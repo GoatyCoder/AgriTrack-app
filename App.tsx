@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   AppState, Turno, SessioneLinea, 
-  Pedana, Scarto, LineaName, PausaEvento 
+  Pedana, Scarto, PausaEvento 
 } from './types';
-import { INITIAL_ARTICOLI, INITIAL_SIGLE_LOTTO, INITIAL_IMBALLI, INITIAL_PRODOTTI, INITIAL_VARIETA, MOTIVI_PAUSA } from './constants';
+import { INITIAL_ARTICOLI, INITIAL_SIGLE_LOTTO, INITIAL_IMBALLI, INITIAL_PRODOTTI, INITIAL_VARIETA, INITIAL_AREE, INITIAL_LINEE, INITIAL_TIPOLOGIE_SCARTO, MOTIVI_PAUSA } from './constants';
 import SessionCard from './components/SessionCard';
 import PedanaModal from './components/PedanaModal';
 import ScartoModal from './components/ScartoModal';
@@ -14,6 +14,38 @@ import { LayoutDashboard, Factory, History, Plus, LogOut, FileText, Settings, Pl
 import { useDialog } from './components/DialogContext';
 import { formatTime, formatDateTime, updateIsoTime } from './utils';
 
+
+const LEGACY_LINEA_TO_LINEA_ID: Record<string, string> = {
+  'Linea 1': 'L1',
+  'Linea 2': 'L2',
+  'Linea 3 (Manuale)': 'L3',
+  'Calibratrice A': 'L4'
+};
+
+const normalizeState = (raw: any): AppState => {
+  const aree = raw.aree || INITIAL_AREE;
+  const linee = raw.linee || INITIAL_LINEE;
+  const defaultAreaId = aree[0]?.id || INITIAL_AREE[0].id;
+  return {
+    ...raw,
+    aree,
+    linee,
+    tipologieScarto: raw.tipologieScarto || INITIAL_TIPOLOGIE_SCARTO,
+    turni: (raw.turni || []).map((t: any) => ({ ...t, areaId: t.areaId || defaultAreaId })),
+    sessioni: (raw.sessioni || []).map((s: any) => ({
+      ...s,
+      lineaId: s.lineaId || LEGACY_LINEA_TO_LINEA_ID[s.linea] || linee[0]?.id || INITIAL_LINEE[0].id
+    })),
+    pedane: (raw.pedane || []).map((p: any, idx: number) => ({
+      ...p,
+      doy: p.doy ?? (parseInt((p.stickerCode || '').split('-')[1]) || 0),
+      seq: p.seq ?? (parseInt((p.stickerCode || '').split('-')[2]) || idx + 1),
+      imballoId: p.imballoId || undefined,
+      snapshotImballo: p.snapshotImballo || (p.imballo ? { codice: '', nome: p.imballo } : undefined)
+    }))
+  };
+};
+
 const App: React.FC = () => {
   const { showAlert, showConfirm } = useDialog();
 
@@ -21,18 +53,21 @@ const App: React.FC = () => {
   const [view, setView] = useState<'HOME' | 'MONITOR' | 'REPORT' | 'SETTINGS'>('HOME');
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem('agritrack_state');
-    if (saved) return JSON.parse(saved);
+    if (saved) return normalizeState(JSON.parse(saved));
     
     return { 
       turni: [], 
       sessioni: [], 
       pedane: [], 
       scarti: [],
+      aree: INITIAL_AREE,
+      linee: INITIAL_LINEE,
       prodotti: INITIAL_PRODOTTI,
       varieta: INITIAL_VARIETA,
       articoli: INITIAL_ARTICOLI,
       sigleLotto: INITIAL_SIGLE_LOTTO,
-      imballi: INITIAL_IMBALLI
+      imballi: INITIAL_IMBALLI,
+      tipologieScarto: INITIAL_TIPOLOGIE_SCARTO
     };
   });
   
@@ -47,7 +82,8 @@ const App: React.FC = () => {
   // New Session Form State
   const [isNewSessionMode, setIsNewSessionMode] = useState(false);
   const [newSessionData, setNewSessionData] = useState({
-    linea: LineaName.L1,
+    areaId: INITIAL_AREE[0].id,
+    lineaId: INITIAL_LINEE[0].id,
     articoloId: '',
     siglaLottoId: '',
     dataIngresso: new Date().toISOString().split('T')[0]
@@ -117,8 +153,17 @@ const App: React.FC = () => {
   }, [state]);
 
   // --- Computed ---
+  const getAreaNome = (areaId: string) => state.aree.find(a => a.id === areaId)?.nome || 'Area N/D';
+  const getLineaNome = (lineaId: string) => state.linee.find(l => l.id === lineaId)?.nome || 'Linea N/D';
+
   const activeTurno = state.turni.find(t => t.id === activeTurnoId);
   const activeSessions = state.sessioni.filter(s => s.turnoId === activeTurnoId && s.status !== 'CHIUSA');
+  useEffect(() => {
+    if (!activeTurno) return;
+    const firstLineaArea = state.linee.find(l => l.areaId === activeTurno.areaId && l.attiva !== false)?.id || state.linee[0]?.id || '';
+    setNewSessionData(prev => ({ ...prev, areaId: activeTurno.areaId, lineaId: firstLineaArea || prev.lineaId }));
+  }, [activeTurnoId]);
+
   
   // Base history data
   const shiftSessionsHistoryRaw = state.sessioni
@@ -133,7 +178,7 @@ const App: React.FC = () => {
       stato: s.status
     }));
 
-    if (filters.linea) data = data.filter(s => s.linea === filters.linea);
+    if (filters.linea) data = data.filter(s => s.lineaId === filters.linea);
     if (filters.articolo) data = data.filter(s => s.articoloNome.toLowerCase().includes(filters.articolo.toLowerCase()));
     if (filters.lotto) data = data.filter(s => s.lottoCodice.toLowerCase().includes(filters.lotto.toLowerCase()));
     if (filters.stato) data = data.filter(s => s.stato === filters.stato);
@@ -214,6 +259,7 @@ const App: React.FC = () => {
       id: crypto.randomUUID(),
       inizio: new Date().toISOString(),
       operatore: 'Op. Principale',
+      areaId: state.aree[0]?.id || INITIAL_AREE[0].id,
       status: 'APERTO',
       pause: []
     };
@@ -309,11 +355,11 @@ const App: React.FC = () => {
   };
 
   const handleStartSession = async () => {
-    if (!newSessionData.articoloId || !newSessionData.siglaLottoId) return;
+    if (!newSessionData.articoloId || !newSessionData.siglaLottoId || !newSessionData.lineaId) return;
     const proposedSession: SessioneLinea = {
         id: crypto.randomUUID(),
         turnoId: activeTurnoId!,
-        linea: newSessionData.linea,
+        lineaId: newSessionData.lineaId,
         articoloId: newSessionData.articoloId,
         siglaLottoId: newSessionData.siglaLottoId,
         dataIngresso: newSessionData.dataIngresso,
@@ -326,7 +372,7 @@ const App: React.FC = () => {
   };
 
   const checkConflictsAndPrepareStart = (proposedSession: SessioneLinea) => {
-    const overlaps = activeSessions.filter(s => s.linea === proposedSession.linea);
+    const overlaps = activeSessions.filter(s => s.lineaId === proposedSession.lineaId);
     if (overlaps.length > 0) {
         setPendingSession(proposedSession);
         setConflictingSessions(overlaps);
@@ -628,7 +674,7 @@ const App: React.FC = () => {
                                 {activeTurno.status === 'PAUSA' ? 'Turno in Pausa' : 'Turno Attivo'}
                             </span>
                             <h2 className="text-3xl font-black text-gray-900 mt-1">Produzione</h2>
-                            <p className="text-gray-500 text-sm">Op: {activeTurno.operatore} • Inizio: {formatTime(activeTurno.inizio)}</p>
+                            <p className="text-gray-500 text-sm">Area: {getAreaNome(activeTurno.areaId)} • Op: {activeTurno.operatore} • Inizio: {formatTime(activeTurno.inizio)}</p>
                         </div>
                         <button 
                           onClick={handleTogglePauseTurno}
@@ -652,11 +698,17 @@ const App: React.FC = () => {
                 {isNewSessionMode && (
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-agri-100 animate-in slide-in-from-top-4">
                         <h3 className="font-bold text-lg mb-4 text-gray-800">Avvia Nuova Sessione</h3>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">Area</label>
+                                <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.areaId} onChange={e => setNewSessionData({...newSessionData, areaId: e.target.value, lineaId: state.linee.find(l => l.areaId === e.target.value)?.id || ''})}>
+                                    {state.aree.filter(a => a.attiva !== false).map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+                                </select>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-500 mb-1">Linea</label>
-                                <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.linea} onChange={e => setNewSessionData({...newSessionData, linea: e.target.value as LineaName})}>
-                                    {Object.values(LineaName).map(l => <option key={l} value={l}>{l}</option>)}
+                                <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.lineaId} onChange={e => setNewSessionData({...newSessionData, lineaId: e.target.value})}>
+                                    {state.linee.filter(l => l.areaId === newSessionData.areaId && l.attiva !== false).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
                                 </select>
                             </div>
                             <div>
@@ -697,6 +749,7 @@ const App: React.FC = () => {
                                     onChangeLotto={() => handleOpenSwitchLotto(session)}
                                     onEditSession={() => handleEditSession(session)}
                                     onTogglePause={() => handleTogglePauseSession(session.id)}
+                                    lineaLabel={getLineaNome(session.lineaId)}
                                 />
                             );
                         })}
@@ -731,7 +784,7 @@ const App: React.FC = () => {
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-200">
                                     {renderSortableHeader('Inizio/Fine', 'inizio', 'w-[140px]')}
-                                    {renderSortableHeader('Linea', 'linea', 'w-[100px]')}
+                                    {renderSortableHeader('Linea', 'lineaId', 'w-[100px]')}
                                     {renderSortableHeader('Articolo', 'articoloNome', 'w-auto')}
                                     {renderSortableHeader('Lotto', 'lottoCodice', 'w-[180px]')}
                                     {renderSortableHeader('Stato', 'stato', 'w-[100px]')}
@@ -776,7 +829,7 @@ const App: React.FC = () => {
                                                 onChange={e => setFilters({...filters, linea: e.target.value})}
                                             >
                                                 <option value="">Tutte</option>
-                                                {Object.values(LineaName).map(l => <option key={l} value={l}>{l}</option>)}
+                                                {state.linee.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
                                             </select>
                                         </td>
                                         <td className="px-6 py-2 align-top">
@@ -892,7 +945,7 @@ const App: React.FC = () => {
                                                     )
                                                 ) : '...'}
                                             </td>
-                                            <td className="px-6 py-3 font-medium">{session.linea}</td>
+                                            <td className="px-6 py-3 font-medium">{getLineaNome(session.lineaId)}</td>
                                             <td className="px-6 py-3">{art?.nome}</td>
                                             <td className="px-6 py-3 font-mono text-xs">{session.lottoCodice}</td>
                                             <td className="px-6 py-3">
@@ -959,6 +1012,8 @@ const App: React.FC = () => {
             isOpen={isPedanaModalOpen}
             onClose={() => setIsPedanaModalOpen(false)}
             sessione={state.sessioni.find(s => s.id === selectedSessionId)!}
+            sessioneLabel={getLineaNome(state.sessioni.find(s => s.id === selectedSessionId)!.lineaId)}
+            lottoCode={state.sigleLotto.find(s => s.id === state.sessioni.find(ss => ss.id === selectedSessionId)?.siglaLottoId)?.code || 'N/D'}
             articolo={state.articoli.find(a => a.id === state.sessioni.find(s => s.id === selectedSessionId)?.articoloId)!}
             imballiOptions={state.imballi}
             calibriOptions={state.prodotti.find(p => p.id === state.articoli.find(a => a.id === state.sessioni.find(s => s.id === selectedSessionId)?.articoloId)?.prodottoId)?.calibri || []}
@@ -972,6 +1027,7 @@ const App: React.FC = () => {
         onClose={() => setIsScartoModalOpen(false)}
         turnoId={activeTurnoId || ''}
         sigleLotto={state.sigleLotto}
+        tipologieOptions={state.tipologieScarto.filter(t => t.attiva).map(t => t.nome)}
         onSave={handleSaveScarto}
       />
 
@@ -1032,7 +1088,7 @@ const App: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-xl text-[#9a3412]">Linea Occupata ({conflictingSessions.length})</h3>
-                <p className="text-[#c2410c] text-sm">Ci sono già sessioni attive su {pendingSession.linea}</p>
+                <p className="text-[#c2410c] text-sm">Ci sono già sessioni attive su {getLineaNome(pendingSession.lineaId)}</p>
               </div>
             </div>
 

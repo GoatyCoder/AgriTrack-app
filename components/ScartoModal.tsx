@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { Scarto, SiglaLotto } from '../types';
-import { TIPI_SCARTO } from '../constants';
 
 interface ScartoModalProps {
   isOpen: boolean;
   onClose: () => void;
   turnoId: string;
   sigleLotto: SiglaLotto[]; 
+  tipologieOptions: string[];
   onSave: (scarto: Omit<Scarto, 'id' | 'timestamp'>) => void;
 }
 
 const ScartoModal: React.FC<ScartoModalProps> = ({ 
-  isOpen, onClose, turnoId, sigleLotto, onSave 
+  isOpen, onClose, turnoId, sigleLotto, tipologieOptions, onSave 
 }) => {
   const [siglaLottoId, setSiglaLottoId] = useState<string>(sigleLotto[0]?.id || '');
   const [dataIngresso, setDataIngresso] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [tipologia, setTipologia] = useState<string>(TIPI_SCARTO[0]);
+  const [tipologia, setTipologia] = useState<string>(tipologieOptions[0] || 'Scarto');
   const [peso, setPeso] = useState<number>(0);
 
   if (!isOpen) return null;
@@ -79,7 +79,7 @@ const ScartoModal: React.FC<ScartoModalProps> = ({
               value={tipologia}
               onChange={(e) => setTipologia(e.target.value)}
             >
-              {TIPI_SCARTO.map(t => (
+              {tipologieOptions.map(t => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>

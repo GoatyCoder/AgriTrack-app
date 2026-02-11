@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, X, Pencil, RotateCcw } from 'lucide-react';
-import { AppState, Articolo, SiglaLotto, Prodotto, Varieta, Imballo } from '../types';
+import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, X, Pencil, RotateCcw, Factory } from 'lucide-react';
+import { AppState, Articolo, SiglaLotto, Prodotto, Varieta, Imballo, Area, Linea } from '../types';
 import { useDialog } from './DialogContext';
 
 interface SettingsDashboardProps {
@@ -10,7 +10,7 @@ interface SettingsDashboardProps {
 
 const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
   const { showConfirm } = useDialog();
-  const [activeTab, setActiveTab] = useState<'PRODOTTI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('PRODOTTI');
+  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Forms State
@@ -22,6 +22,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const [newArticolo, setNewArticolo] = useState<Partial<Articolo>>({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0 });
   const [newLotto, setNewLotto] = useState<Partial<SiglaLotto>>({});
   const [newImballo, setNewImballo] = useState<Partial<Imballo>>({});
+  const [newArea, setNewArea] = useState<Partial<Area>>({ attiva: true });
+  const [newLinea, setNewLinea] = useState<Partial<Linea>>({ attiva: true });
 
   // Reset forms when tab changes
   useEffect(() => {
@@ -34,7 +36,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setNewVarieta({ nome: '', codice: '', prodottoId: '', categoria: '' });
     setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', categoria: '' });
     setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
-    setNewImballo({ nome: '', codice: '' });
+    setNewImballo({ nome: '', codice: '', taraKg: 0 });
+    setNewArea({ nome: '', attiva: true });
+    setNewLinea({ nome: '', areaId: data.aree[0]?.id || '', attiva: true });
     setTempCat('');
     setTempCal('');
   };
@@ -227,6 +231,41 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     resetAllForms();
   };
 
+
+  const startEditArea = (a: Area) => {
+    setEditingId(a.id);
+    setNewArea({ ...a });
+  };
+
+  const startEditLinea = (l: Linea) => {
+    setEditingId(l.id);
+    setNewLinea({ ...l });
+  };
+
+  const saveArea = () => {
+    if (!newArea.nome) return;
+    let updatedList = [...data.aree];
+    if (editingId) {
+      updatedList = updatedList.map(a => a.id === editingId ? { ...a, ...newArea } as Area : a);
+    } else {
+      updatedList.push({ id: crypto.randomUUID(), nome: newArea.nome, attiva: newArea.attiva !== false });
+    }
+    onUpdateData({ aree: updatedList });
+    resetAllForms();
+  };
+
+  const saveLinea = () => {
+    if (!newLinea.nome || !newLinea.areaId) return;
+    let updatedList = [...data.linee];
+    if (editingId) {
+      updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLinea } as Linea : l);
+    } else {
+      updatedList.push({ id: crypto.randomUUID(), nome: newLinea.nome, areaId: newLinea.areaId, attiva: newLinea.attiva !== false });
+    }
+    onUpdateData({ linee: updatedList });
+    resetAllForms();
+  };
+
   const deleteItem = async (key: keyof AppState, id: string) => {
     const confirmed = await showConfirm({
         title: 'Elimina Elemento',
@@ -272,6 +311,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
       <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 space-y-2">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Anagrafiche</h3>
         
+        <button onClick={() => setActiveTab('AREE_LINEE')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'AREE_LINEE' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}><Factory size={18} /> Aree e Linee</button>
         <button onClick={() => setActiveTab('PRODOTTI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'PRODOTTI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
           <Apple size={18} /> Prodotti
         </button>
@@ -292,6 +332,32 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-y-auto">
         
+
+        {activeTab === 'AREE_LINEE' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Aree e Linee</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-4 rounded-lg border bg-gray-50 space-y-3">
+                <h3 className="font-bold">Area</h3>
+                <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Nome area" value={newArea.nome || ''} onChange={e => setNewArea({ ...newArea, nome: e.target.value })} />
+                <button onClick={saveArea} className="w-full bg-agri-600 text-white rounded p-2 text-sm font-bold">Salva Area</button>
+                <ul className="divide-y border rounded bg-white">
+                  {data.aree.map(a => <li key={a.id} className="px-3 py-2 flex justify-between text-sm"><span>{a.nome}</span><span className="flex gap-2"><button onClick={() => startEditArea(a)}><Pencil size={14} /></button><button onClick={() => deleteItem('aree', a.id)}><Trash2 size={14} /></button></span></li>)}
+                </ul>
+              </div>
+              <div className="p-4 rounded-lg border bg-gray-50 space-y-3">
+                <h3 className="font-bold">Linea</h3>
+                <select className="w-full border rounded p-2 text-sm" value={newLinea.areaId || ''} onChange={e => setNewLinea({ ...newLinea, areaId: e.target.value })}>{data.aree.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>
+                <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Nome linea" value={newLinea.nome || ''} onChange={e => setNewLinea({ ...newLinea, nome: e.target.value })} />
+                <button onClick={saveLinea} className="w-full bg-agri-600 text-white rounded p-2 text-sm font-bold">Salva Linea</button>
+                <ul className="divide-y border rounded bg-white">
+                  {data.linee.map(l => <li key={l.id} className="px-3 py-2 flex justify-between text-sm"><span>{l.nome} <span className="text-gray-400">({data.aree.find(a => a.id === l.areaId)?.nome || '-'})</span></span><span className="flex gap-2"><button onClick={() => startEditLinea(l)}><Pencil size={14} /></button><button onClick={() => deleteItem('linee', l.id)}><Trash2 size={14} /></button></span></li>)}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* PRODOTTI */}
         {activeTab === 'PRODOTTI' && (
           <div className="space-y-6">
@@ -620,6 +686,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <input type="text" className="w-full border rounded p-2 text-sm uppercase font-mono" placeholder="COD" value={newImballo.codice || ''} onChange={e => setNewImballo({...newImballo, codice: e.target.value})} />
                     </div>
                     <input type="text" className="flex-1 border rounded p-2 text-sm" placeholder="Nome Imballo (es. IFCO Nero)" value={newImballo.nome || ''} onChange={e => setNewImballo({...newImballo, nome: e.target.value})} />
+                    <input type="number" className="w-28 border rounded p-2 text-sm" placeholder="Tara Kg" value={newImballo.taraKg || 0} onChange={e => setNewImballo({...newImballo, taraKg: parseFloat(e.target.value) || 0})} />
                 </div>
                 <ActionButtons onSave={saveImballo} />
             </div>
