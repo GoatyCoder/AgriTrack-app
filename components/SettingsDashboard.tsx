@@ -1,0 +1,648 @@
+import React, { useState, useEffect } from 'react';
+import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, X, Pencil, RotateCcw } from 'lucide-react';
+import { AppState, Articolo, SiglaLotto, Prodotto, Varieta, Imballo } from '../types';
+import { useDialog } from './DialogContext';
+
+interface SettingsDashboardProps {
+  data: AppState;
+  onUpdateData: (newData: Partial<AppState>) => void;
+}
+
+const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
+  const { showConfirm } = useDialog();
+  const [activeTab, setActiveTab] = useState<'PRODOTTI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('PRODOTTI');
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Forms State
+  const [newProdotto, setNewProdotto] = useState<Partial<Prodotto>>({ categorie: [], calibri: [] });
+  const [tempCat, setTempCat] = useState('');
+  const [tempCal, setTempCal] = useState('');
+
+  const [newVarieta, setNewVarieta] = useState<Partial<Varieta>>({});
+  const [newArticolo, setNewArticolo] = useState<Partial<Articolo>>({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0 });
+  const [newLotto, setNewLotto] = useState<Partial<SiglaLotto>>({});
+  const [newImballo, setNewImballo] = useState<Partial<Imballo>>({});
+
+  // Reset forms when tab changes
+  useEffect(() => {
+    resetAllForms();
+  }, [activeTab]);
+
+  const resetAllForms = () => {
+    setEditingId(null);
+    setNewProdotto({ nome: '', codice: '', categorie: [], calibri: [] });
+    setNewVarieta({ nome: '', codice: '', prodottoId: '', categoria: '' });
+    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', categoria: '' });
+    setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
+    setNewImballo({ nome: '', codice: '' });
+    setTempCat('');
+    setTempCal('');
+  };
+
+  // --- Start Edit Handlers ---
+  
+  const startEditProdotto = (p: Prodotto) => {
+    setEditingId(p.id);
+    setNewProdotto({ ...p });
+    // Scroll to top
+    document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
+  };
+
+  const startEditVarieta = (v: Varieta) => {
+    setEditingId(v.id);
+    setNewVarieta({ ...v });
+    document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
+  };
+
+  const startEditArticolo = (a: Articolo) => {
+    setEditingId(a.id);
+    setNewArticolo({ ...a });
+    document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
+  };
+
+  const startEditLotto = (l: SiglaLotto) => {
+    setEditingId(l.id);
+    setNewLotto({ ...l });
+    document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
+  };
+
+  const startEditImballo = (i: Imballo) => {
+    setEditingId(i.id);
+    setNewImballo({ ...i });
+  };
+
+
+  // --- Save Handlers ---
+
+  // Prodotti
+  const addCategoryToProd = () => {
+    if (tempCat && !newProdotto.categorie?.includes(tempCat)) {
+      setNewProdotto({ ...newProdotto, categorie: [...(newProdotto.categorie || []), tempCat] });
+      setTempCat('');
+    }
+  };
+  const removeCategoryFromProd = (c: string) => {
+    setNewProdotto({ ...newProdotto, categorie: newProdotto.categorie?.filter(x => x !== c) });
+  };
+  const addCaliberToProd = () => {
+     if (tempCal && !newProdotto.calibri?.includes(tempCal)) {
+      setNewProdotto({ ...newProdotto, calibri: [...(newProdotto.calibri || []), tempCal] });
+      setTempCal('');
+    }
+  };
+  const removeCaliberFromProd = (c: string) => {
+    setNewProdotto({ ...newProdotto, calibri: newProdotto.calibri?.filter(x => x !== c) });
+  };
+
+  const saveProdotto = () => {
+    if (!newProdotto.nome || !newProdotto.codice) return;
+    
+    let updatedList = [...data.prodotti];
+
+    if (editingId) {
+        // Update
+        updatedList = updatedList.map(p => p.id === editingId ? { ...p, ...newProdotto } as Prodotto : p);
+    } else {
+        // Create
+        const item: Prodotto = { 
+            id: crypto.randomUUID(), 
+            codice: newProdotto.codice.toUpperCase(),
+            nome: newProdotto.nome,
+            categorie: newProdotto.categorie || [],
+            calibri: newProdotto.calibri || []
+        };
+        updatedList.push(item);
+    }
+    
+    onUpdateData({ prodotti: updatedList });
+    resetAllForms();
+  };
+
+  const saveVarieta = () => {
+    if (!newVarieta.nome || !newVarieta.prodottoId || !newVarieta.codice) return;
+    
+    let updatedList = [...data.varieta];
+
+    if (editingId) {
+        updatedList = updatedList.map(v => v.id === editingId ? { ...v, ...newVarieta } as Varieta : v);
+    } else {
+        const item: Varieta = { 
+            id: crypto.randomUUID(), 
+            codice: newVarieta.codice.toUpperCase(),
+            nome: newVarieta.nome, 
+            prodottoId: newVarieta.prodottoId,
+            categoria: newVarieta.categoria 
+        };
+        updatedList.push(item);
+    }
+
+    onUpdateData({ varieta: updatedList });
+    resetAllForms();
+  };
+
+  const saveArticolo = () => {
+    // Check required fields (prodottoId is now optional)
+    if (!newArticolo.nome || !newArticolo.pesoColloTeorico || !newArticolo.codice) return;
+    
+    const cleanArticolo = { ...newArticolo };
+    
+    // If no product is selected, ensure product-dependent fields are undefined
+    if (!cleanArticolo.prodottoId) {
+      cleanArticolo.prodottoId = undefined;
+      cleanArticolo.varietaId = undefined;
+      cleanArticolo.categoria = undefined;
+    } else {
+      // If product exists, check dependencies
+      if (cleanArticolo.varietaId) cleanArticolo.categoria = undefined;
+      if (cleanArticolo.categoria) cleanArticolo.varietaId = undefined;
+    }
+
+    let updatedList = [...data.articoli];
+
+    if (editingId) {
+        updatedList = updatedList.map(a => a.id === editingId ? {
+             ...a, 
+             ...cleanArticolo,
+             prodottoId: cleanArticolo.prodottoId || undefined,
+             categoria: cleanArticolo.categoria || undefined, 
+             varietaId: cleanArticolo.varietaId || undefined
+        } as Articolo : a);
+    } else {
+        const item: Articolo = {
+            id: crypto.randomUUID(),
+            codice: cleanArticolo.codice.toUpperCase(),
+            nome: cleanArticolo.nome!,
+            prodottoId: cleanArticolo.prodottoId || undefined,
+            varietaId: cleanArticolo.varietaId || undefined,
+            categoria: cleanArticolo.categoria || undefined,
+            pesoColloTeorico: Number(cleanArticolo.pesoColloTeorico),
+            tipoPeso: cleanArticolo.tipoPeso as 'EGALIZZATO' | 'USCENTE'
+        };
+        updatedList.push(item);
+    }
+
+    onUpdateData({ articoli: updatedList });
+    resetAllForms();
+  };
+
+  const saveLotto = () => {
+    if (!newLotto.code || !newLotto.produttore || !newLotto.varietaId) return;
+    
+    let updatedList = [...data.sigleLotto];
+
+    if (editingId) {
+         updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLotto } as SiglaLotto : l);
+    } else {
+        const item: SiglaLotto = {
+            id: crypto.randomUUID(),
+            code: newLotto.code,
+            produttore: newLotto.produttore,
+            varietaId: newLotto.varietaId,
+            campo: newLotto.campo || ''
+        };
+        updatedList.push(item);
+    }
+    
+    onUpdateData({ sigleLotto: updatedList });
+    resetAllForms();
+  };
+
+  const saveImballo = () => {
+    if (!newImballo.nome || !newImballo.codice) return;
+
+    let updatedList = [...data.imballi];
+
+    if (editingId) {
+        updatedList = updatedList.map(i => i.id === editingId ? { ...i, ...newImballo } as Imballo : i);
+    } else {
+        const item: Imballo = {
+            id: crypto.randomUUID(),
+            codice: newImballo.codice.toUpperCase(),
+            nome: newImballo.nome
+        };
+        updatedList.push(item);
+    }
+
+    onUpdateData({ imballi: updatedList });
+    resetAllForms();
+  };
+
+  const deleteItem = async (key: keyof AppState, id: string) => {
+    const confirmed = await showConfirm({
+        title: 'Elimina Elemento',
+        message: 'Sei sicuro di voler eliminare definitivamente questo elemento?',
+        variant: 'DANGER',
+        confirmText: 'Elimina',
+        cancelText: 'Annulla'
+    });
+    
+    if (!confirmed) return;
+    
+    // Check if we are deleting the item currently being edited
+    if (id === editingId) {
+        resetAllForms();
+    }
+
+    // @ts-ignore
+    onUpdateData({ [key]: (data[key] as any[]).filter(item => item.id !== id) });
+  };
+
+  // Helper selectors
+  const selectedProdForVar = data.prodotti.find(p => p.id === newVarieta.prodottoId);
+  const selectedProdForArt = data.prodotti.find(p => p.id === newArticolo.prodottoId);
+
+  // Common Button Component
+  const ActionButtons = ({ onSave }: { onSave: () => void }) => (
+    <div className="flex gap-2 w-full mt-4">
+        {editingId && (
+            <button onClick={resetAllForms} className="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300 flex items-center gap-2">
+                <RotateCcw size={16} /> Annulla
+            </button>
+        )}
+        <button onClick={onSave} className={`flex-1 ${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-agri-600 hover:bg-agri-700'} text-white rounded p-2 text-sm font-bold flex items-center justify-center gap-2`}>
+            {editingId ? <Pencil size={16} /> : <Plus size={16} />} 
+            {editingId ? 'Aggiorna Modifiche' : 'Aggiungi Nuovo'}
+        </button>
+    </div>
+  );
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px] flex">
+      {/* Sidebar Tabs */}
+      <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 space-y-2">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Anagrafiche</h3>
+        
+        <button onClick={() => setActiveTab('PRODOTTI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'PRODOTTI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <Apple size={18} /> Prodotti
+        </button>
+        <button onClick={() => setActiveTab('VARIETA')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'VARIETA' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <Sprout size={18} /> Varietà
+        </button>
+        <button onClick={() => setActiveTab('ARTICOLI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'ARTICOLI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <Package size={18} /> Articoli
+        </button>
+        <button onClick={() => setActiveTab('LOTTI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'LOTTI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <Tags size={18} /> Sigle Lotto
+        </button>
+        <button onClick={() => setActiveTab('IMBALLI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'IMBALLI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <Box size={18} /> Imballaggi
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-8 overflow-y-auto">
+        
+        {/* PRODOTTI */}
+        {activeTab === 'PRODOTTI' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                Prodotti {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
+            </h2>
+            
+            <div className={`p-6 rounded-lg border space-y-4 transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
+               <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-1">
+                     <label className="block text-xs font-bold text-gray-500 mb-1">Codice</label>
+                     <input type="text" className="w-full border rounded p-2 text-sm uppercase font-mono" placeholder="UVA" value={newProdotto.codice || ''} onChange={e => setNewProdotto({ ...newProdotto, codice: e.target.value })} />
+                  </div>
+                  <div className="col-span-3">
+                     <label className="block text-xs font-bold text-gray-500 mb-1">Nome Prodotto</label>
+                     <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. Uva da Tavola" value={newProdotto.nome || ''} onChange={e => setNewProdotto({ ...newProdotto, nome: e.target.value })} />
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-6">
+                 {/* Categorie Manager */}
+                 <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Categorie / Gruppi</label>
+                    <div className="flex gap-2 mb-2">
+                      <input 
+                        type="text" className="flex-1 border rounded p-2 text-sm" 
+                        value={tempCat} onChange={e => setTempCat(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addCategoryToProd()}
+                        placeholder="Aggiungi categoria..."
+                      />
+                      <button onClick={addCategoryToProd} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16}/></button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {newProdotto.categorie?.map(c => (
+                        <span key={c} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded flex items-center gap-1">
+                          {c} <button onClick={() => removeCategoryFromProd(c)}><X size={12}/></button>
+                        </span>
+                      ))}
+                    </div>
+                 </div>
+
+                 {/* Calibri Manager */}
+                 <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Calibri Ammessi</label>
+                    <div className="flex gap-2 mb-2">
+                      <input 
+                        type="text" className="flex-1 border rounded p-2 text-sm" 
+                        value={tempCal} onChange={e => setTempCal(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addCaliberToProd()}
+                        placeholder="Aggiungi calibro..."
+                      />
+                      <button onClick={addCaliberToProd} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16}/></button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {newProdotto.calibri?.map(c => (
+                        <span key={c} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded flex items-center gap-1">
+                          {c} <button onClick={() => removeCaliberFromProd(c)}><X size={12}/></button>
+                        </span>
+                      ))}
+                    </div>
+                 </div>
+               </div>
+
+               <ActionButtons onSave={saveProdotto} />
+            </div>
+
+            <ul className="divide-y divide-gray-200 border rounded-lg">
+                {data.prodotti.map(p => (
+                    <li key={p.id} className={`px-4 py-3 bg-white ${editingId === p.id ? 'ring-2 ring-orange-400 inset-0 z-10' : ''}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-gray-200 px-2 py-0.5 rounded text-xs font-mono font-bold">{p.codice}</span>
+                                <span className="font-bold text-lg">{p.nome}</span>
+                            </div>
+                            <div className="mt-1 text-xs text-gray-500">
+                                <span className="font-semibold">Categorie:</span> {p.categorie.join(', ') || '-'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                                <span className="font-semibold">Calibri:</span> {p.calibri.join(', ') || '-'}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => startEditProdotto(p)} className="text-gray-400 hover:text-orange-500 p-2"><Pencil size={16} /></button>
+                            <button onClick={() => deleteItem('prodotti', p.id)} className="text-gray-400 hover:text-red-500 p-2"><Trash2 size={16} /></button>
+                          </div>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+          </div>
+        )}
+
+        {/* VARIETA */}
+        {activeTab === 'VARIETA' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                Varietà {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
+            </h2>
+            <div className={`p-4 rounded-lg border space-y-4 transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
+               <div className="grid grid-cols-4 gap-4">
+                 <div className="col-span-2">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Prodotto</label>
+                    <select className="w-full border rounded p-2 text-sm" value={newVarieta.prodottoId || ''} onChange={e => setNewVarieta({...newVarieta, prodottoId: e.target.value, categoria: ''})}>
+                        <option value="">Seleziona...</option>
+                        {data.prodotti.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                    </select>
+                 </div>
+                 <div className="col-span-1">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Codice</label>
+                    <input type="text" className="w-full border rounded p-2 text-sm uppercase font-mono" placeholder="CRI" value={newVarieta.codice || ''} onChange={e => setNewVarieta({...newVarieta, codice: e.target.value})} />
+                 </div>
+                 <div className="col-span-1">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Nome Varietà</label>
+                    <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. Crimson" value={newVarieta.nome || ''} onChange={e => setNewVarieta({...newVarieta, nome: e.target.value})} />
+                 </div>
+                 <div className="col-span-4">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Categoria / Gruppo</label>
+                    {newVarieta.prodottoId ? (
+                        <select 
+                        className="w-full border rounded p-2 text-sm" 
+                        value={newVarieta.categoria || ''} 
+                        onChange={e => setNewVarieta({...newVarieta, categoria: e.target.value})}
+                        >
+                        <option value="">Nessuna / Generica</option>
+                        {selectedProdForVar?.categorie.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    ) : (
+                        <input type="text" disabled className="w-full border rounded p-2 text-sm bg-gray-100 cursor-not-allowed" placeholder="Seleziona prima un prodotto" />
+                    )}
+                 </div>
+               </div>
+               <ActionButtons onSave={saveVarieta} />
+            </div>
+            <ul className="divide-y divide-gray-200 border rounded-lg">
+                {data.varieta.map(v => {
+                    const pName = data.prodotti.find(p => p.id === v.prodottoId)?.nome || '?';
+                    return (
+                        <li key={v.id} className={`px-4 py-3 flex justify-between items-center bg-white ${editingId === v.id ? 'ring-2 ring-orange-400 inset-0 z-10' : ''}`}>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                     <span className="bg-gray-200 px-2 py-0.5 rounded text-xs font-mono font-bold">{v.codice}</span>
+                                     <span className="font-bold">{v.nome}</span>
+                                </div>
+                                {v.categoria && <span className="ml-2 text-xs text-white bg-blue-500 px-2 py-1 rounded">{v.categoria}</span>}
+                                <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{pName}</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => startEditVarieta(v)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
+                                <button onClick={() => deleteItem('varieta', v.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                            </div>
+                        </li>
+                    )
+                })}
+            </ul>
+          </div>
+        )}
+
+        {/* ARTICOLI */}
+        {activeTab === 'ARTICOLI' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                Articoli {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
+            </h2>
+            <div className={`p-4 rounded-lg border space-y-4 transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="grid grid-cols-4 gap-4 items-end">
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Codice</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm uppercase font-mono" placeholder="ART" value={newArticolo.codice || ''} onChange={e => setNewArticolo({...newArticolo, codice: e.target.value})} />
+                    </div>
+                    <div className="col-span-3">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Nome Articolo</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. Cestini 10x500g" value={newArticolo.nome || ''} onChange={e => setNewArticolo({...newArticolo, nome: e.target.value})} />
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Prodotto</label>
+                        <select 
+                          className="w-full border rounded p-2 text-sm" 
+                          value={newArticolo.prodottoId || ''} 
+                          onChange={e => setNewArticolo({...newArticolo, prodottoId: e.target.value, varietaId: '', categoria: ''})}
+                        >
+                            <option value="">Qualsiasi Prodotto (Generico)</option>
+                            {data.prodotti.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        </select>
+                    </div>
+                    
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Vincolo (Opz)</label>
+                        <div className="space-y-2">
+                            <select 
+                                className="w-full border rounded p-2 text-xs" 
+                                value={newArticolo.categoria || ''} 
+                                onChange={e => setNewArticolo({...newArticolo, categoria: e.target.value, varietaId: ''})} 
+                                disabled={!newArticolo.prodottoId || !!newArticolo.varietaId}
+                            >
+                                <option value="">Qualsiasi Categoria</option>
+                                {selectedProdForArt?.categorie.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">O Varietà</label>
+                        <select 
+                                className="w-full border rounded p-2 text-xs" 
+                                value={newArticolo.varietaId || ''} 
+                                onChange={e => setNewArticolo({...newArticolo, varietaId: e.target.value, categoria: ''})} 
+                                disabled={!newArticolo.prodottoId || !!newArticolo.categoria}
+                            >
+                                <option value="">Qualsiasi Varietà</option>
+                                {data.varieta.filter(v => v.prodottoId === newArticolo.prodottoId).map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
+                            </select>
+                    </div>
+
+                    <div className="col-span-4">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Peso (Kg)</label>
+                        <input type="number" className="w-full border rounded p-2 text-sm" value={newArticolo.pesoColloTeorico || ''} onChange={e => setNewArticolo({...newArticolo, pesoColloTeorico: parseFloat(e.target.value)})} />
+                    </div>
+                </div>
+                <ActionButtons onSave={saveArticolo} />
+            </div>
+
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                    <th className="px-4 py-2 text-left">Codice</th>
+                    <th className="px-4 py-2 text-left">Nome</th>
+                    <th className="px-4 py-2 text-left">Vincoli</th>
+                    <th className="px-4 py-2 text-left">Peso</th>
+                    <th></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {data.articoli.map(item => {
+                    const pName = data.prodotti.find(p => p.id === item.prodottoId)?.nome || 'Generico / Tutti';
+                    let vincolo = "Tutti";
+                    if (item.categoria) vincolo = `Categ: ${item.categoria}`;
+                    if (item.varietaId) {
+                         const v = data.varieta.find(v => v.id === item.varietaId);
+                         vincolo = `Var: ${v?.nome || '?'}`;
+                    }
+
+                    return (
+                        <tr key={item.id} className={editingId === item.id ? 'bg-orange-50' : ''}>
+                            <td className="px-4 py-2 font-mono font-bold">{item.codice}</td>
+                            <td className="px-4 py-2">{item.nome}</td>
+                            <td className="px-4 py-2">
+                                <span className={`block text-xs font-bold ${!item.prodottoId ? 'text-green-600' : 'text-gray-500'}`}>{pName}</span>
+                                {item.prodottoId && <span className={`text-xs px-2 py-0.5 rounded ${vincolo === 'Tutti' ? 'bg-gray-100' : 'bg-blue-100 text-blue-800'}`}>{vincolo}</span>}
+                            </td>
+                            <td className="px-4 py-2">{item.pesoColloTeorico} kg</td>
+                            <td className="px-4 py-2 flex gap-2">
+                                <button onClick={() => startEditArticolo(item)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
+                                <button onClick={() => deleteItem('articoli', item.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                            </td>
+                        </tr>
+                    )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* LOTTI */}
+        {activeTab === 'LOTTI' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                Gestione Sigle Lotto {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
+            </h2>
+            <div className={`p-4 rounded-lg border space-y-4 transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Codice Lotto</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. ROSSI-VIT-F01" value={newLotto.code || ''} onChange={e => setNewLotto({...newLotto, code: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Produttore</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm" value={newLotto.produttore || ''} onChange={e => setNewLotto({...newLotto, produttore: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Varietà</label>
+                        <select className="w-full border rounded p-2 text-sm" value={newLotto.varietaId || ''} onChange={e => setNewLotto({...newLotto, varietaId: e.target.value})}>
+                            <option value="">Seleziona...</option>
+                            {data.varieta.map(v => (
+                                <option key={v.id} value={v.id}>{v.nome} {v.categoria ? `(${v.categoria})` : ''}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Campo</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm" value={newLotto.campo || ''} onChange={e => setNewLotto({...newLotto, campo: e.target.value})} />
+                    </div>
+                </div>
+                <ActionButtons onSave={saveLotto} />
+            </div>
+            
+             <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead><tr><th className="px-4 py-2 text-left">Codice</th><th className="px-4 py-2 text-left">Dettagli</th><th></th></tr></thead>
+              <tbody>
+                {data.sigleLotto.map(item => {
+                    const vName = data.varieta.find(v => v.id === item.varietaId)?.nome || '?';
+                    return (
+                        <tr key={item.id} className={editingId === item.id ? 'bg-orange-50' : ''}>
+                            <td className="px-4 py-2 font-mono font-bold">{item.code}</td>
+                            <td className="px-4 py-2">{item.produttore} - {vName} - {item.campo}</td>
+                            <td className="px-4 py-2 flex gap-2">
+                                <button onClick={() => startEditLotto(item)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
+                                <button onClick={() => deleteItem('sigleLotto', item.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                            </td>
+                        </tr>
+                    )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* IMBALLI */}
+        {activeTab === 'IMBALLI' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                Imballaggi {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
+            </h2>
+            <div className={`p-4 rounded-lg border transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="flex gap-4">
+                    <div className="w-32">
+                        <input type="text" className="w-full border rounded p-2 text-sm uppercase font-mono" placeholder="COD" value={newImballo.codice || ''} onChange={e => setNewImballo({...newImballo, codice: e.target.value})} />
+                    </div>
+                    <input type="text" className="flex-1 border rounded p-2 text-sm" placeholder="Nome Imballo (es. IFCO Nero)" value={newImballo.nome || ''} onChange={e => setNewImballo({...newImballo, nome: e.target.value})} />
+                </div>
+                <ActionButtons onSave={saveImballo} />
+            </div>
+            <ul className="divide-y divide-gray-200 border rounded-lg">
+                {data.imballi.map((item) => (
+                    <li key={item.id} className={`px-4 py-3 flex justify-between items-center bg-white ${editingId === item.id ? 'ring-2 ring-orange-400 inset-0 z-10' : ''}`}>
+                        <div className="flex items-center gap-3">
+                            <span className="bg-gray-200 px-2 py-1 rounded font-mono font-bold text-xs">{item.codice}</span>
+                            <span>{item.nome}</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => startEditImballo(item)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
+                            <button onClick={() => deleteItem('imballi', item.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+export default SettingsDashboard;
