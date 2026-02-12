@@ -1,50 +1,70 @@
+export interface Area {
+  id: string;
+  nome: string;
+  attiva: boolean;
+}
 
-export enum LineaName {
-  L1 = 'Linea 1',
-  L2 = 'Linea 2',
-  L3 = 'Linea 3 (Manuale)',
-  CAL_A = 'Calibratrice A'
+export interface Linea {
+  id: string;
+  areaId: string;
+  nome: string;
+  attiva: boolean;
 }
 
 export interface Prodotto {
   id: string;
-  codice: string; 
-  nome: string; 
-  categorie: string[]; 
-  calibri: string[]; 
+  codice: string;
+  nome: string;
+  categorie: string[];
+  calibri: string[];
+  attivo?: boolean;
 }
 
 export interface Varieta {
   id: string;
   prodottoId: string;
-  codice: string; 
-  nome: string; 
-  categoria?: string; 
+  codice: string;
+  nome: string;
+  categoria?: string;
+  attiva?: boolean;
 }
 
 export interface SiglaLotto {
   id: string;
-  code: string; 
+  code: string;
   produttore: string;
-  varietaId: string; 
+  varietaId: string;
   campo: string;
 }
 
+export type TipoPesoArticolo = 'EGALIZZATO' | 'USCENTE';
+
 export interface Articolo {
   id: string;
-  codice: string; 
-  nome: string; 
-  prodottoId?: string; 
-  varietaId?: string; 
-  categoria?: string; 
+  codice: string;
+  nome: string;
+  prodottoId?: string;
+  varietaId?: string;
+  categoria?: string;
   pesoColloTeorico: number;
-  tipoPeso: 'EGALIZZATO' | 'USCENTE';
+  tipoPeso: TipoPesoArticolo;
+  attivo?: boolean;
 }
 
 export interface Imballo {
   id: string;
-  codice: string; 
-  nome: string; 
+  codice: string;
+  nome: string;
+  taraKg?: number;
+  attivo?: boolean;
+}
+
+export interface TipologiaScarto {
+  id: string;
+  codice: string;
+  nome: string;
+  prodottoId?: string;
+  attiva: boolean;
 }
 
 export interface PausaEvento {
@@ -58,6 +78,7 @@ export interface Turno {
   inizio: string;
   fine?: string;
   operatore: string;
+  areaId: string;
   status: 'APERTO' | 'PAUSA' | 'CHIUSO';
   pause: PausaEvento[];
 }
@@ -65,9 +86,9 @@ export interface Turno {
 export interface SessioneLinea {
   id: string;
   turnoId: string;
-  linea: LineaName;
-  siglaLottoId: string; 
-  dataIngresso: string; 
+  lineaId: string;
+  siglaLottoId: string;
+  dataIngresso: string;
   articoloId: string;
   inizio: string;
   fine?: string;
@@ -81,20 +102,23 @@ export interface Pedana {
   id: string;
   sessioneId: string;
   stickerCode: string;
+  doy: number;
+  seq: number;
   numeroColli: number;
   pesoTotale: number;
   timestamp: string;
-  imballo?: string; 
+  imballoId?: string;
   calibro?: string;
+  snapshotImballo?: { codice: string; nome: string };
   snapshotArticolo?: { id: string; nome: string; codice: string };
-  snapshotLotto?: { id: string; code: string; };
+  snapshotIngresso?: { siglaLottoId: string; lottoCode: string; dataIngresso: string };
 }
 
 export interface Scarto {
   id: string;
   turnoId: string;
-  siglaLottoId: string; 
-  dataIngresso: string; 
+  siglaLottoId: string;
+  dataIngresso: string;
   tipologia: string;
   peso: number;
   timestamp: string;
@@ -106,9 +130,12 @@ export interface AppState {
   sessioni: SessioneLinea[];
   pedane: Pedana[];
   scarti: Scarto[];
+  aree: Area[];
+  linee: Linea[];
   prodotti: Prodotto[];
   varieta: Varieta[];
   articoli: Articolo[];
   sigleLotto: SiglaLotto[];
   imballi: Imballo[];
+  tipologieScarto: TipologiaScarto[];
 }
