@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppState, SessioneLinea, Turno } from '../types';
+import { ArticoloLottoCompatibilityService } from '../core/services/domain/ArticoloLottoCompatibilityService';
 
 export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) => {
   const [isNewSessionMode, setIsNewSessionMode] = useState(false);
@@ -12,6 +13,8 @@ export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) 
   });
 
   const [sessionToSwitchLotto, setSessionToSwitchLotto] = useState<SessioneLinea | null>(null);
+  const compatibilityService = useMemo(() => new ArticoloLottoCompatibilityService(), []);
+
   const [switchLottoData, setSwitchLottoData] = useState({
     siglaLottoId: '',
     dataIngresso: new Date().toISOString().split('T')[0]
@@ -27,13 +30,8 @@ export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) 
   const selectedLottoVarieta = selectedLotto ? state.varieta.find(v => v.id === selectedLotto.varietaId) : null;
 
   const filteredArticoli = useMemo(() => state.articoli.filter(art => {
-    if (!art.prodottoId) return true;
-    if (!selectedLottoVarieta) return false;
-    if (art.prodottoId !== selectedLottoVarieta.prodottoId) return false;
-    if (art.varietaId && art.varietaId !== selectedLottoVarieta.id) return false;
-    if (art.categoria && art.categoria !== selectedLottoVarieta.categoria) return false;
-    return true;
-  }), [state.articoli, selectedLottoVarieta]);
+    return compatibilityService.isCompatible(art, selectedLotto, selectedLottoVarieta || undefined);
+  }), [state.articoli, selectedLotto, selectedLottoVarieta, compatibilityService]);
 
   const lottoOptions = useMemo(() => state.sigleLotto.map(s => ({ ...s, codice: s.code, nome: `${s.produttore} (${s.campo})` })), [state.sigleLotto]);
 
@@ -42,15 +40,8 @@ export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) 
     const currentArt = state.articoli.find(a => a.id === sessionToSwitchLotto.articoloId);
     if (!currentArt) return lottoOptions;
 
-    return lottoOptions.filter(opt => {
-      const v = state.varieta.find(varItem => varItem.id === opt.varietaId);
-      if (!v) return false;
-      if (currentArt.prodottoId && v.prodottoId !== currentArt.prodottoId) return false;
-      if (currentArt.varietaId && v.id !== currentArt.varietaId) return false;
-      if (currentArt.categoria && v.categoria !== currentArt.categoria) return false;
-      return true;
-    });
-  }, [sessionToSwitchLotto, lottoOptions, state.articoli, state.varieta]);
+    return compatibilityService.getCompatibleLotti(currentArt, lottoOptions, state.varieta);
+  }, [sessionToSwitchLotto, lottoOptions, state.articoli, state.varieta, compatibilityService]);
 
   return {
     isNewSessionMode,
