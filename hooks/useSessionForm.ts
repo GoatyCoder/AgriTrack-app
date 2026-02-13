@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppState, SessioneLinea, Turno } from '../types';
 import { ArticoloLottoCompatibilityService } from '../core/services/domain/ArticoloLottoCompatibilityService';
 
-export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) => {
+export const useSessionForm = (
+  state: AppState,
+  activeTurno: Turno | undefined,
+  sessionToSwitchLotto: SessioneLinea | null
+) => {
   const [isNewSessionMode, setIsNewSessionMode] = useState(false);
   const [newSessionData, setNewSessionData] = useState({
     areaId: state.aree[0]?.id || '',
@@ -12,13 +16,7 @@ export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) 
     dataIngresso: new Date().toISOString().split('T')[0]
   });
 
-  const [sessionToSwitchLotto, setSessionToSwitchLotto] = useState<SessioneLinea | null>(null);
   const compatibilityService = useMemo(() => new ArticoloLottoCompatibilityService(), []);
-
-  const [switchLottoData, setSwitchLottoData] = useState({
-    siglaLottoId: '',
-    dataIngresso: new Date().toISOString().split('T')[0]
-  });
 
   useEffect(() => {
     if (!activeTurno) return;
@@ -50,10 +48,6 @@ export const useSessionForm = (state: AppState, activeTurno: Turno | undefined) 
     setNewSessionData,
     lottoOptions,
     filteredArticoli,
-    sessionToSwitchLotto,
-    setSessionToSwitchLotto,
-    switchLottoData,
-    setSwitchLottoData,
     compatibleLottoOptions
   };
 };

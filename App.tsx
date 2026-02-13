@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Turno, SessioneLinea, 
-  Pedana, Scarto, PausaEvento 
+  SessioneLinea, 
+  PausaEvento 
 } from './types';
-import { INITIAL_AREE, MOTIVI_PAUSA } from './constants';
+import { MOTIVI_PAUSA } from './constants';
 import SessionCard from './components/SessionCard';
+import { AppRoutes } from './app/routes';
 import PedanaModal from './components/PedanaModal';
 import ScartoModal from './components/ScartoModal';
-import ReportDashboard from './components/ReportDashboard';
-import SettingsDashboard from './components/SettingsDashboard';
 import SmartSelect from './components/SmartSelect';
 import { LayoutDashboard, Factory, History, Plus, LogOut, FileText, Settings, PlayCircle, RefreshCw, Archive, Play, X, AlertTriangle, CheckSquare, Square, Activity, Pencil, StickyNote, ArrowUp, ArrowDown, Filter, XCircle, Clock, RotateCcw, Pause, Trash2 } from 'lucide-react';
 import { useDialog } from './components/DialogContext';
 import { formatTime, formatDateTime, updateIsoTime } from './utils';
 import { useAppStateStore } from './hooks/useAppStateStore';
-import { buildSessione, getLineConflicts } from './core/services/SessioneService';
 import { useSessionFilters } from './hooks/useSessionFilters';
 import { useSessionForm } from './hooks/useSessionForm';
+import { useTurnoActions } from './hooks/useTurnoActions';
+import { useSessioneActions } from './hooks/useSessioneActions';
+import { useProductionRecords } from './hooks/useProductionRecords';
 
 
 const App: React.FC = () => {
@@ -33,24 +34,6 @@ const App: React.FC = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isScartoModalOpen, setIsScartoModalOpen] = useState(false);
   const [pausingTarget, setPausingTarget] = useState<{ type: 'SHIFT' | 'SESSION', id: string } | null>(null);
-
-  // Edit Session State (Modal)
-  const [isEditSessionMode, setIsEditSessionMode] = useState(false);
-  const [editingSession, setEditingSession] = useState<SessioneLinea | null>(null);
-  const [editSessionData, setEditSessionData] = useState({
-    articoloId: '',
-    siglaLottoId: '',
-    dataIngresso: '',
-    note: ''
-  });
-
-  // Inline Edit State (Table Time & Note)
-  const [editingCell, setEditingCell] = useState<{ sessionId: string, field: 'inizio' | 'fine' | 'note' } | null>(null);
-
-  // --- CONFLICT HANDLING STATE ---
-  const [pendingSession, setPendingSession] = useState<SessioneLinea | null>(null);
-  const [conflictingSessions, setConflictingSessions] = useState<SessioneLinea[]>([]);
-  const [selectedConflictsToClose, setSelectedConflictsToClose] = useState<string[]>([]);
 
   useEffect(() => {
     if (!loadError) return;
@@ -71,8 +54,56 @@ const App: React.FC = () => {
   const getAreaNome = (areaId: string) => state.aree.find(a => a.id === areaId)?.nome || 'Area N/D';
   const getLineaNome = (lineaId: string) => state.linee.find(l => l.id === lineaId)?.nome || 'Linea N/D';
 
-  const activeTurno = state.turni.find(t => t.id === activeTurnoId);
   const activeSessions = state.sessioni.filter(s => s.turnoId === activeTurnoId && s.status !== 'CHIUSA');
+
+  const { activeTurno, handleStartTurno, handleTogglePauseTurno, handleCloseTurno } = useTurnoActions({
+    state,
+    setState,
+    activeTurnoId,
+    setActiveTurnoId,
+    setView,
+    showConfirm,
+    setPausingTarget
+  });
+
+  const {
+    pendingSession,
+    conflictingSessions,
+    selectedConflictsToClose,
+    toggleConflictSelection,
+    executeStartSession,
+    handleStartSession,
+    handleTogglePauseSession,
+    handleCloseSession,
+    handleDeleteSession,
+    isEditSessionMode,
+    setIsEditSessionMode,
+    editingSession,
+    editSessionData,
+    setEditSessionData,
+    handleEditSession,
+    handleSaveEditSession,
+    editingCell,
+    setEditingCell,
+    sessionToSwitchLotto,
+    setSessionToSwitchLotto,
+    switchLottoData,
+    setSwitchLottoData,
+    handleOpenSwitchLotto,
+    handleSaveSwitchLotto,
+    setPendingSession,
+    setConflictingSessions,
+    setSelectedConflictsToClose
+  } = useSessioneActions({
+    state,
+    setState,
+    activeTurnoId,
+    activeSessions,
+    showConfirm,
+    setPausingTarget
+  });
+
+
   const {
     isNewSessionMode,
     setIsNewSessionMode,
@@ -80,12 +111,8 @@ const App: React.FC = () => {
     setNewSessionData,
     lottoOptions,
     filteredArticoli,
-    sessionToSwitchLotto,
-    setSessionToSwitchLotto,
-    switchLottoData,
-    setSwitchLottoData,
     compatibleLottoOptions
-  } = useSessionForm(state, activeTurno);
+  } = useSessionForm(state, activeTurno, sessionToSwitchLotto);
 
   const {
     showFilters,
@@ -106,220 +133,9 @@ const App: React.FC = () => {
     sigleLotto: state.sigleLotto
   });
 
-  const pedaneTodayCount = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return state.pedane.filter(p => p.timestamp.startsWith(today)).length;
-  }, [state.pedane]);
+  const { pedaneTodayCount, handleSavePedana, handleSaveScarto } = useProductionRecords(state, setState);
 
   // --- Handlers ---
-
-  const handleStartTurno = () => {
-    const newTurno: Turno = {
-      id: crypto.randomUUID(),
-      inizio: new Date().toISOString(),
-      operatore: 'Op. Principale',
-      areaId: state.aree[0]?.id || INITIAL_AREE[0].id,
-      status: 'APERTO',
-      pause: []
-    };
-    setState(prev => ({ ...prev, turni: [...prev.turni, newTurno] }));
-    setActiveTurnoId(newTurno.id);
-    setView('MONITOR');
-  };
-
-  const handleTogglePauseTurno = async () => {
-    if (!activeTurno) return;
-    const isCurrentlyPaused = activeTurno.status === 'PAUSA';
-    const now = new Date().toISOString();
-
-    if (isCurrentlyPaused) {
-        // Ripresa diretta senza motivo
-        setState(prev => {
-          const updatedTurni = prev.turni.map(t => {
-            if (t.id !== activeTurnoId) return t;
-            const newPause = [...t.pause];
-            if (newPause.length > 0) newPause[newPause.length - 1].fine = now;
-            return { ...t, status: 'APERTO' as const, pause: newPause };
-          });
-
-          const updatedSessions = prev.sessioni.map(s => {
-            if (s.turnoId !== activeTurnoId || s.status !== 'PAUSA') return s;
-            const sPause = [...s.pause];
-            if (sPause.length > 0) sPause[sPause.length - 1].fine = now;
-            return { ...s, status: 'ATTIVA' as const, pause: sPause };
-          });
-
-          return { ...prev, turni: updatedTurni, sessioni: updatedSessions };
-        });
-    } else {
-        // Richiesta motivo pausa
-        setPausingTarget({ type: 'SHIFT', id: activeTurno.id });
-    }
-  };
-
-  const handleTogglePauseSession = (sessionId: string) => {
-    const now = new Date().toISOString();
-    const session = state.sessioni.find(s => s.id === sessionId);
-    if (!session) return;
-
-    if (session.status === 'PAUSA') {
-        // Ripresa diretta
-        setState(prev => ({
-          ...prev,
-          sessioni: prev.sessioni.map(s => {
-            if (s.id !== sessionId) return s;
-            const newPause = [...s.pause];
-            if (newPause.length > 0) newPause[newPause.length - 1].fine = now;
-            return { ...s, status: 'ATTIVA', pause: newPause };
-          })
-        }));
-    } else {
-        // Richiesta motivo pausa
-        setPausingTarget({ type: 'SESSION', id: sessionId });
-    }
-  };
-
-  const confirmPause = (motivo: string) => {
-    if (!pausingTarget) return;
-    const now = new Date().toISOString();
-    
-    setState(prev => {
-        if (pausingTarget.type === 'SHIFT') {
-            const updatedTurni = prev.turni.map(t => {
-                if (t.id !== pausingTarget.id) return t;
-                const newPause = [...t.pause, { inizio: now, motivo }];
-                return { ...t, status: 'PAUSA' as const, pause: newPause };
-            });
-
-            const updatedSessions = prev.sessioni.map(s => {
-                if (s.turnoId !== pausingTarget.id || s.status === 'CHIUSA' || s.status === 'PAUSA') return s;
-                const sPause = [...s.pause, { inizio: now, motivo: `Pausa Turno: ${motivo}` }];
-                return { ...s, status: 'PAUSA' as const, pause: sPause };
-            });
-
-            return { ...prev, turni: updatedTurni, sessioni: updatedSessions };
-        } else {
-            return {
-                ...prev,
-                sessioni: prev.sessioni.map(s => {
-                    if (s.id !== pausingTarget.id) return s;
-                    const newPause = [...s.pause, { inizio: now, motivo }];
-                    return { ...s, status: 'PAUSA' as const, pause: newPause };
-                })
-            };
-        }
-    });
-
-    setPausingTarget(null);
-  };
-
-  const handleStartSession = async () => {
-    if (!newSessionData.articoloId || !newSessionData.siglaLottoId || !newSessionData.lineaId || !activeTurnoId) return;
-    const proposedSession = buildSessione({
-      turnoId: activeTurnoId,
-      lineaId: newSessionData.lineaId,
-      articoloId: newSessionData.articoloId,
-      siglaLottoId: newSessionData.siglaLottoId,
-      dataIngresso: newSessionData.dataIngresso
-    });
-    checkConflictsAndPrepareStart(proposedSession);
-  };
-
-  const checkConflictsAndPrepareStart = (proposedSession: SessioneLinea) => {
-    const overlaps = getLineConflicts(activeSessions, proposedSession.lineaId);
-    if (overlaps.length > 0) {
-        setPendingSession(proposedSession);
-        setConflictingSessions(overlaps);
-        setSelectedConflictsToClose(overlaps.map(o => o.id)); 
-        return; 
-    }
-    executeStartSession(proposedSession, []);
-  };
-
-  const executeStartSession = (sessionToStart: SessioneLinea, idsToClose: string[]) => {
-    const now = new Date().toISOString();
-    setState(prev => {
-        let updatedSessions = prev.sessioni.map(s => 
-          idsToClose.includes(s.id) ? { ...s, fine: now, status: 'CHIUSA' as const } : s
-        );
-        updatedSessions.push(sessionToStart);
-        return { ...prev, sessioni: updatedSessions };
-    });
-    setPendingSession(null);
-    setConflictingSessions([]);
-    setSelectedConflictsToClose([]);
-    setIsNewSessionMode(false);
-  };
-
-  const toggleConflictSelection = (id: string) => {
-    setSelectedConflictsToClose(prev => 
-        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
-
-  const handleCloseSession = async (sessionId: string) => {
-    const confirmed = await showConfirm({
-        title: 'Chiudi Sessione',
-        message: 'Terminare definitivamente la lavorazione?',
-        variant: 'INFO'
-    });
-    if(!confirmed) return;
-    setState(prev => ({
-        ...prev,
-        sessioni: prev.sessioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s)
-    }));
-  };
-
-  const handleDeleteSession = async (sessionId: string) => {
-    const sessionPedane = state.pedane.filter(p => p.sessioneId === sessionId);
-    const hasPedane = sessionPedane.length > 0;
-
-    const confirmed = await showConfirm({
-      title: 'Elimina Sessione',
-      message: hasPedane 
-        ? `Questa sessione contiene ${sessionPedane.length} pedane. Eliminando la sessione, verranno eliminate anche tutte le pedane collegate. Questa operazione non è reversibile. Continuare?`
-        : 'Sei sicuro di voler eliminare definitivamente questa sessione?',
-      variant: 'DANGER',
-      confirmText: 'Elimina Tutto',
-      cancelText: 'Annulla'
-    });
-
-    if (!confirmed) return;
-
-    setState(prev => ({
-      ...prev,
-      sessioni: prev.sessioni.filter(s => s.id !== sessionId),
-      pedane: prev.pedane.filter(p => p.sessioneId !== sessionId)
-    }));
-  };
-
-  const handleCloseTurno = async () => {
-    const confirmed = await showConfirm({
-        title: 'Chiudi Turno',
-        message: 'Sei sicuro di voler chiudere il turno? Tutte le sessioni verranno terminate.',
-        variant: 'DANGER'
-    });
-    if(!confirmed) return;
-    const now = new Date().toISOString();
-    setState(prev => ({
-        ...prev,
-        turni: prev.turni.map(t => t.id === activeTurnoId ? { ...t, fine: now, status: 'CHIUSO' } : t),
-        sessioni: prev.sessioni.map(s => (s.turnoId === activeTurnoId && s.status !== 'CHIUSA') ? { ...s, fine: now, status: 'CHIUSA' } : s)
-    }));
-    setActiveTurnoId(null);
-    setView('HOME');
-  };
-
-  const handleEditSession = (session: SessioneLinea) => {
-    setEditingSession(session);
-    setEditSessionData({
-      articoloId: session.articoloId,
-      siglaLottoId: session.siglaLottoId,
-      dataIngresso: session.dataIngresso,
-      note: session.note || ''
-    });
-    setIsEditSessionMode(true);
-  };
 
   // --- Inline Edit Handlers ---
   const handleCellSave = (sessionId: string, field: 'inizio' | 'fine' | 'note', value: string) => {
@@ -344,73 +160,38 @@ const App: React.FC = () => {
     setEditingCell(null);
   };
 
-  const handleOpenSwitchLotto = (session: SessioneLinea) => {
-    setSessionToSwitchLotto(session);
-    setSwitchLottoData({
-      siglaLottoId: session.siglaLottoId,
-      dataIngresso: session.dataIngresso
-    });
-  };
-
-  const handleSavePedana = (pedanaData: Omit<Pedana, 'id' | 'timestamp'>) => {
-    const newPedana: Pedana = {
-      ...pedanaData,
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString()
-    };
-    setState(prev => ({ ...prev, pedane: [...prev.pedane, newPedana] }));
-    setIsPedanaModalOpen(false);
-  };
-
-  const handleSaveScarto = (scartoData: Omit<Scarto, 'id' | 'timestamp'>) => {
-    const newScarto: Scarto = {
-      ...scartoData,
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString()
-    };
-    setState(prev => ({ ...prev, scarti: [...prev.scarti, newScarto] }));
-  };
-
-  const handleSaveEditSession = () => {
-    if (!editingSession) return;
-    setState(prev => ({
-      ...prev,
-      sessioni: prev.sessioni.map(s => s.id === editingSession.id ? {
-        ...s,
-        articoloId: editSessionData.articoloId,
-        siglaLottoId: editSessionData.siglaLottoId,
-        dataIngresso: editSessionData.dataIngresso,
-        note: editSessionData.note
-      } : s)
-    }));
-    setIsEditSessionMode(false);
-    setEditingSession(null);
-  };
-
-  const handleSaveSwitchLotto = () => {
-    if (!sessionToSwitchLotto) return;
+  const confirmPause = (motivo: string) => {
+    if (!pausingTarget) return;
     const now = new Date().toISOString();
 
-    const newSession: SessioneLinea = {
-        ...sessionToSwitchLotto,
-        id: crypto.randomUUID(),
-        inizio: now,
-        fine: undefined,
-        status: 'ATTIVA',
-        pause: [],
-        siglaLottoId: switchLottoData.siglaLottoId,
-        dataIngresso: switchLottoData.dataIngresso,
-        note: sessionToSwitchLotto.note
-    };
+    setState(prev => {
+      if (pausingTarget.type === 'SHIFT') {
+        const updatedTurni = prev.turni.map(t => {
+          if (t.id !== pausingTarget.id) return t;
+          const newPause = [...t.pause, { inizio: now, motivo }];
+          return { ...t, status: 'PAUSA' as const, pause: newPause };
+        });
 
-    setState(prev => ({
-      ...prev,
-      sessioni: [
-        ...prev.sessioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s),
-        newSession
-      ]
-    }));
-    setSessionToSwitchLotto(null);
+        const updatedSessions = prev.sessioni.map(s => {
+          if (s.turnoId !== pausingTarget.id || s.status === 'CHIUSA' || s.status === 'PAUSA') return s;
+          const sPause = [...s.pause, { inizio: now, motivo: `Pausa Turno: ${motivo}` }];
+          return { ...s, status: 'PAUSA' as const, pause: sPause };
+        });
+
+        return { ...prev, turni: updatedTurni, sessioni: updatedSessions };
+      }
+
+      return {
+        ...prev,
+        sessioni: prev.sessioni.map(s => {
+          if (s.id !== pausingTarget.id) return s;
+          const newPause = [...s.pause, { inizio: now, motivo }];
+          return { ...s, status: 'PAUSA' as const, pause: newPause };
+        })
+      };
+    });
+
+    setPausingTarget(null);
   };
 
   const renderSortableHeader = (label: string, key: string, widthClass: string = '') => {
@@ -432,50 +213,20 @@ const App: React.FC = () => {
     );
   };
 
-  const renderHome = () => (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full space-y-8 text-center">
-        <div className="flex flex-col items-center">
-          <div className="bg-agri-600 p-4 rounded-2xl shadow-xl mb-6">
-            <Factory size={48} className="text-white" />
-          </div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">AgriTrack</h1>
-          <p className="text-gray-500 mt-2">Sistema Gestione Produzione e Tracciabilità</p>
-        </div>
-
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-          <button 
-            onClick={handleStartTurno}
-            className="w-full flex items-center justify-center gap-3 bg-agri-600 hover:bg-agri-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95"
-          >
-            <PlayCircle size={24} />
-            INIZIA TURNO
-          </button>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              onClick={() => setView('REPORT')}
-              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-gray-700 font-bold gap-2"
-            >
-              <FileText size={24} className="text-agri-600" />
-              Report
-            </button>
-            <button 
-              onClick={() => setView('SETTINGS')}
-              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-gray-700 font-bold gap-2"
-            >
-              <Settings size={24} className="text-agri-600" />
-              Anagrafiche
-            </button>
-          </div>
-        </div>
-        
-        <p className="text-xs text-gray-400 mt-8">AgriTrack Production Management System</p>
-      </div>
-    </div>
-  );
-
-  if (view === 'HOME') return renderHome();
+  if (view === 'HOME') {
+    return (
+      <AppRoutes
+        view={view}
+        onStartTurno={handleStartTurno}
+        onGoReport={() => setView('REPORT')}
+        onGoSettings={() => setView('SETTINGS')}
+        monitorNode={null}
+        state={state}
+        articoli={state.articoli}
+        onUpdateData={(newData) => setState(prev => ({ ...prev, ...newData }))}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
@@ -562,7 +313,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex justify-end gap-3">
                             <button onClick={() => setIsNewSessionMode(false)} className="px-4 py-2 text-gray-500 font-medium">Annulla</button>
-                            <button onClick={handleStartSession} className="px-6 py-2 bg-agri-600 text-white rounded-lg font-bold shadow hover:bg-agri-700">Avvia Sessione</button>
+                            <button onClick={() => handleStartSession(newSessionData)} className="px-6 py-2 bg-agri-600 text-white rounded-lg font-bold shadow hover:bg-agri-700">Avvia Sessione</button>
                         </div>
                     </div>
                 )}
@@ -845,7 +596,16 @@ const App: React.FC = () => {
                     </div>
                 </div>
             </div>
-        ) : view === 'REPORT' ? <ReportDashboard data={state} articolis={state.articoli} /> : <SettingsDashboard data={state} onUpdateData={(newData) => setState(prev => ({ ...prev, ...newData }))} />}
+        ) : <AppRoutes
+            view={view}
+            onStartTurno={handleStartTurno}
+            onGoReport={() => setView('REPORT')}
+            onGoSettings={() => setView('SETTINGS')}
+            monitorNode={null}
+            state={state}
+            articoli={state.articoli}
+            onUpdateData={(newData) => setState(prev => ({ ...prev, ...newData }))}
+          />}
       </main>
 
       {/* Modals Implementation */}
@@ -860,7 +620,7 @@ const App: React.FC = () => {
             imballiOptions={state.imballi}
             calibriOptions={state.prodotti.find(p => p.id === state.articoli.find(a => a.id === state.sessioni.find(s => s.id === selectedSessionId)?.articoloId)?.prodottoId)?.calibri || []}
             pedaneTodayCount={pedaneTodayCount}
-            onSave={handleSavePedana}
+            onSave={(data) => { handleSavePedana(data); setIsPedanaModalOpen(false); }}
         />
       )}
 
