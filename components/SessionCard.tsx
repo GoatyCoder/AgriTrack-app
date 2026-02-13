@@ -15,10 +15,11 @@ interface SessionCardProps {
   onChangeLotto: () => void;
   onEditSession: () => void;
   onTogglePause: () => void;
+  lineaLabel: string;
 }
 
 const SessionCard: React.FC<SessionCardProps> = ({ 
-  sessione, articolo, siglaLottoCode, dataIngresso, pedaneSessione, onAddPedana, onCloseSession, onDeleteSession, onChangeLotto, onEditSession, onTogglePause 
+  sessione, articolo, siglaLottoCode, dataIngresso, pedaneSessione, onAddPedana, onCloseSession, onDeleteSession, onChangeLotto, onEditSession, onTogglePause, lineaLabel 
 }) => {
   const totColli = pedaneSessione.reduce((acc, p) => acc + p.numeroColli, 0);
   const totKg = pedaneSessione.reduce((acc, p) => acc + p.pesoTotale, 0);
@@ -32,7 +33,7 @@ const SessionCard: React.FC<SessionCardProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide ${isPaused ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'}`}>
-                {sessione.linea}
+                {lineaLabel}
               </span>
               <span className="text-gray-400 text-xs flex items-center gap-1">
                 {isPaused ? (
