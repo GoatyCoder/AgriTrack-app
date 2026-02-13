@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 type DialogType = 'ALERT' | 'CONFIRM';
 type DialogVariant = 'INFO' | 'DANGER' | 'SUCCESS';
 
-interface DialogOptions {
+export interface DialogOptions {
   title: string;
   message: string;
   variant?: DialogVariant;
