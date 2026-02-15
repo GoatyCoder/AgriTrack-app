@@ -38,7 +38,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     validationService.ensureRequired(newSessionData.lineaId, 'Linea');
     if (!activeTurnoId) return;
     const proposedSession = buildSessione({
-      turnoId: activeTurnoId,
+      sessioneProduzioneId: activeTurnoId,
       lineaId: newSessionData.lineaId,
       articoloId: newSessionData.articoloId,
       siglaLottoId: newSessionData.siglaLottoId,
@@ -62,11 +62,11 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
   const executeStartSession = (sessionToStart: SessioneLinea, idsToClose: string[]) => {
     const now = new Date().toISOString();
     setState(prev => {
-      const updatedSessions = prev.sessioni.map(s =>
+      const updatedSessions = prev.lavorazioni.map(s =>
         idsToClose.includes(s.id) ? { ...s, fine: now, status: 'CHIUSA' as const } : s
       );
       updatedSessions.push(sessionToStart);
-      return { ...prev, sessioni: updatedSessions, lavorazioni: updatedSessions };
+      return { ...prev, lavorazioni: updatedSessions };
     });
     setPendingSession(null);
     setConflictingSessions([]);
@@ -79,13 +79,13 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
 
   const handleTogglePauseSession = (sessionId: string) => {
     const now = new Date().toISOString();
-    const session = state.sessioni.find(s => s.id === sessionId);
+    const session = state.lavorazioni.find(s => s.id === sessionId);
     if (!session) return;
 
     if (session.status === 'PAUSA') {
       setState(prev => ({
         ...prev,
-        sessioni: prev.sessioni.map(s => {
+        lavorazioni: prev.lavorazioni.map(s => {
           if (s.id !== sessionId) return s;
           const newPause = [...s.pause];
           if (newPause.length > 0) newPause[newPause.length - 1].fine = now;
@@ -100,7 +100,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
   const handleCloseSession = async (sessionId: string) => {
     const confirmed = await showConfirm({ title: 'Chiudi Sessione', message: 'Terminare definitivamente la lavorazione?', variant: 'INFO' });
     if (!confirmed) return;
-    setState(prev => ({ ...prev, sessioni: prev.sessioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s), lavorazioni: prev.sessioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s) }));
+    setState(prev => ({ ...prev, lavorazioni: prev.lavorazioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s) }));
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -118,8 +118,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
 
     setState(prev => ({
       ...prev,
-      sessioni: prev.sessioni.filter(s => s.id !== sessionId),
-      lavorazioni: prev.sessioni.filter(s => s.id !== sessionId),
+      lavorazioni: prev.lavorazioni.filter(s => s.id !== sessionId),
       pedane: prev.pedane.filter(p => p.sessioneId !== sessionId)
     }));
   };
@@ -180,8 +179,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
 
     setState(prev => ({
       ...prev,
-      sessioni: prev.sessioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s),
-      lavorazioni: prev.sessioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s),
+      lavorazioni: prev.lavorazioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s),
       pedane: shouldUpdateSnapshots
         ? prev.pedane.map(p => {
             if (p.sessioneId !== editingSession.id) return p;
@@ -225,8 +223,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
 
     setState(prev => ({
       ...prev,
-      sessioni: [...prev.sessioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s), newSession],
-      lavorazioni: [...prev.sessioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s), newSession]
+      lavorazioni: [...prev.lavorazioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s), newSession]
     }));
     setSessionToSwitchLotto(null);
   };

@@ -20,6 +20,13 @@ const applyAuditDefaults = <T extends Record<string, any>>(rows: T[]): T[] => {
   }));
 };
 
+const getSafeDoy = (dataIngresso?: string): number | undefined => {
+  if (!dataIngresso) return undefined;
+  const parsedDate = new Date(dataIngresso);
+  if (Number.isNaN(parsedDate.getTime())) return undefined;
+  return computeDoy(parsedDate);
+};
+
 export const buildInitialState = (): AppState => ({
   schemaVersion: SCHEMA_VERSION,
   sessioniProduzione: [],
@@ -35,77 +42,57 @@ export const buildInitialState = (): AppState => ({
   articoli: INITIAL_ARTICOLI,
   sigleLotto: INITIAL_SIGLE_LOTTO,
   imballi: INITIAL_IMBALLI,
-  tipologieScarto: INITIAL_TIPOLOGIE_SCARTO,
-  turni: [],
-  sessioni: [],
-  prodotti: INITIAL_PRODOTTI
+  tipologieScarto: INITIAL_TIPOLOGIE_SCARTO
 });
 
 export const normalizeLegacyState = (raw: any): AppState => {
   const aree = applyAuditDefaults(raw.aree || INITIAL_AREE);
   const linee = applyAuditDefaults(raw.linee || INITIAL_LINEE);
   const defaultAreaId = aree[0]?.id || INITIAL_AREE[0].id;
-
   const tipologie = applyAuditDefaults(raw.tipologie || INITIAL_TIPOLOGIE);
-  const calibri = applyAuditDefaults(raw.calibri || INITIAL_CALIBRI);
 
-  const sessioniProduzione = (raw.sessioniProduzione || raw.turni || []).map((sessione: any) => ({
-    ...sessione,
-    areaId: sessione.areaId || defaultAreaId
-  }));
-
-  const lavorazioni = (raw.lavorazioni || raw.sessioni || []).map((lavorazione: any) => ({
-    ...lavorazione,
-    sessioneProduzioneId: lavorazione.sessioneProduzioneId || lavorazione.turnoId,
-    turnoId: lavorazione.turnoId || lavorazione.sessioneProduzioneId,
-    lineaId: lavorazione.lineaId || LEGACY_LINEA_TO_LINEA_ID[lavorazione.linea] || linee[0]?.id || INITIAL_LINEE[0].id,
-    doyIngresso: lavorazione.doyIngresso || computeDoy(new Date(lavorazione.dataIngresso))
-  }));
-
-  const prodottiGrezzi = applyAuditDefaults(raw.prodottiGrezzi || raw.prodotti || INITIAL_PRODOTTI);
-
-  const base = buildInitialState();
-  const versioned: AppState = {
-    ...base,
+  return {
+    ...buildInitialState(),
     ...raw,
-    schemaVersion: raw.schemaVersion || SCHEMA_VERSION,
+    schemaVersion: SCHEMA_VERSION,
     aree,
     linee,
     tipologieScarto: applyAuditDefaults(raw.tipologieScarto || INITIAL_TIPOLOGIE_SCARTO),
     tipologie,
-    calibri,
-    sessioniProduzione,
-    lavorazioni,
-    varieta: applyAuditDefaults((raw.varieta || INITIAL_VARIETA).map((v: any) => ({
-      ...v,
-      tipologiaId: v.tipologiaId || tipologie.find((t: any) => t.nome === v.categoria && t.prodottoId === v.prodottoId)?.id
+    calibri: applyAuditDefaults(raw.calibri || INITIAL_CALIBRI),
+    sessioniProduzione: (raw.sessioniProduzione || raw.turni || []).map((sessione: any) => ({
+      ...sessione,
+      areaId: sessione.areaId || defaultAreaId
+    })),
+    lavorazioni: (raw.lavorazioni || raw.sessioni || []).map((lavorazione: any) => ({
+      ...lavorazione,
+      sessioneProduzioneId: lavorazione.sessioneProduzioneId || lavorazione.turnoId,
+      lineaId: lavorazione.lineaId || LEGACY_LINEA_TO_LINEA_ID[lavorazione.linea] || linee[0]?.id || INITIAL_LINEE[0].id,
+      doyIngresso: lavorazione.doyIngresso ?? getSafeDoy(lavorazione.dataIngresso)
+    })),
+    varieta: applyAuditDefaults((raw.varieta || INITIAL_VARIETA).map((varieta: any) => ({
+      ...varieta,
+      tipologiaId: varieta.tipologiaId || tipologie.find((tipologia: any) => tipologia.nome === varieta.categoria && tipologia.prodottoId === varieta.prodottoId)?.id
     }))),
-    articoli: applyAuditDefaults((raw.articoli || INITIAL_ARTICOLI).map((a: any) => ({
-      ...a,
-      tipologiaId: a.tipologiaId || tipologie.find((t: any) => t.nome === a.categoria && t.prodottoId === a.prodottoId)?.id
+    articoli: applyAuditDefaults((raw.articoli || INITIAL_ARTICOLI).map((articolo: any) => ({
+      ...articolo,
+      tipologiaId: articolo.tipologiaId || tipologie.find((tipologia: any) => tipologia.nome === articolo.categoria && tipologia.prodottoId === articolo.prodottoId)?.id
     }))),
     sigleLotto: applyAuditDefaults(raw.sigleLotto || INITIAL_SIGLE_LOTTO),
     imballi: applyAuditDefaults(raw.imballi || INITIAL_IMBALLI),
-    prodottiGrezzi,
-    pedane: (raw.pedane || []).map((p: any, idx: number) => ({
-      ...p,
-      doy: p.doy ?? (parseInt((p.stickerCode || '').split('-')[1]) || 0),
-      seq: p.seq ?? (parseInt((p.stickerCode || '').split('-')[2]) || idx + 1),
-      imballoId: p.imballoId || undefined,
-      calibroId: p.calibroId || undefined,
-      snapshotImballo: p.snapshotImballo || (p.imballo ? { codice: '', nome: p.imballo } : undefined),
-      snapshotCalibro: p.snapshotCalibro || (p.calibro ? { nome: p.calibro } : undefined)
+    prodottiGrezzi: applyAuditDefaults(raw.prodottiGrezzi || raw.prodotti || INITIAL_PRODOTTI),
+    pedane: (raw.pedane || []).map((pedana: any, idx: number) => ({
+      ...pedana,
+      doy: pedana.doy ?? (parseInt((pedana.stickerCode || '').split('-')[1], 10) || 0),
+      seq: pedana.seq ?? (parseInt((pedana.stickerCode || '').split('-')[2], 10) || idx + 1),
+      imballoId: pedana.imballoId || undefined,
+      calibroId: pedana.calibroId || undefined,
+      snapshotImballo: pedana.snapshotImballo || (pedana.imballo ? { codice: '', nome: pedana.imballo } : undefined),
+      snapshotCalibro: pedana.snapshotCalibro || (pedana.calibro ? { nome: pedana.calibro } : undefined)
     })),
-    scarti: (raw.scarti || []).map((s: any) => ({
-      ...s,
-      sessioneProduzioneId: s.sessioneProduzioneId || s.turnoId,
-      turnoId: s.turnoId || s.sessioneProduzioneId
-    })),
-    // legacy compatibility mirrors
-    turni: sessioniProduzione,
-    sessioni: lavorazioni,
-    prodotti: prodottiGrezzi
+    scarti: (raw.scarti || []).map((scarto: any) => ({
+      ...scarto,
+      sessioneProduzioneId: scarto.sessioneProduzioneId || scarto.turnoId
+    }))
   };
-
-  return { ...versioned, schemaVersion: SCHEMA_VERSION };
 };

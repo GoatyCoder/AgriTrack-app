@@ -1,11 +1,13 @@
 import { Articolo, SiglaLotto, ProdottoGrezzo, Varieta, Imballo, Area, Linea, TipologiaScarto, Tipologia, Calibro } from './types';
 
-const nowIso = new Date().toISOString();
-const withAudit = <T extends object>(entity: T) => ({
-  ...entity,
-  createdAt: nowIso,
-  updatedAt: nowIso
-});
+const withAudit = <T extends object>(entity: T) => {
+  const now = new Date().toISOString();
+  return {
+    ...entity,
+    createdAt: now,
+    updatedAt: now
+  };
+};
 
 export const INITIAL_AREE: Area[] = [
   withAudit({ id: 'AR1', nome: 'Confezionamento', attiva: true }),
@@ -20,30 +22,9 @@ export const INITIAL_LINEE: Linea[] = [
 ];
 
 export const INITIAL_PRODOTTI: ProdottoGrezzo[] = [
-  withAudit({
-    id: 'P1',
-    codice: 'UVA',
-    nome: 'Uva da Tavola',
-    categorie: ['Bianca Con Semi', 'Bianca Senza Semi', 'Rossa Con Semi', 'Rossa Senza Semi', 'Nera Senza Semi'],
-    calibri: ['S', 'M', 'L', 'XL', 'XXL', 'Misto'],
-    attivo: true
-  }),
-  withAudit({
-    id: 'P2',
-    codice: 'AGR',
-    nome: 'Agrumi (Mandarini)',
-    categorie: ['Clementine', 'Tardivo', 'Ibrido'],
-    calibri: ['1XX', '1X', '1', '2', '3', '4', '5'],
-    attivo: true
-  }),
-  withAudit({
-    id: 'P3',
-    codice: 'ALB',
-    nome: 'Albicocche',
-    categorie: ['Precoce', 'Tardiva', 'Rossa'],
-    calibri: ['AAAA', 'AAA', 'AA', 'A', 'B', 'C'],
-    attivo: true
-  })
+  withAudit({ id: 'P1', codice: 'UVA', nome: 'Uva da Tavola', attivo: true }),
+  withAudit({ id: 'P2', codice: 'AGR', nome: 'Agrumi (Mandarini)', attivo: true }),
+  withAudit({ id: 'P3', codice: 'ALB', nome: 'Albicocche', attivo: true })
 ];
 
 export const INITIAL_TIPOLOGIE: Tipologia[] = [
@@ -83,23 +64,23 @@ export const INITIAL_CALIBRI: Calibro[] = [
 ];
 
 export const INITIAL_VARIETA: Varieta[] = [
-  withAudit({ id: 'V1', prodottoId: 'P1', codice: 'ITA', nome: 'Italia', categoria: 'Bianca Con Semi', tipologiaId: 'TIP1', attiva: true }),
-  withAudit({ id: 'V2', prodottoId: 'P1', codice: 'VIT', nome: 'Vittoria', categoria: 'Bianca Con Semi', tipologiaId: 'TIP1', attiva: true }),
-  withAudit({ id: 'V3', prodottoId: 'P1', codice: 'RED', nome: 'Red Globe', categoria: 'Rossa Con Semi', tipologiaId: 'TIP3', attiva: true }),
-  withAudit({ id: 'V4', prodottoId: 'P1', codice: 'CRI', nome: 'Crimson', categoria: 'Rossa Senza Semi', tipologiaId: 'TIP4', attiva: true }),
-  withAudit({ id: 'V5', prodottoId: 'P1', codice: 'AUT', nome: 'Autumn Crisp', categoria: 'Bianca Senza Semi', tipologiaId: 'TIP2', attiva: true }),
-  withAudit({ id: 'V6', prodottoId: 'P1', codice: 'SWT', nome: 'Sweet Celebration', categoria: 'Rossa Senza Semi', tipologiaId: 'TIP4', attiva: true }),
-  withAudit({ id: 'V7', prodottoId: 'P2', codice: 'NAD', nome: 'Nadorcott', categoria: 'Tardivo', tipologiaId: 'TIP7', attiva: true }),
-  withAudit({ id: 'V8', prodottoId: 'P2', codice: 'TAR', nome: 'Tarocco', categoria: 'Ibrido', tipologiaId: 'TIP8', attiva: true }),
-  withAudit({ id: 'V9', prodottoId: 'P2', codice: 'ORO', nome: 'Orogros', categoria: 'Clementine', tipologiaId: 'TIP6', attiva: true })
+  withAudit({ id: 'V1', prodottoId: 'P1', codice: 'ITA', nome: 'Italia', tipologiaId: 'TIP1', attiva: true }),
+  withAudit({ id: 'V2', prodottoId: 'P1', codice: 'VIT', nome: 'Vittoria', tipologiaId: 'TIP1', attiva: true }),
+  withAudit({ id: 'V3', prodottoId: 'P1', codice: 'RED', nome: 'Red Globe', tipologiaId: 'TIP3', attiva: true }),
+  withAudit({ id: 'V4', prodottoId: 'P1', codice: 'CRI', nome: 'Crimson', tipologiaId: 'TIP4', attiva: true }),
+  withAudit({ id: 'V5', prodottoId: 'P1', codice: 'AUT', nome: 'Autumn Crisp', tipologiaId: 'TIP2', attiva: true }),
+  withAudit({ id: 'V6', prodottoId: 'P1', codice: 'SWT', nome: 'Sweet Celebration', tipologiaId: 'TIP4', attiva: true }),
+  withAudit({ id: 'V7', prodottoId: 'P2', codice: 'NAD', nome: 'Nadorcott', tipologiaId: 'TIP7', attiva: true }),
+  withAudit({ id: 'V8', prodottoId: 'P2', codice: 'TAR', nome: 'Tarocco', tipologiaId: 'TIP8', attiva: true }),
+  withAudit({ id: 'V9', prodottoId: 'P2', codice: 'ORO', nome: 'Orogros', tipologiaId: 'TIP6', attiva: true })
 ];
 
 export const INITIAL_ARTICOLI: Articolo[] = [
-  withAudit({ id: 'ART1', codice: '10x500', nome: 'Cestini 10x500g (Bianca SS)', prodottoId: 'P1', categoria: 'Bianca Senza Semi', tipologiaId: 'TIP2', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
-  withAudit({ id: 'ART2', codice: '5KG', nome: 'Cartone 30x40 5kg (Rossa SS)', prodottoId: 'P1', categoria: 'Rossa Senza Semi', tipologiaId: 'TIP4', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
+  withAudit({ id: 'ART1', codice: '10x500', nome: 'Cestini 10x500g (Bianca SS)', prodottoId: 'P1', tipologiaId: 'TIP2', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
+  withAudit({ id: 'ART2', codice: '5KG', nome: 'Cartone 30x40 5kg (Rossa SS)', prodottoId: 'P1', tipologiaId: 'TIP4', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
   withAudit({ id: 'ART3', codice: 'SFUSO', nome: 'Plateau 60x40 Sfuso (Mista)', prodottoId: 'P1', pesoColloTeorico: 6.0, tipoPeso: 'USCENTE', attivo: true }),
   withAudit({ id: 'ART4', codice: 'FOG', nome: 'Mandarini con Foglia 2 Strati', prodottoId: 'P2', varietaId: 'V7', pesoColloTeorico: 10.0, tipoPeso: 'EGALIZZATO', attivo: true }),
-  withAudit({ id: 'ART5', codice: 'RETE', nome: 'Mandarini Defogliati Rete 1kg', prodottoId: 'P2', categoria: 'Tardivo', tipologiaId: 'TIP7', pesoColloTeorico: 8.0, tipoPeso: 'EGALIZZATO', attivo: true })
+  withAudit({ id: 'ART5', codice: 'RETE', nome: 'Mandarini Defogliati Rete 1kg', prodottoId: 'P2', tipologiaId: 'TIP7', pesoColloTeorico: 8.0, tipoPeso: 'EGALIZZATO', attivo: true })
 ];
 
 export const INITIAL_SIGLE_LOTTO: SiglaLotto[] = [

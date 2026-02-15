@@ -42,7 +42,7 @@ export class SessioneApplicationService {
     const activeLineSessions = await this.sessioneRepo.getActiveByLinea(params.lineaId);
     const conflicts = this.conflictService.findConflicts(params.lineaId, activeLineSessions);
 
-    const sessione = buildSessione(params);
+    const sessione = buildSessione({ ...params, sessioneProduzioneId: params.turnoId });
     return { sessione, conflicts };
   }
 }

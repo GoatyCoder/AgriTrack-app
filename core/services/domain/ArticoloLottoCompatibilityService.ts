@@ -7,9 +7,7 @@ export class ArticoloLottoCompatibilityService {
     if (articolo.prodottoId !== varieta.prodottoId) return false;
     if (articolo.varietaId && articolo.varietaId !== varieta.id) return false;
 
-    const articoloTipologia = articolo.tipologiaId || articolo.categoria;
-    const varietaTipologia = varieta.tipologiaId || varieta.categoria;
-    if (articoloTipologia && articoloTipologia !== varietaTipologia) return false;
+    if (articolo.tipologiaId && articolo.tipologiaId !== varieta.tipologiaId) return false;
     return true;
   }
 

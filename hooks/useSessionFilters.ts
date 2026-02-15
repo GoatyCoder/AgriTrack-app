@@ -19,7 +19,7 @@ export const useSessionFilters = ({ sessioni, activeTurnoId, articoli, sigleLott
   });
 
   const shiftSessionsHistoryRaw = useMemo(
-    () => sessioni.filter(s => s.turnoId === activeTurnoId),
+    () => sessioni.filter(s => s.sessioneProduzioneId === activeTurnoId),
     [sessioni, activeTurnoId]
   );
 

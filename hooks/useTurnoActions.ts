@@ -14,7 +14,10 @@ interface Params {
 }
 
 export const useTurnoActions = ({ state, setState, activeTurnoId, setActiveTurnoId, setView, showConfirm, setPausingTarget }: Params) => {
-  const activeTurno = useMemo(() => state.turni.find(t => t.id === activeTurnoId), [state.turni, activeTurnoId]);
+  const activeTurno = useMemo(
+    () => state.sessioniProduzione.find((sessioneProduzione) => sessioneProduzione.id === activeTurnoId),
+    [state.sessioniProduzione, activeTurnoId]
+  );
 
   const handleStartTurno = () => {
     const newTurno = {
@@ -25,7 +28,8 @@ export const useTurnoActions = ({ state, setState, activeTurnoId, setActiveTurno
       status: 'APERTO' as const,
       pause: []
     };
-    setState(prev => ({ ...prev, turni: [...prev.turni, newTurno], sessioniProduzione: [...prev.turni, newTurno] }));
+
+    setState((prev) => ({ ...prev, sessioniProduzione: [...prev.sessioniProduzione, newTurno] }));
     setActiveTurnoId(newTurno.id);
     setView('MONITOR');
   };
@@ -36,26 +40,27 @@ export const useTurnoActions = ({ state, setState, activeTurnoId, setActiveTurno
     const now = new Date().toISOString();
 
     if (isCurrentlyPaused) {
-      setState(prev => {
-        const updatedTurni = prev.turni.map(t => {
-          if (t.id !== activeTurnoId) return t;
-          const newPause = [...t.pause];
-          if (newPause.length > 0) newPause[newPause.length - 1].fine = now;
-          return { ...t, status: 'APERTO' as const, pause: newPause };
+      setState((prev) => {
+        const updatedSessioniProduzione = prev.sessioniProduzione.map((sessioneProduzione) => {
+          if (sessioneProduzione.id !== activeTurnoId) return sessioneProduzione;
+          const pauseAggiornate = [...sessioneProduzione.pause];
+          if (pauseAggiornate.length > 0) pauseAggiornate[pauseAggiornate.length - 1].fine = now;
+          return { ...sessioneProduzione, status: 'APERTO' as const, pause: pauseAggiornate };
         });
 
-        const updatedSessions = prev.sessioni.map(s => {
-          if (s.turnoId !== activeTurnoId || s.status !== 'PAUSA') return s;
-          const sPause = [...s.pause];
-          if (sPause.length > 0) sPause[sPause.length - 1].fine = now;
-          return { ...s, status: 'ATTIVA' as const, pause: sPause };
+        const updatedLavorazioni = prev.lavorazioni.map((lavorazione) => {
+          if (lavorazione.sessioneProduzioneId !== activeTurnoId || lavorazione.status !== 'PAUSA') return lavorazione;
+          const pauseAggiornate = [...lavorazione.pause];
+          if (pauseAggiornate.length > 0) pauseAggiornate[pauseAggiornate.length - 1].fine = now;
+          return { ...lavorazione, status: 'ATTIVA' as const, pause: pauseAggiornate };
         });
 
-        return { ...prev, turni: updatedTurni, sessioniProduzione: updatedTurni, sessioni: updatedSessions, lavorazioni: updatedSessions };
+        return { ...prev, sessioniProduzione: updatedSessioniProduzione, lavorazioni: updatedLavorazioni };
       });
-    } else {
-      setPausingTarget({ type: 'SHIFT', id: activeTurno.id });
+      return;
     }
+
+    setPausingTarget({ type: 'SHIFT', id: activeTurno.id });
   };
 
   const handleCloseTurno = async () => {
@@ -65,14 +70,20 @@ export const useTurnoActions = ({ state, setState, activeTurnoId, setActiveTurno
       variant: 'DANGER'
     });
     if (!confirmed) return;
+
     const now = new Date().toISOString();
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      turni: prev.turni.map(t => t.id === activeTurnoId ? { ...t, fine: now, status: 'CHIUSO' } : t),
-      sessioniProduzione: prev.turni.map(t => t.id === activeTurnoId ? { ...t, fine: now, status: 'CHIUSO' } : t),
-      sessioni: prev.sessioni.map(s => (s.turnoId === activeTurnoId && s.status !== 'CHIUSA') ? { ...s, fine: now, status: 'CHIUSA' } : s),
-      lavorazioni: prev.sessioni.map(s => (s.turnoId === activeTurnoId && s.status !== 'CHIUSA') ? { ...s, fine: now, status: 'CHIUSA' } : s)
+      sessioniProduzione: prev.sessioniProduzione.map((sessioneProduzione) =>
+        sessioneProduzione.id === activeTurnoId ? { ...sessioneProduzione, fine: now, status: 'CHIUSO' } : sessioneProduzione
+      ),
+      lavorazioni: prev.lavorazioni.map((lavorazione) =>
+        lavorazione.sessioneProduzioneId === activeTurnoId && lavorazione.status !== 'CHIUSA'
+          ? { ...lavorazione, fine: now, status: 'CHIUSA' }
+          : lavorazione
+      )
     }));
+
     setActiveTurnoId(null);
     setView('HOME');
   };

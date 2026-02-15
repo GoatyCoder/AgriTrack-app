@@ -4,7 +4,7 @@ import { readState, writeState } from './stateStorage';
 
 export class LocalStorageTurnoRepository implements ITurnoRepository {
   async getAll(): Promise<Turno[]> {
-    return readState().turni;
+    return readState().sessioniProduzione;
   }
 
   async getById(id: string): Promise<Turno | null> {
@@ -17,21 +17,21 @@ export class LocalStorageTurnoRepository implements ITurnoRepository {
 
   async create(turno: Turno): Promise<Turno> {
     const state = readState();
-    state.turni.push(turno);
+    state.sessioniProduzione.push(turno);
     writeState(state);
     return turno;
   }
 
   async update(turno: Turno): Promise<Turno> {
     const state = readState();
-    state.turni = state.turni.map(t => (t.id === turno.id ? turno : t));
+    state.sessioniProduzione = state.sessioniProduzione.map(t => (t.id === turno.id ? turno : t));
     writeState(state);
     return turno;
   }
 
   async delete(id: string): Promise<void> {
     const state = readState();
-    state.turni = state.turni.filter(t => t.id !== id);
+    state.sessioniProduzione = state.sessioniProduzione.filter(t => t.id !== id);
     writeState(state);
   }
 }

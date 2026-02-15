@@ -13,7 +13,7 @@ const ReportDashboard: React.FC<ReportProps> = ({ data, articolis }) => {
   // 1. Prepare data for Production by Article
   const prodByArticle = articolis.map(art => {
     const pedaneArt = data.pedane.filter(p => {
-        const session = data.sessioni.find(s => s.id === p.sessioneId);
+        const session = data.lavorazioni.find(s => s.id === p.sessioneId);
         return session?.articoloId === art.id;
     });
     return {

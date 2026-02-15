@@ -22,8 +22,8 @@ export interface ProdottoGrezzo extends AuditFields {
   id: string;
   codice: string;
   nome: string;
-  categorie: string[]; // legacy compatibility
-  calibri: string[]; // legacy compatibility
+  categorie?: string[];
+  calibri?: string[];
   attivo?: boolean;
 }
 
@@ -51,7 +51,7 @@ export interface Varieta extends AuditFields {
   prodottoId: string;
   codice: string;
   nome: string;
-  categoria?: string; // legacy
+  categoria?: string;
   tipologiaId?: string;
   attiva?: boolean;
 }
@@ -72,7 +72,7 @@ export interface Articolo extends AuditFields {
   nome: string;
   prodottoId?: string;
   varietaId?: string;
-  categoria?: string; // legacy
+  categoria?: string;
   tipologiaId?: string;
   pesoColloTeorico: number;
   tipoPeso: TipoPesoArticolo;
@@ -123,8 +123,7 @@ export type Turno = SessioneProduzione;
 
 export interface Lavorazione {
   id: string;
-  sessioneProduzioneId?: string;
-  turnoId?: string; // legacy
+  sessioneProduzioneId: string;
   lineaId: string;
   siglaLottoId: string;
   dataIngresso: string;
@@ -150,7 +149,6 @@ export interface Pedana {
   pesoTotale: number;
   timestamp: string;
   imballoId?: string;
-  calibro?: string; // legacy
   calibroId?: string;
   categoriaCommercialeId?: string;
   snapshotImballo?: { codice: string; nome: string };
@@ -162,8 +160,7 @@ export interface Pedana {
 
 export interface Scarto {
   id: string;
-  sessioneProduzioneId?: string;
-  turnoId?: string; // legacy
+  sessioneProduzioneId: string;
   siglaLottoId: string;
   dataIngresso: string;
   tipologia: string;
@@ -176,14 +173,11 @@ export interface AppState {
   schemaVersion: string;
   sessioniProduzione: SessioneProduzione[];
   lavorazioni: Lavorazione[];
-  turni: Turno[]; // legacy mirror
-  sessioni: SessioneLinea[]; // legacy mirror
   pedane: Pedana[];
   scarti: Scarto[];
   aree: Area[];
   linee: Linea[];
   prodottiGrezzi: ProdottoGrezzo[];
-  prodotti: Prodotto[]; // legacy mirror
   tipologie: Tipologia[];
   calibri: Calibro[];
   varieta: Varieta[];

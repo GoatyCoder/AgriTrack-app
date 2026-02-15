@@ -43,7 +43,7 @@ const App: React.FC = () => {
 
   // Restore active turno on load
   useEffect(() => {
-    const active = state.turni.find(t => t.status === 'APERTO' || t.status === 'PAUSA');
+    const active = state.sessioniProduzione.find(t => t.status === 'APERTO' || t.status === 'PAUSA');
     if (active) {
         setActiveTurnoId(active.id);
         setView('MONITOR');
@@ -54,7 +54,7 @@ const App: React.FC = () => {
   const getAreaNome = (areaId: string) => state.aree.find(a => a.id === areaId)?.nome || 'Area N/D';
   const getLineaNome = (lineaId: string) => state.linee.find(l => l.id === lineaId)?.nome || 'Linea N/D';
 
-  const activeSessions = state.sessioni.filter(s => s.turnoId === activeTurnoId && s.status !== 'CHIUSA');
+  const activeSessions = state.lavorazioni.filter(s => s.sessioneProduzioneId === activeTurnoId && s.status !== 'CHIUSA');
 
   const { activeTurno, handleStartTurno, handleTogglePauseTurno, handleCloseTurno } = useTurnoActions({
     state,
@@ -127,7 +127,7 @@ const App: React.FC = () => {
     handleSort,
     clearFilters
   } = useSessionFilters({
-    sessioni: state.sessioni,
+    sessioni: state.lavorazioni,
     activeTurnoId,
     articoli: state.articoli,
     sigleLotto: state.sigleLotto
@@ -141,7 +141,7 @@ const App: React.FC = () => {
   const handleCellSave = (sessionId: string, field: 'inizio' | 'fine' | 'note', value: string) => {
     setState(prev => ({
       ...prev,
-      sessioni: prev.sessioni.map(s => {
+      lavorazioni: prev.lavorazioni.map(s => {
         if (s.id !== sessionId) return s;
         
         if (field === 'note') return { ...s, note: value };
@@ -166,24 +166,24 @@ const App: React.FC = () => {
 
     setState(prev => {
       if (pausingTarget.type === 'SHIFT') {
-        const updatedTurni = prev.turni.map(t => {
+        const updatedTurni = prev.sessioniProduzione.map(t => {
           if (t.id !== pausingTarget.id) return t;
           const newPause = [...t.pause, { inizio: now, motivo }];
           return { ...t, status: 'PAUSA' as const, pause: newPause };
         });
 
-        const updatedSessions = prev.sessioni.map(s => {
-          if (s.turnoId !== pausingTarget.id || s.status === 'CHIUSA' || s.status === 'PAUSA') return s;
+        const updatedSessions = prev.lavorazioni.map(s => {
+          if (s.sessioneProduzioneId !== pausingTarget.id || s.status === 'CHIUSA' || s.status === 'PAUSA') return s;
           const sPause = [...s.pause, { inizio: now, motivo: `Pausa Turno: ${motivo}` }];
           return { ...s, status: 'PAUSA' as const, pause: sPause };
         });
 
-        return { ...prev, turni: updatedTurni, sessioni: updatedSessions };
+        return { ...prev, sessioniProduzione: updatedTurni, lavorazioni: updatedSessions };
       }
 
       return {
         ...prev,
-        sessioni: prev.sessioni.map(s => {
+        lavorazioni: prev.lavorazioni.map(s => {
           if (s.id !== pausingTarget.id) return s;
           const newPause = [...s.pause, { inizio: now, motivo }];
           return { ...s, status: 'PAUSA' as const, pause: newPause };
@@ -609,16 +609,16 @@ const App: React.FC = () => {
       </main>
 
       {/* Modals Implementation */}
-      {selectedSessionId && state.sessioni.find(s => s.id === selectedSessionId) && state.articoli.find(a => a.id === state.sessioni.find(s => s.id === selectedSessionId)?.articoloId) && (
+      {selectedSessionId && state.lavorazioni.find(s => s.id === selectedSessionId) && state.articoli.find(a => a.id === state.lavorazioni.find(s => s.id === selectedSessionId)?.articoloId) && (
         <PedanaModal 
             isOpen={isPedanaModalOpen}
             onClose={() => setIsPedanaModalOpen(false)}
-            sessione={state.sessioni.find(s => s.id === selectedSessionId)!}
-            sessioneLabel={getLineaNome(state.sessioni.find(s => s.id === selectedSessionId)!.lineaId)}
-            lottoCode={state.sigleLotto.find(s => s.id === state.sessioni.find(ss => ss.id === selectedSessionId)?.siglaLottoId)?.code || 'N/D'}
-            articolo={state.articoli.find(a => a.id === state.sessioni.find(s => s.id === selectedSessionId)?.articoloId)!}
+            sessione={state.lavorazioni.find(s => s.id === selectedSessionId)!}
+            sessioneLabel={getLineaNome(state.lavorazioni.find(s => s.id === selectedSessionId)!.lineaId)}
+            lottoCode={state.sigleLotto.find(s => s.id === state.lavorazioni.find(ss => ss.id === selectedSessionId)?.siglaLottoId)?.code || 'N/D'}
+            articolo={state.articoli.find(a => a.id === state.lavorazioni.find(s => s.id === selectedSessionId)?.articoloId)!}
             imballiOptions={state.imballi}
-            calibriOptions={state.prodotti.find(p => p.id === state.articoli.find(a => a.id === state.sessioni.find(s => s.id === selectedSessionId)?.articoloId)?.prodottoId)?.calibri || []}
+            calibriOptions={state.calibri.filter(c => c.prodottoId === state.articoli.find(a => a.id === state.lavorazioni.find(s => s.id === selectedSessionId)?.articoloId)?.prodottoId).map(c => c.nome)}
             pedaneTodayCount={pedaneTodayCount}
             onSave={(data) => { handleSavePedana(data); setIsPedanaModalOpen(false); }}
         />
@@ -627,7 +627,7 @@ const App: React.FC = () => {
       <ScartoModal 
         isOpen={isScartoModalOpen}
         onClose={() => setIsScartoModalOpen(false)}
-        turnoId={activeTurnoId || ''}
+        sessioneProduzioneId={activeTurnoId || ''}
         sigleLotto={state.sigleLotto}
         tipologieOptions={state.tipologieScarto.filter(t => t.attiva).map(t => t.nome)}
         onSave={handleSaveScarto}

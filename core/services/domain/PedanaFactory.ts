@@ -23,7 +23,7 @@ export class PedanaFactory {
       pesoTotale: params.pesoTotale,
       timestamp: new Date().toISOString(),
       imballoId: params.imballo?.id,
-      calibro: params.calibro,
+      snapshotCalibro: params.calibro ? { nome: params.calibro } : undefined,
       snapshotImballo: params.imballo ? { codice: params.imballo.codice, nome: params.imballo.nome } : undefined,
       snapshotArticolo: { id: params.articolo.id, nome: params.articolo.nome, codice: params.articolo.codice },
       snapshotIngresso: {

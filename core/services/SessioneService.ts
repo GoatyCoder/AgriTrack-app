@@ -1,14 +1,14 @@
 import { SessioneLinea } from '../../types';
 
 export const buildSessione = (params: {
-  turnoId: string;
+  sessioneProduzioneId: string;
   lineaId: string;
   articoloId: string;
   siglaLottoId: string;
   dataIngresso: string;
 }): SessioneLinea => ({
   id: crypto.randomUUID(),
-  turnoId: params.turnoId,
+  sessioneProduzioneId: params.sessioneProduzioneId,
   lineaId: params.lineaId,
   articoloId: params.articoloId,
   siglaLottoId: params.siglaLottoId,
