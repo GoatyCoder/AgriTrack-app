@@ -10,7 +10,7 @@ interface SettingsDashboardProps {
 
 const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
   const { showConfirm, showAlert } = useDialog();
-  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
+  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'TIPOLOGIE' | 'CALIBRI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [mostraDisattivati, setMostraDisattivati] = useState(false);
 
@@ -18,6 +18,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const [newProdotto, setNewProdotto] = useState<Partial<ProdottoGrezzo>>({ attivo: true });
 
   const [newVarieta, setNewVarieta] = useState<Partial<Varieta>>({});
+  const [newTipologia, setNewTipologia] = useState<Partial<Tipologia>>({ attivo: true });
+  const [newCalibro, setNewCalibro] = useState<Partial<Calibro>>({ attivo: true, ordinamento: 1 });
   const [draftTipologie, setDraftTipologie] = useState<Array<{ id?: string; nome: string }>>([]);
   const [draftCalibri, setDraftCalibri] = useState<Array<{ id?: string; nome: string }>>([]);
   const [nuovaTipologiaNome, setNuovaTipologiaNome] = useState('');
@@ -37,6 +39,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setEditingId(null);
     setNewProdotto({ nome: '', codice: '', attivo: true });
     setNewVarieta({ nome: '', codice: '', prodottoId: '', tipologiaId: '' });
+    setNewTipologia({ nome: '', prodottoId: '', ordinamento: 1, attivo: true });
+    setNewCalibro({ nome: '', prodottoId: '', ordinamento: 1, descrizione: '', attivo: true });
     setDraftTipologie([]);
     setDraftCalibri([]);
     setNuovaTipologiaNome('');
