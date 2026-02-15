@@ -195,6 +195,59 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     resetAllForms();
   };
 
+  const saveTipologia = () => {
+    const now = new Date().toISOString();
+    if (!newTipologia.nome || !newTipologia.prodottoId) return;
+
+    let updatedList = [...data.tipologie];
+    if (editingId) {
+      updatedList = updatedList.map((tipologia) =>
+        tipologia.id === editingId
+          ? { ...tipologia, ...newTipologia, updatedAt: now, ordinamento: Number(newTipologia.ordinamento) || 1 } as Tipologia
+          : tipologia
+      );
+    } else {
+      updatedList.push({
+        id: crypto.randomUUID(),
+        nome: newTipologia.nome,
+        prodottoId: newTipologia.prodottoId,
+        ordinamento: Number(newTipologia.ordinamento) || 1,
+        attivo: newTipologia.attivo !== false,
+        ...buildAuditFields()
+      });
+    }
+
+    onUpdateData({ tipologie: updatedList });
+    resetAllForms();
+  };
+
+  const saveCalibro = () => {
+    const now = new Date().toISOString();
+    if (!newCalibro.nome || !newCalibro.prodottoId) return;
+
+    let updatedList = [...data.calibri];
+    if (editingId) {
+      updatedList = updatedList.map((calibro) =>
+        calibro.id === editingId
+          ? { ...calibro, ...newCalibro, updatedAt: now, ordinamento: Number(newCalibro.ordinamento) || 1 } as Calibro
+          : calibro
+      );
+    } else {
+      updatedList.push({
+        id: crypto.randomUUID(),
+        nome: newCalibro.nome,
+        prodottoId: newCalibro.prodottoId,
+        ordinamento: Number(newCalibro.ordinamento) || 1,
+        descrizione: newCalibro.descrizione,
+        attivo: newCalibro.attivo !== false,
+        ...buildAuditFields()
+      });
+    }
+
+    onUpdateData({ calibri: updatedList });
+    resetAllForms();
+  };
+
   const saveVarieta = () => {
     const now = new Date().toISOString();
     if (!newVarieta.nome || !newVarieta.prodottoId || !newVarieta.codice) return;
@@ -468,6 +521,12 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
         <button onClick={() => setActiveTab('AREE_LINEE')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'AREE_LINEE' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}><Factory size={18} /> Aree e Linee</button>
         <button onClick={() => setActiveTab('PRODOTTI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'PRODOTTI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
           <Apple size={18} /> Prodotti
+        </button>
+        <button onClick={() => setActiveTab('TIPOLOGIE')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'TIPOLOGIE' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <ListTree size={18} /> Tipologie
+        </button>
+        <button onClick={() => setActiveTab('CALIBRI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'CALIBRI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+          <Ruler size={18} /> Calibri
         </button>
         <button onClick={() => setActiveTab('VARIETA')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'VARIETA' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
           <Sprout size={18} /> Varietà
