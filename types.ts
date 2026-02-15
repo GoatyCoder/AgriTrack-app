@@ -141,7 +141,7 @@ export interface Pedana {
   pesoTotale: number;
   timestamp: string;
   imballoId?: string;
-  calibroId?: string;
+  calibro?: string;
   categoriaCommercialeId?: string;
   snapshotImballo?: { codice: string; nome: string };
   snapshotArticolo?: { id: string; nome: string; codice: string };

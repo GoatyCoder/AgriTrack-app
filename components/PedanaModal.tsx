@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Printer, Package } from 'lucide-react';
 import { Articolo, Lavorazione, Pedana, Imballo } from '../types';
 import { generateStickerData } from '../utils';
@@ -22,7 +22,10 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
 }) => {
   const [numeroColli, setNumeroColli] = useState<number>(72);
   const [imballoId, setImballoId] = useState<string>('');
-  const [calibro, setCalibro] = useState<string>('');
+  const [modalitaCalibro, setModalitaCalibro] = useState<'SINGOLO' | 'RANGE'>('SINGOLO');
+  const [calibroSingolo, setCalibroSingolo] = useState<string>('');
+  const [calibroDa, setCalibroDa] = useState<string>('');
+  const [calibroA, setCalibroA] = useState<string>('');
   const [pesoManuale, setPesoManuale] = useState<number>(0);
   const [stickerPreview, setStickerPreview] = useState('');
   const [doy, setDoy] = useState(0);
@@ -39,11 +42,32 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
       setNumeroColli(72);
       setPesoManuale(0);
       setImballoId(imballiOptions[0]?.id || '');
-      setCalibro(calibriOptions[0] || '');
+      const defaultCalibro = calibriOptions[0] || '';
+      setModalitaCalibro('SINGOLO');
+      setCalibroSingolo(defaultCalibro);
+      setCalibroDa(defaultCalibro);
+      setCalibroA(defaultCalibro);
     }
   }, [isOpen, pedaneTodayCount, imballiOptions, calibriOptions]);
 
   const pesoTeorico = pesoManuale > 0 ? pesoManuale : numeroColli * articolo.pesoColloTeorico;
+
+  const selectedCalibro = useMemo(() => {
+    if (calibriOptions.length === 0) return '';
+    if (modalitaCalibro === 'SINGOLO') {
+      return calibroSingolo;
+    }
+
+    const fromIndex = calibriOptions.indexOf(calibroDa);
+    const toIndex = calibriOptions.indexOf(calibroA);
+    if (fromIndex < 0 || toIndex < 0) return '';
+
+    const start = Math.min(fromIndex, toIndex);
+    const end = Math.max(fromIndex, toIndex);
+    const from = calibriOptions[start];
+    const to = calibriOptions[end];
+    return from === to ? from : `${from}-${to}`;
+  }, [calibriOptions, modalitaCalibro, calibroSingolo, calibroDa, calibroA]);
 
   const handleSave = () => {
     const imballoObj = imballiOptions.find(i => i.id === imballoId);
@@ -58,7 +82,8 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
       snapshotImballo: imballoObj ? { codice: imballoObj.codice, nome: imballoObj.nome } : undefined,
       snapshotArticolo: { id: articolo.id, nome: articolo.nome, codice: articolo.codice },
       snapshotIngresso: { siglaLottoId: sessione.siglaLottoId, lottoCode, dataIngresso: sessione.dataIngresso },
-      calibro
+      calibro: selectedCalibro,
+      snapshotCalibro: selectedCalibro ? { nome: selectedCalibro } : undefined
     });
     setShowSticker(true);
   };
@@ -89,11 +114,35 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
               <SmartSelect label="Imballaggio" options={imballiOptions} value={imballoId} onSelect={setImballoId} placeholder="Codice Imballo..." />
 
               {calibriOptions.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Calibro</label>
-                  <select value={calibro} onChange={(e) => setCalibro(e.target.value)} className="w-full border-gray-300 border rounded-lg p-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Calibro</label>
+                  <div className="flex gap-4 text-sm">
+                    <label className="flex items-center gap-1">
+                      <input type="radio" checked={modalitaCalibro === 'SINGOLO'} onChange={() => setModalitaCalibro('SINGOLO')} />
+                      Singolo
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input type="radio" checked={modalitaCalibro === 'RANGE'} onChange={() => setModalitaCalibro('RANGE')} />
+                      Range
+                    </label>
+                  </div>
+
+                  {modalitaCalibro === 'SINGOLO' ? (
+                    <select value={calibroSingolo} onChange={(e) => setCalibroSingolo(e.target.value)} className="w-full border-gray-300 border rounded-lg p-2">
                       {calibriOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                    </select>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <select value={calibroDa} onChange={(e) => setCalibroDa(e.target.value)} className="w-full border-gray-300 border rounded-lg p-2">
+                        {calibriOptions.map(c => <option key={`from-${c}`} value={c}>{c}</option>)}
+                      </select>
+                      <select value={calibroA} onChange={(e) => setCalibroA(e.target.value)} className="w-full border-gray-300 border rounded-lg p-2">
+                        {calibriOptions.map(c => <option key={`to-${c}`} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  {selectedCalibro && <p className="text-xs text-gray-500">Valore salvato: <span className="font-semibold">{selectedCalibro}</span></p>}
                 </div>
               )}
 
