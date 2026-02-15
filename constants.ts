@@ -84,9 +84,9 @@ export const INITIAL_ARTICOLI: Articolo[] = [
 ];
 
 export const INITIAL_SIGLE_LOTTO: SiglaLotto[] = [
-  withAudit({ id: 'SL1', code: 'ROSSI-VIT-F01', produttore: 'Az. Rossi', varietaId: 'V2', campo: 'Fondo Valle' }),
-  withAudit({ id: 'SL2', code: 'BIANCHI-CRI-F02', produttore: 'Az. Bianchi', varietaId: 'V4', campo: 'Poggio Alto' }),
-  withAudit({ id: 'SL3', code: 'VERDI-NAD-F05', produttore: 'Az. Verdi', varietaId: 'V7', campo: 'Contrada X' })
+  withAudit({ id: 'SL1', code: '1234', produttore: 'Az. Rossi', varietaId: 'V2', campo: 'Fondo Valle' }),
+  withAudit({ id: 'SL2', code: '23456', produttore: 'Az. Bianchi', varietaId: 'V4', campo: 'Poggio Alto' }),
+  withAudit({ id: 'SL3', code: '3456', produttore: 'Az. Verdi', varietaId: 'V7', campo: 'Contrada X' })
 ];
 
 export const INITIAL_IMBALLI: Imballo[] = [

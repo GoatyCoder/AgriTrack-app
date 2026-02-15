@@ -172,7 +172,6 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 **DATA INGRESSO**
 - Data di arrivo del lotto nello stabilimento
 - **Formato**: ISO string `YYYY-MM-DD` (es: "2024-03-15")
-- Importante per FIFO (First In First Out)
 - **Utility richiesta**: Convertitore Data ↔ DOY (Day of Year)
   - DOY 1 = 1 Gennaio
   - DOY 365 = 31 Dicembre (366 per bisestile)
@@ -1589,7 +1588,6 @@ await updateLavorazione({ ...lavorazione, ...updates });
 - Tempo medio sessione
 - Percentuale scarti per tipologia
 - Utilizzo linee (% tempo attivo)
-- FIFO compliance (lotti più vecchi lavorati per primi)
 
 ---
 
@@ -1613,6 +1611,16 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 ### Version 0.1.1 (Current - Internal Alignment)
 - Added phased execution strategy for FASE 1
 - Introduced migration-first approach before full terminology refactor
+
+### Version 0.2.4 (Current - Q2 2026)
+- Removed lot-priority references from documentation as requested
+- Enforced `Sigla Lotto` validation to 4-5 numeric digits in UI and state schema
+- Updated initial sample lotto codes to valid 4-5 digit numeric format
+
+### Version 0.2.3 (Current - Q2 2026)
+- Moved `Tipologie` and `Calibri` management back into `Anagrafica Prodotti` (single workflow)
+- Product form now edits both lists inline; `Calibri` keeps explicit `ordinamento`, `Tipologie` are managed without dedicated ordering controls
+- Removed dedicated sidebar tabs for Tipologie/Calibri to simplify operator UX
 
 ### Version 0.2.2 (Current - Q2 2026)
 - Added Settings CRUD tabs for `Tipologie` and `Calibri` with full create/update/deactivate flows
@@ -1688,8 +1696,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-18
-**Version**: 0.2.2
+**Last Updated**: 2026-02-20
+**Version**: 0.2.4
 **Maintained by**: Development Team
 
 ---

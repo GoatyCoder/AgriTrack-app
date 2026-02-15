@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, Pencil, RotateCcw, Factory, ListTree, Ruler } from 'lucide-react';
+import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, Pencil, RotateCcw, Factory } from 'lucide-react';
 import { AppState, Articolo, SiglaLotto, ProdottoGrezzo, Varieta, Imballo, Area, Linea, Tipologia, Calibro } from '../types';
 import { useDialog } from './DialogContext';
 
@@ -10,16 +10,19 @@ interface SettingsDashboardProps {
 
 const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
   const { showConfirm, showAlert } = useDialog();
-  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'TIPOLOGIE' | 'CALIBRI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
+  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [mostraDisattivati, setMostraDisattivati] = useState(false);
 
   // Forms State
   const [newProdotto, setNewProdotto] = useState<Partial<ProdottoGrezzo>>({ attivo: true });
-  const [newTipologia, setNewTipologia] = useState<Partial<Tipologia>>({ attivo: true, ordinamento: 1 });
-  const [newCalibro, setNewCalibro] = useState<Partial<Calibro>>({ attivo: true, ordinamento: 1 });
 
   const [newVarieta, setNewVarieta] = useState<Partial<Varieta>>({});
+  const [draftTipologie, setDraftTipologie] = useState<Array<{ id?: string; nome: string }>>([]);
+  const [draftCalibri, setDraftCalibri] = useState<Array<{ id?: string; nome: string; ordinamento: number }>>([]);
+  const [nuovaTipologiaNome, setNuovaTipologiaNome] = useState('');
+  const [nuovoCalibroNome, setNuovoCalibroNome] = useState('');
+  const [nuovoCalibroOrd, setNuovoCalibroOrd] = useState(1);
   const [newArticolo, setNewArticolo] = useState<Partial<Articolo>>({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0 });
   const [newLotto, setNewLotto] = useState<Partial<SiglaLotto>>({});
   const [newImballo, setNewImballo] = useState<Partial<Imballo>>({});
@@ -34,9 +37,12 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const resetAllForms = () => {
     setEditingId(null);
     setNewProdotto({ nome: '', codice: '', attivo: true });
-    setNewTipologia({ nome: '', prodottoId: '', ordinamento: 1, attivo: true });
-    setNewCalibro({ nome: '', prodottoId: '', ordinamento: 1, descrizione: '', attivo: true });
     setNewVarieta({ nome: '', codice: '', prodottoId: '', tipologiaId: '' });
+    setDraftTipologie([]);
+    setDraftCalibri([]);
+    setNuovaTipologiaNome('');
+    setNuovoCalibroNome('');
+    setNuovoCalibroOrd(1);
     setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', tipologiaId: '' });
     setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
     setNewImballo({ nome: '', codice: '', taraKg: 0 });
@@ -49,7 +55,15 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const startEditProdotto = (p: ProdottoGrezzo) => {
     setEditingId(p.id);
     setNewProdotto({ ...p });
-    // Scroll to top
+    const tipologieProdotto = data.tipologie
+      .filter((tipologia) => tipologia.prodottoId === p.id && tipologia.attivo)
+      .map((tipologia) => ({ id: tipologia.id, nome: tipologia.nome }));
+    const calibriProdotto = data.calibri
+      .filter((calibro) => calibro.prodottoId === p.id && calibro.attivo)
+      .sort((a, b) => a.ordinamento - b.ordinamento)
+      .map((calibro) => ({ id: calibro.id, nome: calibro.nome, ordinamento: calibro.ordinamento }));
+    setDraftTipologie(tipologieProdotto);
+    setDraftCalibri(calibriProdotto);
     document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
   };
 
@@ -59,17 +73,6 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
   };
 
-  const startEditTipologia = (tipologia: Tipologia) => {
-    setEditingId(tipologia.id);
-    setNewTipologia({ ...tipologia });
-    document.querySelector('.overflow-y-auto')?.scrollTo(0, 0);
-  };
-
-  const startEditCalibro = (calibro: Calibro) => {
-    setEditingId(calibro.id);
-    setNewCalibro({ ...calibro });
-    document.querySelector('.overflow-y-auto')?.scrollTo(0, 0);
-  };
 
   const startEditArticolo = (a: Articolo) => {
     setEditingId(a.id);
@@ -100,28 +103,95 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
   // --- Save Handlers ---
 
+  const addTipologiaDraft = () => {
+    const nome = nuovaTipologiaNome.trim();
+    if (!nome) return;
+    if (draftTipologie.some((tipologia) => tipologia.nome.toLowerCase() === nome.toLowerCase())) return;
+    setDraftTipologie((prev) => [...prev, { nome }]);
+    setNuovaTipologiaNome('');
+  };
+
+  const removeTipologiaDraft = (nome: string) => {
+    setDraftTipologie((prev) => prev.filter((tipologia) => tipologia.nome !== nome));
+  };
+
+  const addCalibroDraft = () => {
+    const nome = nuovoCalibroNome.trim();
+    if (!nome) return;
+    if (draftCalibri.some((calibro) => calibro.nome.toLowerCase() === nome.toLowerCase())) return;
+    setDraftCalibri((prev) => [...prev, { nome, ordinamento: nuovoCalibroOrd || 1 }].sort((a, b) => a.ordinamento - b.ordinamento));
+    setNuovoCalibroNome('');
+    setNuovoCalibroOrd(1);
+  };
+
+  const removeCalibroDraft = (nome: string) => {
+    setDraftCalibri((prev) => prev.filter((calibro) => calibro.nome !== nome));
+  };
+
   const saveProdotto = () => {
     if (!newProdotto.nome || !newProdotto.codice) return;
     const now = new Date().toISOString();
+    const prodottoId = editingId || crypto.randomUUID();
 
-    let updatedList = [...data.prodottiGrezzi];
-
+    let updatedProdotti = [...data.prodottiGrezzi];
     if (editingId) {
-        // Update
-        updatedList = updatedList.map(p => p.id === editingId ? { ...p, ...newProdotto, updatedAt: now } as ProdottoGrezzo : p);
+      updatedProdotti = updatedProdotti.map((prodotto) => prodotto.id === editingId ? { ...prodotto, ...newProdotto, updatedAt: now } as ProdottoGrezzo : prodotto);
     } else {
-        // Create
-        const item: ProdottoGrezzo = { 
-            id: crypto.randomUUID(), 
-            codice: newProdotto.codice.toUpperCase(),
-            nome: newProdotto.nome,
-            attivo: newProdotto.attivo !== false,
-            ...buildAuditFields()
-        };
-        updatedList.push(item);
+      updatedProdotti.push({
+        id: prodottoId,
+        codice: newProdotto.codice.toUpperCase(),
+        nome: newProdotto.nome,
+        attivo: newProdotto.attivo !== false,
+        ...buildAuditFields()
+      });
     }
-    
-    onUpdateData({ prodottiGrezzi: updatedList });
+
+    const existingTipologie = data.tipologie.filter((tipologia) => tipologia.prodottoId === prodottoId);
+    const preservedTipologie = data.tipologie.filter((tipologia) => tipologia.prodottoId !== prodottoId);
+    const nextTipologie = draftTipologie.map((tipologiaDraft) => {
+      const existing = existingTipologie.find((tipologia) => tipologia.id === tipologiaDraft.id || tipologia.nome === tipologiaDraft.nome);
+      return {
+        id: existing?.id || crypto.randomUUID(),
+        nome: tipologiaDraft.nome,
+        prodottoId,
+        ordinamento: existing?.ordinamento || 1,
+        attivo: true,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+        createdBy: existing?.createdBy,
+        updatedBy: existing?.updatedBy
+      } as Tipologia;
+    });
+    const removedTipologie = existingTipologie
+      .filter((tipologia) => !nextTipologie.some((nextTipologia) => nextTipologia.id === tipologia.id))
+      .map((tipologia) => ({ ...tipologia, attivo: false, updatedAt: now }));
+
+    const existingCalibri = data.calibri.filter((calibro) => calibro.prodottoId === prodottoId);
+    const preservedCalibri = data.calibri.filter((calibro) => calibro.prodottoId !== prodottoId);
+    const nextCalibri = draftCalibri.map((calibroDraft) => {
+      const existing = existingCalibri.find((calibro) => calibro.id === calibroDraft.id || calibro.nome === calibroDraft.nome);
+      return {
+        id: existing?.id || crypto.randomUUID(),
+        nome: calibroDraft.nome,
+        prodottoId,
+        ordinamento: calibroDraft.ordinamento,
+        descrizione: existing?.descrizione,
+        attivo: true,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+        createdBy: existing?.createdBy,
+        updatedBy: existing?.updatedBy
+      } as Calibro;
+    });
+    const removedCalibri = existingCalibri
+      .filter((calibro) => !nextCalibri.some((nextCalibro) => nextCalibro.id === calibro.id))
+      .map((calibro) => ({ ...calibro, attivo: false, updatedAt: now }));
+
+    onUpdateData({
+      prodottiGrezzi: updatedProdotti,
+      tipologie: [...preservedTipologie, ...nextTipologie, ...removedTipologie],
+      calibri: [...preservedCalibri, ...nextCalibri, ...removedCalibri]
+    });
     resetAllForms();
   };
 
@@ -253,6 +323,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const saveLotto = () => {
     const now = new Date().toISOString();
     if (!newLotto.code || !newLotto.produttore || !newLotto.varietaId) return;
+    if (!/^\d{4,5}$/.test(newLotto.code)) {
+      showAlert({
+        title: 'Sigla lotto non valida',
+        message: 'La sigla lotto deve contenere solo 4 o 5 cifre numeriche.',
+        variant: 'DANGER'
+      });
+      return;
+    }
     
     let updatedList = [...data.sigleLotto];
 
@@ -415,11 +493,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
   // Helper selectors
   const tipologieProdottoVarieta = data.tipologie
-    .filter((tipologia) => tipologia.prodottoId === newVarieta.prodottoId && (mostraDisattivati || tipologia.attivo))
-    .sort((a, b) => a.ordinamento - b.ordinamento);
+    .filter((tipologia) => tipologia.prodottoId === newVarieta.prodottoId && (mostraDisattivati || tipologia.attivo));
   const tipologieProdottoArticolo = data.tipologie
-    .filter((tipologia) => tipologia.prodottoId === newArticolo.prodottoId && (mostraDisattivati || tipologia.attivo))
-    .sort((a, b) => a.ordinamento - b.ordinamento);
+    .filter((tipologia) => tipologia.prodottoId === newArticolo.prodottoId && (mostraDisattivati || tipologia.attivo));
 
   // Common Button Component
   const ActionButtons = ({ onSave }: { onSave: () => void }) => (
@@ -527,7 +603,61 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                 </label>
               </div>
 
-              <p className="text-xs text-gray-500">Tipologie e calibri sono gestiti nelle tab dedicate.</p>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Tipologie</label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      className="flex-1 border rounded p-2 text-sm"
+                      placeholder="Aggiungi tipologia"
+                      value={nuovaTipologiaNome}
+                      onChange={(event) => setNuovaTipologiaNome(event.target.value)}
+                      onKeyDown={(event) => event.key === 'Enter' && addTipologiaDraft()}
+                    />
+                    <button onClick={addTipologiaDraft} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16} /></button>
+                  </div>
+                  <div className="space-y-1">
+                    {draftTipologie.map((tipologia) => (
+                      <div key={tipologia.nome} className="flex items-center justify-between bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
+                        <span>{tipologia.nome}</span>
+                        <button onClick={() => removeTipologiaDraft(tipologia.nome)}><Trash2 size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Calibri</label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      className="flex-1 border rounded p-2 text-sm"
+                      placeholder="Nome calibro"
+                      value={nuovoCalibroNome}
+                      onChange={(event) => setNuovoCalibroNome(event.target.value)}
+                    />
+                    <input
+                      type="number"
+                      className="w-24 border rounded p-2 text-sm"
+                      placeholder="Ord."
+                      value={nuovoCalibroOrd}
+                      onChange={(event) => setNuovoCalibroOrd(parseInt(event.target.value, 10) || 1)}
+                    />
+                    <button onClick={addCalibroDraft} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16} /></button>
+                  </div>
+                  <div className="space-y-1">
+                    {draftCalibri.map((calibro) => (
+                      <div key={calibro.nome} className="flex items-center justify-between bg-purple-50 text-purple-800 text-xs px-2 py-1 rounded">
+                        <span>{calibro.nome} (ord. {calibro.ordinamento})</span>
+                        <button onClick={() => removeCalibroDraft(calibro.nome)}><Trash2 size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {!editingId && <p className="text-xs text-gray-500">Suggerimento: salva il prodotto per primo; tipologie e calibri verranno collegati allo stesso salvataggio.</p>}
               <ActionButtons onSave={saveProdotto} />
             </div>
 
@@ -541,6 +671,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <span className="font-bold text-lg">{p.nome}</span>
                         {p.attivo === false && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Disattivato</span>}
                       </div>
+                      <div className="text-xs text-gray-500 mt-1">Tipologie: {data.tipologie.filter(t => t.prodottoId === p.id && t.attivo).map(t => t.nome).join(', ') || '-'}</div>
+                      <div className="text-xs text-gray-500">Calibri: {data.calibri.filter(c => c.prodottoId === p.id && c.attivo).sort((a,b) => a.ordinamento - b.ordinamento).map(c => `${c.nome}(${c.ordinamento})`).join(', ') || '-'}</div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => startEditProdotto(p)} className="text-gray-400 hover:text-orange-500 p-2"><Pencil size={16} /></button>
@@ -550,116 +682,6 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-
-        {/* TIPOLOGIE */}
-        {activeTab === 'TIPOLOGIE' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-              Tipologie {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
-            </h2>
-            <div className={`p-4 rounded-lg border space-y-4 transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="grid grid-cols-4 gap-4 items-end">
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Prodotto</label>
-                  <select className="w-full border rounded p-2 text-sm" value={newTipologia.prodottoId || ''} onChange={e => setNewTipologia({ ...newTipologia, prodottoId: e.target.value })}>
-                    <option value="">Seleziona...</option>
-                    {data.prodottiGrezzi.filter(p => p.attivo !== false).map(prodotto => <option key={prodotto.id} value={prodotto.id}>{prodotto.nome}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Ordinamento</label>
-                  <input type="number" className="w-full border rounded p-2 text-sm" value={newTipologia.ordinamento || 1} onChange={e => setNewTipologia({ ...newTipologia, ordinamento: parseInt(e.target.value, 10) || 1 })} />
-                </div>
-                <label className="flex items-center gap-2 text-sm mb-2">
-                  <input type="checkbox" checked={newTipologia.attivo !== false} onChange={e => setNewTipologia({ ...newTipologia, attivo: e.target.checked })} />
-                  Attiva
-                </label>
-                <div className="col-span-4">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Nome Tipologia</label>
-                  <input type="text" className="w-full border rounded p-2 text-sm" value={newTipologia.nome || ''} onChange={e => setNewTipologia({ ...newTipologia, nome: e.target.value })} />
-                </div>
-              </div>
-              <ActionButtons onSave={saveTipologia} />
-            </div>
-
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prodotto</th><th className="px-4 py-2 text-left">Nome</th><th className="px-4 py-2 text-left">Ord.</th><th></th></tr></thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.tipologie
-                  .filter(t => mostraDisattivati || t.attivo)
-                  .sort((a, b) => a.ordinamento - b.ordinamento)
-                  .map(tipologia => (
-                    <tr key={tipologia.id} className={editingId === tipologia.id ? 'bg-orange-50' : ''}>
-                      <td className="px-4 py-2">{data.prodottiGrezzi.find(p => p.id === tipologia.prodottoId)?.nome || '-'}</td>
-                      <td className="px-4 py-2">{tipologia.nome} {!tipologia.attivo && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded ml-2">Disattivata</span>}</td>
-                      <td className="px-4 py-2">{tipologia.ordinamento}</td>
-                      <td className="px-4 py-2 flex gap-2">
-                        <button onClick={() => startEditTipologia(tipologia)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
-                        <button onClick={() => deleteItem('tipologie', tipologia.id)} className="text-gray-400 hover:text-red-500" title="Disattiva"><Trash2 size={16} /></button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* CALIBRI */}
-        {activeTab === 'CALIBRI' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-              Calibri {editingId && <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded font-normal">Modifica in corso...</span>}
-            </h2>
-            <div className={`p-4 rounded-lg border space-y-4 transition-colors ${editingId ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="grid grid-cols-4 gap-4 items-end">
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Prodotto</label>
-                  <select className="w-full border rounded p-2 text-sm" value={newCalibro.prodottoId || ''} onChange={e => setNewCalibro({ ...newCalibro, prodottoId: e.target.value })}>
-                    <option value="">Seleziona...</option>
-                    {data.prodottiGrezzi.filter(p => p.attivo !== false).map(prodotto => <option key={prodotto.id} value={prodotto.id}>{prodotto.nome}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Ordinamento</label>
-                  <input type="number" className="w-full border rounded p-2 text-sm" value={newCalibro.ordinamento || 1} onChange={e => setNewCalibro({ ...newCalibro, ordinamento: parseInt(e.target.value, 10) || 1 })} />
-                </div>
-                <label className="flex items-center gap-2 text-sm mb-2">
-                  <input type="checkbox" checked={newCalibro.attivo !== false} onChange={e => setNewCalibro({ ...newCalibro, attivo: e.target.checked })} />
-                  Attivo
-                </label>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Nome</label>
-                  <input type="text" className="w-full border rounded p-2 text-sm" value={newCalibro.nome || ''} onChange={e => setNewCalibro({ ...newCalibro, nome: e.target.value })} />
-                </div>
-                <div className="col-span-3">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Descrizione</label>
-                  <input type="text" className="w-full border rounded p-2 text-sm" value={newCalibro.descrizione || ''} onChange={e => setNewCalibro({ ...newCalibro, descrizione: e.target.value })} />
-                </div>
-              </div>
-              <ActionButtons onSave={saveCalibro} />
-            </div>
-
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left">Prodotto</th><th className="px-4 py-2 text-left">Nome</th><th className="px-4 py-2 text-left">Ord.</th><th></th></tr></thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.calibri
-                  .filter(c => mostraDisattivati || c.attivo)
-                  .sort((a, b) => a.ordinamento - b.ordinamento)
-                  .map(calibro => (
-                    <tr key={calibro.id} className={editingId === calibro.id ? 'bg-orange-50' : ''}>
-                      <td className="px-4 py-2">{data.prodottiGrezzi.find(p => p.id === calibro.prodottoId)?.nome || '-'}</td>
-                      <td className="px-4 py-2">{calibro.nome} {!calibro.attivo && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded ml-2">Disattivato</span>}</td>
-                      <td className="px-4 py-2">{calibro.ordinamento}</td>
-                      <td className="px-4 py-2 flex gap-2">
-                        <button onClick={() => startEditCalibro(calibro)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
-                        <button onClick={() => deleteItem('calibri', calibro.id)} className="text-gray-400 hover:text-red-500" title="Disattiva"><Trash2 size={16} /></button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
           </div>
         )}
 
@@ -842,7 +864,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Codice Lotto</label>
-                        <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. ROSSI-VIT-F01" value={newLotto.code || ''} onChange={e => setNewLotto({...newLotto, code: e.target.value})} />
+                        <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. 1234 o 12345" value={newLotto.code || ''} onChange={e => setNewLotto({...newLotto, code: e.target.value})} />
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Produttore</label>
