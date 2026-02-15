@@ -15,7 +15,7 @@ import { formatTime, formatDateTime, updateIsoTime } from './utils';
 import { useAppStateStore } from './hooks/useAppStateStore';
 import { useSessionFilters } from './hooks/useSessionFilters';
 import { useSessionForm } from './hooks/useSessionForm';
-import { useTurnoActions } from './hooks/useTurnoActions';
+import { useSessioneProduzioneActions } from './hooks/useSessioneProduzioneActions';
 import { useSessioneActions } from './hooks/useSessioneActions';
 import { useProductionRecords } from './hooks/useProductionRecords';
 
@@ -60,7 +60,7 @@ const App: React.FC = () => {
   const selectedArticolo = useMemo(() => selectedLavorazione ? state.articoli.find((articolo) => articolo.id === selectedLavorazione.articoloId) : undefined, [state.articoli, selectedLavorazione]);
 
 
-  const { activeTurno, handleStartTurno, handleTogglePauseTurno, handleCloseTurno } = useTurnoActions({
+  const { activeTurno, handleStartTurno, handleTogglePauseTurno, handleCloseTurno } = useSessioneProduzioneActions({
     state,
     setState,
     activeTurnoId,
