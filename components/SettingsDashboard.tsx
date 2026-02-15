@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, Pencil, RotateCcw, Factory, ListTree, Ruler } from 'lucide-react';
+import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, Pencil, RotateCcw, Factory, ChevronUp, ChevronDown } from 'lucide-react';
 import { AppState, Articolo, SiglaLotto, ProdottoGrezzo, Varieta, Imballo, Area, Linea, Tipologia, Calibro } from '../types';
 import { useDialog } from './DialogContext';
 
@@ -21,10 +21,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const [newTipologia, setNewTipologia] = useState<Partial<Tipologia>>({ attivo: true });
   const [newCalibro, setNewCalibro] = useState<Partial<Calibro>>({ attivo: true, ordinamento: 1 });
   const [draftTipologie, setDraftTipologie] = useState<Array<{ id?: string; nome: string }>>([]);
-  const [draftCalibri, setDraftCalibri] = useState<Array<{ id?: string; nome: string; ordinamento: number }>>([]);
+  const [draftCalibri, setDraftCalibri] = useState<Array<{ id?: string; nome: string }>>([]);
   const [nuovaTipologiaNome, setNuovaTipologiaNome] = useState('');
   const [nuovoCalibroNome, setNuovoCalibroNome] = useState('');
-  const [nuovoCalibroOrd, setNuovoCalibroOrd] = useState(1);
   const [newArticolo, setNewArticolo] = useState<Partial<Articolo>>({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0 });
   const [newLotto, setNewLotto] = useState<Partial<SiglaLotto>>({});
   const [newImballo, setNewImballo] = useState<Partial<Imballo>>({});
@@ -46,7 +45,6 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setDraftCalibri([]);
     setNuovaTipologiaNome('');
     setNuovoCalibroNome('');
-    setNuovoCalibroOrd(1);
     setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', tipologiaId: '' });
     setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
     setNewImballo({ nome: '', codice: '', taraKg: 0 });
@@ -65,7 +63,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     const calibriProdotto = data.calibri
       .filter((calibro) => calibro.prodottoId === p.id && calibro.attivo)
       .sort((a, b) => a.ordinamento - b.ordinamento)
-      .map((calibro) => ({ id: calibro.id, nome: calibro.nome, ordinamento: calibro.ordinamento }));
+      .map((calibro) => ({ id: calibro.id, nome: calibro.nome }));
     setDraftTipologie(tipologieProdotto);
     setDraftCalibri(calibriProdotto);
     document.querySelector('.overflow-y-auto')?.scrollTo(0,0);
@@ -115,6 +113,16 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setNuovaTipologiaNome('');
   };
 
+  const moveTipologiaDraft = (index: number, direction: -1 | 1) => {
+    setDraftTipologie((prev) => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const updated = [...prev];
+      [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+      return updated;
+    });
+  };
+
   const removeTipologiaDraft = (nome: string) => {
     setDraftTipologie((prev) => prev.filter((tipologia) => tipologia.nome !== nome));
   };
@@ -123,9 +131,18 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     const nome = nuovoCalibroNome.trim();
     if (!nome) return;
     if (draftCalibri.some((calibro) => calibro.nome.toLowerCase() === nome.toLowerCase())) return;
-    setDraftCalibri((prev) => [...prev, { nome, ordinamento: nuovoCalibroOrd || 1 }].sort((a, b) => a.ordinamento - b.ordinamento));
+    setDraftCalibri((prev) => [...prev, { nome }]);
     setNuovoCalibroNome('');
-    setNuovoCalibroOrd(1);
+  };
+
+  const moveCalibroDraft = (index: number, direction: -1 | 1) => {
+    setDraftCalibri((prev) => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const updated = [...prev];
+      [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+      return updated;
+    });
   };
 
   const removeCalibroDraft = (nome: string) => {
@@ -152,13 +169,13 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
     const existingTipologie = data.tipologie.filter((tipologia) => tipologia.prodottoId === prodottoId);
     const preservedTipologie = data.tipologie.filter((tipologia) => tipologia.prodottoId !== prodottoId);
-    const nextTipologie = draftTipologie.map((tipologiaDraft) => {
+    const nextTipologie = draftTipologie.map((tipologiaDraft, index) => {
       const existing = existingTipologie.find((tipologia) => tipologia.id === tipologiaDraft.id || tipologia.nome === tipologiaDraft.nome);
       return {
         id: existing?.id || crypto.randomUUID(),
         nome: tipologiaDraft.nome,
         prodottoId,
-        ordinamento: existing?.ordinamento || 1,
+        ordinamento: index + 1,
         attivo: true,
         createdAt: existing?.createdAt || now,
         updatedAt: now,
@@ -166,19 +183,23 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
         updatedBy: existing?.updatedBy
       } as Tipologia;
     });
-    const removedTipologie = existingTipologie
-      .filter((tipologia) => !nextTipologie.some((nextTipologia) => nextTipologia.id === tipologia.id))
-      .map((tipologia) => ({ ...tipologia, attivo: false, updatedAt: now }));
+
+    const removedTipologie = existingTipologie.filter((tipologia) => !nextTipologie.some((nextTipologia) => nextTipologia.id === tipologia.id));
+    const tipologieInUso = removedTipologie.filter((tipologia) =>
+      data.varieta.some((varieta) => varieta.tipologiaId === tipologia.id) ||
+      data.articoli.some((articolo) => articolo.tipologiaId === tipologia.id)
+    );
+    const tipologieDisattivabili = removedTipologie.filter((tipologia) => !tipologieInUso.some((item) => item.id === tipologia.id));
 
     const existingCalibri = data.calibri.filter((calibro) => calibro.prodottoId === prodottoId);
     const preservedCalibri = data.calibri.filter((calibro) => calibro.prodottoId !== prodottoId);
-    const nextCalibri = draftCalibri.map((calibroDraft) => {
+    const nextCalibri = draftCalibri.map((calibroDraft, index) => {
       const existing = existingCalibri.find((calibro) => calibro.id === calibroDraft.id || calibro.nome === calibroDraft.nome);
       return {
         id: existing?.id || crypto.randomUUID(),
         nome: calibroDraft.nome,
         prodottoId,
-        ordinamento: calibroDraft.ordinamento,
+        ordinamento: index + 1,
         descrizione: existing?.descrizione,
         attivo: true,
         createdAt: existing?.createdAt || now,
@@ -187,68 +208,41 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
         updatedBy: existing?.updatedBy
       } as Calibro;
     });
-    const removedCalibri = existingCalibri
-      .filter((calibro) => !nextCalibri.some((nextCalibro) => nextCalibro.id === calibro.id))
-      .map((calibro) => ({ ...calibro, attivo: false, updatedAt: now }));
+
+    const removedCalibri = existingCalibri.filter((calibro) => !nextCalibri.some((nextCalibro) => nextCalibro.id === calibro.id));
+    const calibriInUso = removedCalibri.filter((calibro) => data.pedane.some((pedana) => pedana.calibroId === calibro.id));
+    const calibriDisattivabili = removedCalibri.filter((calibro) => !calibriInUso.some((item) => item.id === calibro.id));
+
+    if (tipologieInUso.length > 0 || calibriInUso.length > 0) {
+      const parts: string[] = [];
+      if (tipologieInUso.length > 0) {
+        parts.push(`Tipologie in uso non rimosse: ${tipologieInUso.map((tipologia) => tipologia.nome).join(', ')}.`);
+      }
+      if (calibriInUso.length > 0) {
+        parts.push(`Calibri in uso non rimossi: ${calibriInUso.map((calibro) => calibro.nome).join(', ')}.`);
+      }
+      showAlert({
+        title: 'Rimozione parziale',
+        message: parts.join(' '),
+        variant: 'INFO'
+      });
+    }
 
     onUpdateData({
       prodottiGrezzi: updatedProdotti,
-      tipologie: [...preservedTipologie, ...nextTipologie, ...removedTipologie],
-      calibri: [...preservedCalibri, ...nextCalibri, ...removedCalibri]
+      tipologie: [
+        ...preservedTipologie,
+        ...nextTipologie,
+        ...tipologieInUso.map((tipologia) => ({ ...tipologia, attivo: true, updatedAt: now })),
+        ...tipologieDisattivabili.map((tipologia) => ({ ...tipologia, attivo: false, updatedAt: now }))
+      ],
+      calibri: [
+        ...preservedCalibri,
+        ...nextCalibri,
+        ...calibriInUso.map((calibro) => ({ ...calibro, attivo: true, updatedAt: now })),
+        ...calibriDisattivabili.map((calibro) => ({ ...calibro, attivo: false, updatedAt: now }))
+      ]
     });
-    resetAllForms();
-  };
-
-  const saveTipologia = () => {
-    const now = new Date().toISOString();
-    if (!newTipologia.nome || !newTipologia.prodottoId) return;
-
-    let updatedList = [...data.tipologie];
-    if (editingId) {
-      updatedList = updatedList.map((tipologia) =>
-        tipologia.id === editingId
-          ? { ...tipologia, ...newTipologia, updatedAt: now, ordinamento: Number(newTipologia.ordinamento) || 1 } as Tipologia
-          : tipologia
-      );
-    } else {
-      updatedList.push({
-        id: crypto.randomUUID(),
-        nome: newTipologia.nome,
-        prodottoId: newTipologia.prodottoId,
-        ordinamento: Number(newTipologia.ordinamento) || 1,
-        attivo: newTipologia.attivo !== false,
-        ...buildAuditFields()
-      });
-    }
-
-    onUpdateData({ tipologie: updatedList });
-    resetAllForms();
-  };
-
-  const saveCalibro = () => {
-    const now = new Date().toISOString();
-    if (!newCalibro.nome || !newCalibro.prodottoId) return;
-
-    let updatedList = [...data.calibri];
-    if (editingId) {
-      updatedList = updatedList.map((calibro) =>
-        calibro.id === editingId
-          ? { ...calibro, ...newCalibro, updatedAt: now, ordinamento: Number(newCalibro.ordinamento) || 1 } as Calibro
-          : calibro
-      );
-    } else {
-      updatedList.push({
-        id: crypto.randomUUID(),
-        nome: newCalibro.nome,
-        prodottoId: newCalibro.prodottoId,
-        ordinamento: Number(newCalibro.ordinamento) || 1,
-        descrizione: newCalibro.descrizione,
-        attivo: newCalibro.attivo !== false,
-        ...buildAuditFields()
-      });
-    }
-
-    onUpdateData({ calibri: updatedList });
     resetAllForms();
   };
 
@@ -526,12 +520,6 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
         <button onClick={() => setActiveTab('PRODOTTI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'PRODOTTI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
           <Apple size={18} /> Prodotti
         </button>
-        <button onClick={() => setActiveTab('TIPOLOGIE')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'TIPOLOGIE' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
-          <ListTree size={18} /> Tipologie
-        </button>
-        <button onClick={() => setActiveTab('CALIBRI')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'CALIBRI' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
-          <Ruler size={18} /> Calibri
-        </button>
         <button onClick={() => setActiveTab('VARIETA')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'VARIETA' ? 'bg-agri-100 text-agri-800' : 'text-gray-600 hover:bg-gray-100'}`}>
           <Sprout size={18} /> Varietà
         </button>
@@ -622,10 +610,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     <button onClick={addTipologiaDraft} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16} /></button>
                   </div>
                   <div className="space-y-1">
-                    {draftTipologie.map((tipologia) => (
+                    {draftTipologie.map((tipologia, index) => (
                       <div key={tipologia.nome} className="flex items-center justify-between bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
                         <span>{tipologia.nome}</span>
-                        <button onClick={() => removeTipologiaDraft(tipologia.nome)}><Trash2 size={12} /></button>
+                        <div className="flex items-center gap-1">
+                          <button disabled={index === 0} onClick={() => moveTipologiaDraft(index, -1)} className="disabled:opacity-40"><ChevronUp size={12} /></button>
+                          <button disabled={index === draftTipologie.length - 1} onClick={() => moveTipologiaDraft(index, 1)} className="disabled:opacity-40"><ChevronDown size={12} /></button>
+                          <button onClick={() => removeTipologiaDraft(tipologia.nome)}><Trash2 size={12} /></button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -641,20 +633,17 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                       value={nuovoCalibroNome}
                       onChange={(event) => setNuovoCalibroNome(event.target.value)}
                     />
-                    <input
-                      type="number"
-                      className="w-24 border rounded p-2 text-sm"
-                      placeholder="Ord."
-                      value={nuovoCalibroOrd}
-                      onChange={(event) => setNuovoCalibroOrd(parseInt(event.target.value, 10) || 1)}
-                    />
                     <button onClick={addCalibroDraft} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16} /></button>
                   </div>
                   <div className="space-y-1">
-                    {draftCalibri.map((calibro) => (
+                    {draftCalibri.map((calibro, index) => (
                       <div key={calibro.nome} className="flex items-center justify-between bg-purple-50 text-purple-800 text-xs px-2 py-1 rounded">
-                        <span>{calibro.nome} (ord. {calibro.ordinamento})</span>
-                        <button onClick={() => removeCalibroDraft(calibro.nome)}><Trash2 size={12} /></button>
+                        <span>{calibro.nome}</span>
+                        <div className="flex items-center gap-1">
+                          <button disabled={index === 0} onClick={() => moveCalibroDraft(index, -1)} className="disabled:opacity-40"><ChevronUp size={12} /></button>
+                          <button disabled={index === draftCalibri.length - 1} onClick={() => moveCalibroDraft(index, 1)} className="disabled:opacity-40"><ChevronDown size={12} /></button>
+                          <button onClick={() => removeCalibroDraft(calibro.nome)}><Trash2 size={12} /></button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -676,7 +665,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         {p.attivo === false && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Disattivato</span>}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">Tipologie: {data.tipologie.filter(t => t.prodottoId === p.id && t.attivo).map(t => t.nome).join(', ') || '-'}</div>
-                      <div className="text-xs text-gray-500">Calibri: {data.calibri.filter(c => c.prodottoId === p.id && c.attivo).sort((a,b) => a.ordinamento - b.ordinamento).map(c => `${c.nome}(${c.ordinamento})`).join(', ') || '-'}</div>
+                      <div className="text-xs text-gray-500">Calibri: {data.calibri.filter(c => c.prodottoId === p.id && c.attivo).sort((a,b) => a.ordinamento - b.ordinamento).map(c => c.nome).join(', ') || '-'}</div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => startEditProdotto(p)} className="text-gray-400 hover:text-orange-500 p-2"><Pencil size={16} /></button>

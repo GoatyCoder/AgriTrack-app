@@ -46,7 +46,7 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - ✅ Gestione sessioni produzione e lavorazioni
 - ✅ Tracciabilità pedane con codici univoci
 - ✅ Report base con grafici
-- 🚧 Calibri e Tipologie come entità separate (in sviluppo)
+- ✅ Calibri e Tipologie come entità separate, gestite nella schermata Prodotto con ordinamento manuale da lista
 - 🚧 Testing suite (da implementare)
 - 🚧 Backend + Database (pianificato)
 - 🚧 Multi-user auth (pianificato)
@@ -605,6 +605,11 @@ await handleUpdateLavorazioneWithSnapshots(
 - Articolo con `tipologiaId` → deve esistere Tipologia
 - Lavorazione → deve esistere Articolo valido
 - Lavorazione → deve esistere Sigla Lotto valida
+
+**Implementazione corrente (frontend/localStorage):**
+- Tipologie non disattivabili se referenziate da Varietà o Articoli
+- Calibri non disattivabili se referenziati da Pedane
+- In fase di modifica Prodotto, le rimozioni non valide vengono bloccate con alert esplicito
 
 **Implementazione futura** (con backend):
 - Foreign keys DB
@@ -1696,8 +1701,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-20
-**Version**: 0.2.4
+**Last Updated**: 2026-02-15
+**Version**: 0.2.5
 **Maintained by**: Development Team
 
 ---
