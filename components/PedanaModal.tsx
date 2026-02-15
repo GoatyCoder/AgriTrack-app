@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Printer, Package } from 'lucide-react';
-import { Articolo, SessioneLinea, Pedana, Imballo } from '../types';
+import { Articolo, Lavorazione, Pedana, Imballo } from '../types';
 import { generateStickerData } from '../utils';
 import SmartSelect from './SmartSelect';
 
 interface PedanaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  sessione: SessioneLinea;
+  sessione: Lavorazione;
   sessioneLabel: string;
   lottoCode: string;
   articolo: Articolo;

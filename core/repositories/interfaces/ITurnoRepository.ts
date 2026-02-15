@@ -1,10 +1,10 @@
-import { Turno } from '../../../types';
+import { SessioneProduzione } from '../../../types';
 
 export interface ITurnoRepository {
-  getAll(): Promise<Turno[]>;
-  getById(id: string): Promise<Turno | null>;
-  getActive(): Promise<Turno | null>;
-  create(turno: Turno): Promise<Turno>;
-  update(turno: Turno): Promise<Turno>;
+  getAll(): Promise<SessioneProduzione[]>;
+  getById(id: string): Promise<SessioneProduzione | null>;
+  getActive(): Promise<SessioneProduzione | null>;
+  create(turno: SessioneProduzione): Promise<SessioneProduzione>;
+  update(turno: SessioneProduzione): Promise<SessioneProduzione>;
   delete(id: string): Promise<void>;
 }

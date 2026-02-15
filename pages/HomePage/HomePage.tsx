@@ -2,12 +2,12 @@ import React from 'react';
 import { Factory, FileText, PlayCircle, Settings } from 'lucide-react';
 
 interface HomePageProps {
-  onStartTurno: () => void;
+  onStartSessioneProduzione: () => void;
   onGoReport: () => void;
   onGoSettings: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onStartTurno, onGoReport, onGoSettings }) => {
+export const HomePage: React.FC<HomePageProps> = ({ onStartSessioneProduzione, onGoReport, onGoSettings }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full space-y-8 text-center">
@@ -18,7 +18,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onStartTurno, onGoReport, on
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-          <button onClick={onStartTurno} className="w-full flex items-center justify-center gap-3 bg-agri-600 hover:bg-agri-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95">
+          <button onClick={onStartSessioneProduzione} className="w-full flex items-center justify-center gap-3 bg-agri-600 hover:bg-agri-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95">
             <PlayCircle size={24} /> INIZIA TURNO
           </button>
 

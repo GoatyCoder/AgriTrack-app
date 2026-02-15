@@ -1,11 +1,11 @@
-import { SessioneLinea } from '../../../types';
+import { Lavorazione } from '../../../types';
 
 export interface ISessioneRepository {
-  getAll(): Promise<SessioneLinea[]>;
-  getById(id: string): Promise<SessioneLinea | null>;
-  getByTurno(turnoId: string): Promise<SessioneLinea[]>;
-  getActiveByLinea(lineaId: string): Promise<SessioneLinea[]>;
-  create(sessione: SessioneLinea): Promise<SessioneLinea>;
-  update(sessione: SessioneLinea): Promise<SessioneLinea>;
+  getAll(): Promise<Lavorazione[]>;
+  getById(id: string): Promise<Lavorazione | null>;
+  getBySessioneProduzione(sessioneProduzioneId: string): Promise<Lavorazione[]>;
+  getActiveByLinea(lineaId: string): Promise<Lavorazione[]>;
+  create(sessione: Lavorazione): Promise<Lavorazione>;
+  update(sessione: Lavorazione): Promise<Lavorazione>;
   delete(id: string): Promise<void>;
 }

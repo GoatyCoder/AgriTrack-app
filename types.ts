@@ -27,8 +27,6 @@ export interface ProdottoGrezzo extends AuditFields {
   attivo?: boolean;
 }
 
-export type Prodotto = ProdottoGrezzo;
-
 export interface Tipologia extends AuditFields {
   id: string;
   nome: string;
@@ -51,7 +49,6 @@ export interface Varieta extends AuditFields {
   prodottoId: string;
   codice: string;
   nome: string;
-  categoria?: string;
   tipologiaId?: string;
   attiva?: boolean;
 }
@@ -72,7 +69,6 @@ export interface Articolo extends AuditFields {
   nome: string;
   prodottoId?: string;
   varietaId?: string;
-  categoria?: string;
   tipologiaId?: string;
   pesoColloTeorico: number;
   tipoPeso: TipoPesoArticolo;
@@ -119,8 +115,6 @@ export interface SessioneProduzione {
   pause: PausaEvento[];
 }
 
-export type Turno = SessioneProduzione;
-
 export interface Lavorazione {
   id: string;
   sessioneProduzioneId: string;
@@ -136,8 +130,6 @@ export interface Lavorazione {
   warningSovrapposizione?: boolean;
   note?: string;
 }
-
-export type SessioneLinea = Lavorazione;
 
 export interface Pedana {
   id: string;

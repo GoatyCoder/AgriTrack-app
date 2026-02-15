@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
-import { AppState, Pedana, SessioneLinea } from '../types';
+import { AppState, Pedana, Lavorazione } from '../types';
 import { buildSessione } from '../core/services/SessioneService';
 import { SessioneConflictService } from '../core/services/domain/SessioneConflictService';
 import { ProductionValidationService } from '../core/services/domain/ProductionValidationService';
@@ -8,24 +8,24 @@ import { DialogOptions } from '../components/DialogContext';
 interface Params {
   state: AppState;
   setState: Dispatch<SetStateAction<AppState>>;
-  activeTurnoId: string | null;
-  activeSessions: SessioneLinea[];
+  activeSessioneProduzioneId: string | null;
+  activeSessions: Lavorazione[];
   showConfirm: (opts: DialogOptions) => Promise<boolean>;
   setPausingTarget: (target: { type: 'SHIFT' | 'SESSION'; id: string } | null) => void;
 }
 
-export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessions, showConfirm, setPausingTarget }: Params) => {
-  const [pendingSession, setPendingSession] = useState<SessioneLinea | null>(null);
-  const [conflictingSessions, setConflictingSessions] = useState<SessioneLinea[]>([]);
+export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId, activeSessions, showConfirm, setPausingTarget }: Params) => {
+  const [pendingSession, setPendingSession] = useState<Lavorazione | null>(null);
+  const [conflictingSessions, setConflictingSessions] = useState<Lavorazione[]>([]);
   const [selectedConflictsToClose, setSelectedConflictsToClose] = useState<string[]>([]);
 
   const [isEditSessionMode, setIsEditSessionMode] = useState(false);
-  const [editingSession, setEditingSession] = useState<SessioneLinea | null>(null);
+  const [editingSession, setEditingSession] = useState<Lavorazione | null>(null);
   const [editSessionData, setEditSessionData] = useState({ articoloId: '', siglaLottoId: '', dataIngresso: '', note: '' });
 
   const [editingCell, setEditingCell] = useState<{ sessionId: string; field: 'inizio' | 'fine' | 'note' } | null>(null);
 
-  const [sessionToSwitchLotto, setSessionToSwitchLotto] = useState<SessioneLinea | null>(null);
+  const [sessionToSwitchLotto, setSessionToSwitchLotto] = useState<Lavorazione | null>(null);
   const [switchLottoData, setSwitchLottoData] = useState({ siglaLottoId: '', dataIngresso: new Date().toISOString().split('T')[0] });
 
   const conflictService = useMemo(() => new SessioneConflictService(), []);
@@ -36,9 +36,9 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     validationService.ensureRequired(newSessionData.articoloId, 'Articolo');
     validationService.ensureRequired(newSessionData.siglaLottoId, 'Sigla lotto');
     validationService.ensureRequired(newSessionData.lineaId, 'Linea');
-    if (!activeTurnoId) return;
+    if (!activeSessioneProduzioneId) return;
     const proposedSession = buildSessione({
-      sessioneProduzioneId: activeTurnoId,
+      sessioneProduzioneId: activeSessioneProduzioneId,
       lineaId: newSessionData.lineaId,
       articoloId: newSessionData.articoloId,
       siglaLottoId: newSessionData.siglaLottoId,
@@ -59,7 +59,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     }
   };
 
-  const executeStartSession = (sessionToStart: SessioneLinea, idsToClose: string[]) => {
+  const executeStartSession = (sessionToStart: Lavorazione, idsToClose: string[]) => {
     const now = new Date().toISOString();
     setState(prev => {
       const updatedSessions = prev.lavorazioni.map(s =>
@@ -123,7 +123,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     }));
   };
 
-  const handleEditSession = (session: SessioneLinea) => {
+  const handleEditSession = (session: Lavorazione) => {
     setEditingSession(session);
     setEditSessionData({ articoloId: session.articoloId, siglaLottoId: session.siglaLottoId, dataIngresso: session.dataIngresso, note: session.note || '' });
     setIsEditSessionMode(true);
@@ -201,7 +201,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     setEditingSession(null);
   };
 
-  const handleOpenSwitchLotto = (session: SessioneLinea) => {
+  const handleOpenSwitchLotto = (session: Lavorazione) => {
     setSessionToSwitchLotto(session);
     setSwitchLottoData({ siglaLottoId: session.siglaLottoId, dataIngresso: session.dataIngresso });
   };
@@ -209,7 +209,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
   const handleSaveSwitchLotto = () => {
     if (!sessionToSwitchLotto) return;
     const now = new Date().toISOString();
-    const newSession: SessioneLinea = {
+    const newSession: Lavorazione = {
       ...sessionToSwitchLotto,
       id: crypto.randomUUID(),
       inizio: now,

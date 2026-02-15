@@ -7,8 +7,8 @@ export class LocalStorageScartoRepository implements IScartoRepository {
     return readState().scarti;
   }
 
-  async getByTurno(turnoId: string): Promise<Scarto[]> {
-    return (await this.getAll()).filter(s => s.sessioneProduzioneId === turnoId);
+  async getBySessioneProduzione(sessioneProduzioneId: string): Promise<Scarto[]> {
+    return (await this.getAll()).filter(s => s.sessioneProduzioneId === sessioneProduzioneId);
   }
 
   async create(scarto: Scarto): Promise<Scarto> {

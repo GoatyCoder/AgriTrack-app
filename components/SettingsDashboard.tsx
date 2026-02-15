@@ -33,8 +33,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const resetAllForms = () => {
     setEditingId(null);
     setNewProdotto({ nome: '', codice: '', categorie: [], calibri: [] });
-    setNewVarieta({ nome: '', codice: '', prodottoId: '', categoria: '' });
-    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', categoria: '' });
+    setNewVarieta({ nome: '', codice: '', prodottoId: '', tipologiaId: '' });
+    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', tipologiaId: '' });
     setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
     setNewImballo({ nome: '', codice: '', taraKg: 0 });
     setNewArea({ nome: '', attiva: true });
@@ -147,7 +147,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             codice: newVarieta.codice.toUpperCase(),
             nome: newVarieta.nome, 
             prodottoId: newVarieta.prodottoId,
-            categoria: newVarieta.categoria,
+            tipologiaId: newVarieta.tipologiaId,
             ...buildAuditFields()
         };
         updatedList.push(item);
@@ -168,11 +168,11 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     if (!cleanArticolo.prodottoId) {
       cleanArticolo.prodottoId = undefined;
       cleanArticolo.varietaId = undefined;
-      cleanArticolo.categoria = undefined;
+      cleanArticolo.tipologiaId = undefined;
     } else {
       // If product exists, check dependencies
-      if (cleanArticolo.varietaId) cleanArticolo.categoria = undefined;
-      if (cleanArticolo.categoria) cleanArticolo.varietaId = undefined;
+      if (cleanArticolo.varietaId) cleanArticolo.tipologiaId = undefined;
+      if (cleanArticolo.tipologiaId) cleanArticolo.varietaId = undefined;
     }
 
     let updatedList = [...data.articoli];
@@ -183,7 +183,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
              updatedAt: now, 
              ...cleanArticolo,
              prodottoId: cleanArticolo.prodottoId || undefined,
-             categoria: cleanArticolo.categoria || undefined, 
+             tipologiaId: cleanArticolo.tipologiaId || undefined, 
              varietaId: cleanArticolo.varietaId || undefined
         } as Articolo : a);
     } else {
@@ -193,7 +193,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             nome: cleanArticolo.nome!,
             prodottoId: cleanArticolo.prodottoId || undefined,
             varietaId: cleanArticolo.varietaId || undefined,
-            categoria: cleanArticolo.categoria || undefined,
+            tipologiaId: cleanArticolo.tipologiaId || undefined,
             pesoColloTeorico: Number(cleanArticolo.pesoColloTeorico),
             tipoPeso: cleanArticolo.tipoPeso as 'EGALIZZATO' | 'USCENTE',
             ...buildAuditFields()
@@ -408,7 +408,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         type="text" className="flex-1 border rounded p-2 text-sm" 
                         value={tempCat} onChange={e => setTempCat(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && addCategoryToProd()}
-                        placeholder="Aggiungi categoria..."
+                        placeholder="Aggiungi tipologia..."
                       />
                       <button onClick={addCategoryToProd} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16}/></button>
                     </div>
@@ -483,7 +483,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                <div className="grid grid-cols-4 gap-4">
                  <div className="col-span-2">
                     <label className="block text-xs font-bold text-gray-500 mb-1">Prodotto</label>
-                    <select className="w-full border rounded p-2 text-sm" value={newVarieta.prodottoId || ''} onChange={e => setNewVarieta({...newVarieta, prodottoId: e.target.value, categoria: ''})}>
+                    <select className="w-full border rounded p-2 text-sm" value={newVarieta.prodottoId || ''} onChange={e => setNewVarieta({...newVarieta, prodottoId: e.target.value, tipologiaId: ''})}>
                         <option value="">Seleziona...</option>
                         {data.prodottiGrezzi.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                     </select>
@@ -497,12 +497,12 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. Crimson" value={newVarieta.nome || ''} onChange={e => setNewVarieta({...newVarieta, nome: e.target.value})} />
                  </div>
                  <div className="col-span-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Categoria / Gruppo</label>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Tipologia / Gruppo</label>
                     {newVarieta.prodottoId ? (
                         <select 
                         className="w-full border rounded p-2 text-sm" 
-                        value={newVarieta.categoria || ''} 
-                        onChange={e => setNewVarieta({...newVarieta, categoria: e.target.value})}
+                        value={newVarieta.tipologiaId || ''} 
+                        onChange={e => setNewVarieta({...newVarieta, tipologiaId: e.target.value})}
                         >
                         <option value="">Nessuna / Generica</option>
                         {selectedProdForVar?.categorie.map(c => <option key={c} value={c}>{c}</option>)}
@@ -524,7 +524,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                                      <span className="bg-gray-200 px-2 py-0.5 rounded text-xs font-mono font-bold">{v.codice}</span>
                                      <span className="font-bold">{v.nome}</span>
                                 </div>
-                                {v.categoria && <span className="ml-2 text-xs text-white bg-blue-500 px-2 py-1 rounded">{v.categoria}</span>}
+                                {v.tipologiaId && <span className="ml-2 text-xs text-white bg-blue-500 px-2 py-1 rounded">{data.tipologie.find(t => t.id === v.tipologiaId)?.nome || v.tipologiaId}</span>}
                                 <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{pName}</span>
                             </div>
                             <div className="flex gap-2">
@@ -559,7 +559,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <select 
                           className="w-full border rounded p-2 text-sm" 
                           value={newArticolo.prodottoId || ''} 
-                          onChange={e => setNewArticolo({...newArticolo, prodottoId: e.target.value, varietaId: '', categoria: ''})}
+                          onChange={e => setNewArticolo({...newArticolo, prodottoId: e.target.value, varietaId: '', tipologiaId: ''})}
                         >
                             <option value="">Qualsiasi Prodotto (Generico)</option>
                             {data.prodottiGrezzi.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -571,11 +571,11 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <div className="space-y-2">
                             <select 
                                 className="w-full border rounded p-2 text-xs" 
-                                value={newArticolo.categoria || ''} 
-                                onChange={e => setNewArticolo({...newArticolo, categoria: e.target.value, varietaId: ''})} 
+                                value={newArticolo.tipologiaId || ''} 
+                                onChange={e => setNewArticolo({...newArticolo, tipologiaId: e.target.value, varietaId: ''})} 
                                 disabled={!newArticolo.prodottoId || !!newArticolo.varietaId}
                             >
-                                <option value="">Qualsiasi Categoria</option>
+                                <option value="">Qualsiasi Tipologia</option>
                                 {selectedProdForArt?.categorie.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
@@ -585,8 +585,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <select 
                                 className="w-full border rounded p-2 text-xs" 
                                 value={newArticolo.varietaId || ''} 
-                                onChange={e => setNewArticolo({...newArticolo, varietaId: e.target.value, categoria: ''})} 
-                                disabled={!newArticolo.prodottoId || !!newArticolo.categoria}
+                                onChange={e => setNewArticolo({...newArticolo, varietaId: e.target.value, tipologiaId: ''})} 
+                                disabled={!newArticolo.prodottoId || !!newArticolo.tipologiaId}
                             >
                                 <option value="">Qualsiasi Varietà</option>
                                 {data.varieta.filter(v => v.prodottoId === newArticolo.prodottoId).map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
@@ -615,7 +615,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                 {data.articoli.map(item => {
                     const pName = data.prodottiGrezzi.find(p => p.id === item.prodottoId)?.nome || 'Generico / Tutti';
                     let vincolo = "Tutti";
-                    if (item.categoria) vincolo = `Categ: ${item.categoria}`;
+                    if (item.tipologiaId) vincolo = `Tipologia: ${data.tipologie.find(t => t.id === item.tipologiaId)?.nome || item.tipologiaId}`;
                     if (item.varietaId) {
                          const v = data.varieta.find(v => v.id === item.varietaId);
                          vincolo = `Var: ${v?.nome || '?'}`;
@@ -663,7 +663,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <select className="w-full border rounded p-2 text-sm" value={newLotto.varietaId || ''} onChange={e => setNewLotto({...newLotto, varietaId: e.target.value})}>
                             <option value="">Seleziona...</option>
                             {data.varieta.map(v => (
-                                <option key={v.id} value={v.id}>{v.nome} {v.categoria ? `(${v.categoria})` : ''}</option>
+                                <option key={v.id} value={v.id}>{v.nome} {v.tipologiaId ? `(${data.tipologie.find(t => t.id === v.tipologiaId)?.nome || v.tipologiaId})` : ''}</option>
                             ))}
                         </select>
                     </div>

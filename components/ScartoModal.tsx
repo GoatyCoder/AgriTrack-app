@@ -5,14 +5,14 @@ import { Scarto, SiglaLotto } from '../types';
 interface ScartoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  turnoId: string;
+  sessioneProduzioneId: string;
   sigleLotto: SiglaLotto[]; 
   tipologieOptions: string[];
   onSave: (scarto: Omit<Scarto, 'id' | 'timestamp'>) => void;
 }
 
 const ScartoModal: React.FC<ScartoModalProps> = ({ 
-  isOpen, onClose, turnoId, sigleLotto, tipologieOptions, onSave 
+  isOpen, onClose, sessioneProduzioneId, sigleLotto, tipologieOptions, onSave 
 }) => {
   const [siglaLottoId, setSiglaLottoId] = useState<string>(sigleLotto[0]?.id || '');
   const [dataIngresso, setDataIngresso] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -24,7 +24,7 @@ const ScartoModal: React.FC<ScartoModalProps> = ({
   const handleSave = () => {
     if (peso <= 0 || !siglaLottoId) return;
     onSave({
-      turnoId,
+      sessioneProduzioneId,
       siglaLottoId,
       dataIngresso,
       tipologia,

@@ -6,7 +6,7 @@ import { AppState, Articolo } from '../../types';
 
 interface AppRoutesProps {
   view: 'HOME' | 'MONITOR' | 'REPORT' | 'SETTINGS';
-  onStartTurno: () => void;
+  onStartSessioneProduzione: () => void;
   onGoReport: () => void;
   onGoSettings: () => void;
   monitorNode: React.ReactNode;
@@ -17,7 +17,7 @@ interface AppRoutesProps {
 
 export const AppRoutes: React.FC<AppRoutesProps> = ({
   view,
-  onStartTurno,
+  onStartSessioneProduzione,
   onGoReport,
   onGoSettings,
   monitorNode,
@@ -25,7 +25,7 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({
   articoli,
   onUpdateData
 }) => {
-  if (view === 'HOME') return <HomePage onStartTurno={onStartTurno} onGoReport={onGoReport} onGoSettings={onGoSettings} />;
+  if (view === 'HOME') return <HomePage onStartSessioneProduzione={onStartSessioneProduzione} onGoReport={onGoReport} onGoSettings={onGoSettings} />;
   if (view === 'REPORT') return <ReportPage data={state} articoli={articoli} />;
   if (view === 'SETTINGS') return <SettingsPage data={state} onUpdateData={onUpdateData} />;
   return <>{monitorNode}</>;

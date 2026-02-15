@@ -60,11 +60,11 @@ export const normalizeLegacyState = (raw: any): AppState => {
     tipologieScarto: applyAuditDefaults(raw.tipologieScarto || INITIAL_TIPOLOGIE_SCARTO),
     tipologie,
     calibri: applyAuditDefaults(raw.calibri || INITIAL_CALIBRI),
-    sessioniProduzione: (raw.sessioniProduzione || raw.turni || []).map((sessione: any) => ({
+    sessioniProduzione: (raw.sessioniProduzione || []).map((sessione: any) => ({
       ...sessione,
       areaId: sessione.areaId || defaultAreaId
     })),
-    lavorazioni: (raw.lavorazioni || raw.sessioni || []).map((lavorazione: any) => ({
+    lavorazioni: (raw.lavorazioni || []).map((lavorazione: any) => ({
       ...lavorazione,
       sessioneProduzioneId: lavorazione.sessioneProduzioneId || lavorazione.turnoId,
       lineaId: lavorazione.lineaId || LEGACY_LINEA_TO_LINEA_ID[lavorazione.linea] || linee[0]?.id || INITIAL_LINEE[0].id,
@@ -72,27 +72,27 @@ export const normalizeLegacyState = (raw: any): AppState => {
     })),
     varieta: applyAuditDefaults((raw.varieta || INITIAL_VARIETA).map((varieta: any) => ({
       ...varieta,
-      tipologiaId: varieta.tipologiaId || tipologie.find((tipologia: any) => tipologia.nome === varieta.categoria && tipologia.prodottoId === varieta.prodottoId)?.id
+      tipologiaId: varieta.tipologiaId
     }))),
     articoli: applyAuditDefaults((raw.articoli || INITIAL_ARTICOLI).map((articolo: any) => ({
       ...articolo,
-      tipologiaId: articolo.tipologiaId || tipologie.find((tipologia: any) => tipologia.nome === articolo.categoria && tipologia.prodottoId === articolo.prodottoId)?.id
+      tipologiaId: articolo.tipologiaId
     }))),
     sigleLotto: applyAuditDefaults(raw.sigleLotto || INITIAL_SIGLE_LOTTO),
     imballi: applyAuditDefaults(raw.imballi || INITIAL_IMBALLI),
-    prodottiGrezzi: applyAuditDefaults(raw.prodottiGrezzi || raw.prodotti || INITIAL_PRODOTTI),
+    prodottiGrezzi: applyAuditDefaults(raw.prodottiGrezzi || INITIAL_PRODOTTI),
     pedane: (raw.pedane || []).map((pedana: any, idx: number) => ({
       ...pedana,
       doy: pedana.doy ?? (parseInt((pedana.stickerCode || '').split('-')[1], 10) || 0),
       seq: pedana.seq ?? (parseInt((pedana.stickerCode || '').split('-')[2], 10) || idx + 1),
       imballoId: pedana.imballoId || undefined,
       calibroId: pedana.calibroId || undefined,
-      snapshotImballo: pedana.snapshotImballo || (pedana.imballo ? { codice: '', nome: pedana.imballo } : undefined),
-      snapshotCalibro: pedana.snapshotCalibro || (pedana.calibro ? { nome: pedana.calibro } : undefined)
+      snapshotImballo: pedana.snapshotImballo,
+      snapshotCalibro: pedana.snapshotCalibro
     })),
     scarti: (raw.scarti || []).map((scarto: any) => ({
       ...scarto,
-      sessioneProduzioneId: scarto.sessioneProduzioneId || scarto.turnoId
+      sessioneProduzioneId: scarto.sessioneProduzioneId
     }))
   };
 };

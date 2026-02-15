@@ -1,8 +1,8 @@
-import { Articolo, Imballo, Pedana, SessioneLinea, SiglaLotto } from '../../../types';
+import { Articolo, Imballo, Pedana, Lavorazione, SiglaLotto } from '../../../types';
 
 export class PedanaFactory {
   create(params: {
-    sessione: SessioneLinea;
+    sessione: Lavorazione;
     articolo: Articolo;
     lotto: SiglaLotto;
     imballo?: Imballo;

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AppState, SessioneLinea, Turno } from '../types';
+import { AppState, Lavorazione, SessioneProduzione } from '../types';
 import { ArticoloLottoCompatibilityService } from '../core/services/domain/ArticoloLottoCompatibilityService';
 
 export const useSessionForm = (
   state: AppState,
-  activeTurno: Turno | undefined,
-  sessionToSwitchLotto: SessioneLinea | null
+  activeSessioneProduzione: SessioneProduzione | undefined,
+  sessionToSwitchLotto: Lavorazione | null
 ) => {
   const [isNewSessionMode, setIsNewSessionMode] = useState(false);
   const [newSessionData, setNewSessionData] = useState({
@@ -19,10 +19,10 @@ export const useSessionForm = (
   const compatibilityService = useMemo(() => new ArticoloLottoCompatibilityService(), []);
 
   useEffect(() => {
-    if (!activeTurno) return;
-    const firstLineaArea = state.linee.find(l => l.areaId === activeTurno.areaId && l.attiva !== false)?.id || state.linee[0]?.id || '';
-    setNewSessionData(prev => ({ ...prev, areaId: activeTurno.areaId, lineaId: firstLineaArea || prev.lineaId }));
-  }, [activeTurno, state.linee]);
+    if (!activeSessioneProduzione) return;
+    const firstLineaArea = state.linee.find(l => l.areaId === activeSessioneProduzione.areaId && l.attiva !== false)?.id || state.linee[0]?.id || '';
+    setNewSessionData(prev => ({ ...prev, areaId: activeSessioneProduzione.areaId, lineaId: firstLineaArea || prev.lineaId }));
+  }, [activeSessioneProduzione, state.linee]);
 
   const selectedLotto = state.sigleLotto.find(s => s.id === newSessionData.siglaLottoId);
   const selectedLottoVarieta = selectedLotto ? state.varieta.find(v => v.id === selectedLotto.varietaId) : null;
