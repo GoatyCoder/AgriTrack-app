@@ -66,7 +66,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
         idsToClose.includes(s.id) ? { ...s, fine: now, status: 'CHIUSA' as const } : s
       );
       updatedSessions.push(sessionToStart);
-      return { ...prev, sessioni: updatedSessions };
+      return { ...prev, sessioni: updatedSessions, lavorazioni: updatedSessions };
     });
     setPendingSession(null);
     setConflictingSessions([]);
@@ -100,7 +100,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
   const handleCloseSession = async (sessionId: string) => {
     const confirmed = await showConfirm({ title: 'Chiudi Sessione', message: 'Terminare definitivamente la lavorazione?', variant: 'INFO' });
     if (!confirmed) return;
-    setState(prev => ({ ...prev, sessioni: prev.sessioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s) }));
+    setState(prev => ({ ...prev, sessioni: prev.sessioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s), lavorazioni: prev.sessioni.map(s => s.id === sessionId ? { ...s, fine: new Date().toISOString(), status: 'CHIUSA' as const } : s) }));
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -119,6 +119,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     setState(prev => ({
       ...prev,
       sessioni: prev.sessioni.filter(s => s.id !== sessionId),
+      lavorazioni: prev.sessioni.filter(s => s.id !== sessionId),
       pedane: prev.pedane.filter(p => p.sessioneId !== sessionId)
     }));
   };
@@ -180,6 +181,7 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     setState(prev => ({
       ...prev,
       sessioni: prev.sessioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s),
+      lavorazioni: prev.sessioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s),
       pedane: shouldUpdateSnapshots
         ? prev.pedane.map(p => {
             if (p.sessioneId !== editingSession.id) return p;
@@ -223,7 +225,8 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
 
     setState(prev => ({
       ...prev,
-      sessioni: [...prev.sessioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s), newSession]
+      sessioni: [...prev.sessioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s), newSession],
+      lavorazioni: [...prev.sessioni.map(s => s.id === sessionToSwitchLotto.id ? { ...s, fine: now, status: 'CHIUSA' as const } : s), newSession]
     }));
     setSessionToSwitchLotto(null);
   };

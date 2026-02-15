@@ -1,26 +1,35 @@
-export interface Area {
+export interface AuditFields {
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface Area extends AuditFields {
   id: string;
   nome: string;
   attiva: boolean;
 }
 
-export interface Linea {
+export interface Linea extends AuditFields {
   id: string;
   areaId: string;
   nome: string;
   attiva: boolean;
 }
 
-export interface Prodotto {
+export interface ProdottoGrezzo extends AuditFields {
   id: string;
   codice: string;
   nome: string;
-  categorie: string[];
-  calibri: string[];
+  categorie: string[]; // legacy compatibility
+  calibri: string[]; // legacy compatibility
   attivo?: boolean;
 }
 
-export interface Tipologia {
+export type Prodotto = ProdottoGrezzo;
+
+export interface Tipologia extends AuditFields {
   id: string;
   nome: string;
   prodottoId: string;
@@ -28,7 +37,7 @@ export interface Tipologia {
   attivo: boolean;
 }
 
-export interface Calibro {
+export interface Calibro extends AuditFields {
   id: string;
   nome: string;
   prodottoId: string;
@@ -37,7 +46,7 @@ export interface Calibro {
   attivo: boolean;
 }
 
-export interface Varieta {
+export interface Varieta extends AuditFields {
   id: string;
   prodottoId: string;
   codice: string;
@@ -47,7 +56,7 @@ export interface Varieta {
   attiva?: boolean;
 }
 
-export interface SiglaLotto {
+export interface SiglaLotto extends AuditFields {
   id: string;
   code: string;
   produttore: string;
@@ -57,7 +66,7 @@ export interface SiglaLotto {
 
 export type TipoPesoArticolo = 'EGALIZZATO' | 'USCENTE';
 
-export interface Articolo {
+export interface Articolo extends AuditFields {
   id: string;
   codice: string;
   nome: string;
@@ -70,7 +79,7 @@ export interface Articolo {
   attivo?: boolean;
 }
 
-export interface Imballo {
+export interface Imballo extends AuditFields {
   id: string;
   codice: string;
   nome: string;
@@ -78,11 +87,19 @@ export interface Imballo {
   attivo?: boolean;
 }
 
-export interface TipologiaScarto {
+export interface TipologiaScarto extends AuditFields {
   id: string;
   codice: string;
   nome: string;
   prodottoId?: string;
+  attiva: boolean;
+}
+
+export interface CategoriaCommerciale extends AuditFields {
+  id: string;
+  nome: string;
+  ordinamento: number;
+  descrizione?: string;
   attiva: boolean;
 }
 
@@ -92,7 +109,7 @@ export interface PausaEvento {
   motivo?: string;
 }
 
-export interface Turno {
+export interface SessioneProduzione {
   id: string;
   inizio: string;
   fine?: string;
@@ -102,12 +119,16 @@ export interface Turno {
   pause: PausaEvento[];
 }
 
-export interface SessioneLinea {
+export type Turno = SessioneProduzione;
+
+export interface Lavorazione {
   id: string;
-  turnoId: string;
+  sessioneProduzioneId?: string;
+  turnoId?: string; // legacy
   lineaId: string;
   siglaLottoId: string;
   dataIngresso: string;
+  doyIngresso?: number;
   articoloId: string;
   inizio: string;
   fine?: string;
@@ -116,6 +137,8 @@ export interface SessioneLinea {
   warningSovrapposizione?: boolean;
   note?: string;
 }
+
+export type SessioneLinea = Lavorazione;
 
 export interface Pedana {
   id: string;
@@ -139,7 +162,8 @@ export interface Pedana {
 
 export interface Scarto {
   id: string;
-  turnoId: string;
+  sessioneProduzioneId?: string;
+  turnoId?: string; // legacy
   siglaLottoId: string;
   dataIngresso: string;
   tipologia: string;
@@ -150,13 +174,16 @@ export interface Scarto {
 
 export interface AppState {
   schemaVersion: string;
-  turni: Turno[];
-  sessioni: SessioneLinea[];
+  sessioniProduzione: SessioneProduzione[];
+  lavorazioni: Lavorazione[];
+  turni: Turno[]; // legacy mirror
+  sessioni: SessioneLinea[]; // legacy mirror
   pedane: Pedana[];
   scarti: Scarto[];
   aree: Area[];
   linee: Linea[];
-  prodotti: Prodotto[];
+  prodottiGrezzi: ProdottoGrezzo[];
+  prodotti: Prodotto[]; // legacy mirror
   tipologie: Tipologia[];
   calibri: Calibro[];
   varieta: Varieta[];
@@ -164,4 +191,5 @@ export interface AppState {
   sigleLotto: SiglaLotto[];
   imballi: Imballo[];
   tipologieScarto: TipologiaScarto[];
+  categorieCommerciali?: CategoriaCommerciale[];
 }

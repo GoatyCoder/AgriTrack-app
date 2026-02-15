@@ -76,6 +76,12 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
 
+
+  const buildAuditFields = () => ({
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+
   // --- Save Handlers ---
 
   // Prodotti
@@ -105,7 +111,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
     if (editingId) {
         // Update
-        updatedList = updatedList.map(p => p.id === editingId ? { ...p, ...newProdotto } as Prodotto : p);
+        updatedList = updatedList.map(p => p.id === editingId ? { ...p, ...newProdotto, updatedAt: new Date().toISOString() } as Prodotto : p);
     } else {
         // Create
         const item: Prodotto = { 
@@ -113,7 +119,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             codice: newProdotto.codice.toUpperCase(),
             nome: newProdotto.nome,
             categorie: newProdotto.categorie || [],
-            calibri: newProdotto.calibri || []
+            calibri: newProdotto.calibri || [],
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -128,14 +135,15 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     let updatedList = [...data.varieta];
 
     if (editingId) {
-        updatedList = updatedList.map(v => v.id === editingId ? { ...v, ...newVarieta } as Varieta : v);
+        updatedList = updatedList.map(v => v.id === editingId ? { ...v, ...newVarieta, updatedAt: new Date().toISOString() } as Varieta : v);
     } else {
         const item: Varieta = { 
             id: crypto.randomUUID(), 
             codice: newVarieta.codice.toUpperCase(),
             nome: newVarieta.nome, 
             prodottoId: newVarieta.prodottoId,
-            categoria: newVarieta.categoria 
+            categoria: newVarieta.categoria,
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -165,7 +173,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
     if (editingId) {
         updatedList = updatedList.map(a => a.id === editingId ? {
-             ...a, 
+             ...a,
+             updatedAt: new Date().toISOString(), 
              ...cleanArticolo,
              prodottoId: cleanArticolo.prodottoId || undefined,
              categoria: cleanArticolo.categoria || undefined, 
@@ -180,7 +189,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             varietaId: cleanArticolo.varietaId || undefined,
             categoria: cleanArticolo.categoria || undefined,
             pesoColloTeorico: Number(cleanArticolo.pesoColloTeorico),
-            tipoPeso: cleanArticolo.tipoPeso as 'EGALIZZATO' | 'USCENTE'
+            tipoPeso: cleanArticolo.tipoPeso as 'EGALIZZATO' | 'USCENTE',
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -195,14 +205,15 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     let updatedList = [...data.sigleLotto];
 
     if (editingId) {
-         updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLotto } as SiglaLotto : l);
+         updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLotto, updatedAt: new Date().toISOString() } as SiglaLotto : l);
     } else {
         const item: SiglaLotto = {
             id: crypto.randomUUID(),
             code: newLotto.code,
             produttore: newLotto.produttore,
             varietaId: newLotto.varietaId,
-            campo: newLotto.campo || ''
+            campo: newLotto.campo || '',
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -217,12 +228,13 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     let updatedList = [...data.imballi];
 
     if (editingId) {
-        updatedList = updatedList.map(i => i.id === editingId ? { ...i, ...newImballo } as Imballo : i);
+        updatedList = updatedList.map(i => i.id === editingId ? { ...i, ...newImballo, updatedAt: new Date().toISOString() } as Imballo : i);
     } else {
         const item: Imballo = {
             id: crypto.randomUUID(),
             codice: newImballo.codice.toUpperCase(),
-            nome: newImballo.nome
+            nome: newImballo.nome,
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -246,9 +258,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     if (!newArea.nome) return;
     let updatedList = [...data.aree];
     if (editingId) {
-      updatedList = updatedList.map(a => a.id === editingId ? { ...a, ...newArea } as Area : a);
+      updatedList = updatedList.map(a => a.id === editingId ? { ...a, ...newArea, updatedAt: new Date().toISOString() } as Area : a);
     } else {
-      updatedList.push({ id: crypto.randomUUID(), nome: newArea.nome, attiva: newArea.attiva !== false });
+      updatedList.push({ id: crypto.randomUUID(), nome: newArea.nome, attiva: newArea.attiva !== false, ...buildAuditFields() });
     }
     onUpdateData({ aree: updatedList });
     resetAllForms();
@@ -258,9 +270,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     if (!newLinea.nome || !newLinea.areaId) return;
     let updatedList = [...data.linee];
     if (editingId) {
-      updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLinea } as Linea : l);
+      updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLinea, updatedAt: new Date().toISOString() } as Linea : l);
     } else {
-      updatedList.push({ id: crypto.randomUUID(), nome: newLinea.nome, areaId: newLinea.areaId, attiva: newLinea.attiva !== false });
+      updatedList.push({ id: crypto.randomUUID(), nome: newLinea.nome, areaId: newLinea.areaId, attiva: newLinea.attiva !== false, ...buildAuditFields() });
     }
     onUpdateData({ linee: updatedList });
     resetAllForms();

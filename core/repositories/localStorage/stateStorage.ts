@@ -16,7 +16,16 @@ export const readState = (storageKey = DEFAULT_KEY): AppState => {
 
 export const writeState = (state: AppState, storageKey = DEFAULT_KEY): void => {
   try {
-    localStorage.setItem(storageKey, JSON.stringify(state));
+    const normalizedState: AppState = {
+      ...state,
+      sessioniProduzione: state.sessioniProduzione?.length ? state.sessioniProduzione : state.turni,
+      lavorazioni: state.lavorazioni?.length ? state.lavorazioni : state.sessioni,
+      prodottiGrezzi: state.prodottiGrezzi?.length ? state.prodottiGrezzi : state.prodotti,
+      turni: state.turni?.length ? state.turni : state.sessioniProduzione,
+      sessioni: state.sessioni?.length ? state.sessioni : state.lavorazioni,
+      prodotti: state.prodotti?.length ? state.prodotti : state.prodottiGrezzi
+    };
+    localStorage.setItem(storageKey, JSON.stringify(normalizedState));
   } catch (error) {
     throw new DataAccessError('Failed to write state to localStorage', error);
   }
