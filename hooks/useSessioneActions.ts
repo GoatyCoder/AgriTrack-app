@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
-import { AppState, SessioneLinea } from '../types';
+import { AppState, Pedana, SessioneLinea } from '../types';
 import { buildSessione } from '../core/services/SessioneService';
 import { SessioneConflictService } from '../core/services/domain/SessioneConflictService';
 import { ProductionValidationService } from '../core/services/domain/ProductionValidationService';
@@ -129,12 +129,74 @@ export const useSessioneActions = ({ state, setState, activeTurnoId, activeSessi
     setIsEditSessionMode(true);
   };
 
-  const handleSaveEditSession = () => {
+  const handleSaveEditSession = async () => {
     if (!editingSession) return;
+
+    const snapshotUpdates: Array<{ key: 'snapshotArticolo' | 'snapshotIngresso'; label: string; value: Pedana['snapshotArticolo'] | Pedana['snapshotIngresso'] }> = [];
+
+    if (editSessionData.articoloId !== editingSession.articoloId) {
+      const articolo = state.articoli.find(a => a.id === editSessionData.articoloId);
+      if (articolo) {
+        snapshotUpdates.push({
+          key: 'snapshotArticolo',
+          label: 'Articolo',
+          value: { id: articolo.id, nome: articolo.nome, codice: articolo.codice }
+        });
+      }
+    }
+
+    if (
+      editSessionData.siglaLottoId !== editingSession.siglaLottoId ||
+      editSessionData.dataIngresso !== editingSession.dataIngresso
+    ) {
+      const lotto = state.sigleLotto.find(l => l.id === editSessionData.siglaLottoId);
+      if (lotto) {
+        snapshotUpdates.push({
+          key: 'snapshotIngresso',
+          label: 'Lotto Ingresso',
+          value: {
+            siglaLottoId: lotto.id,
+            lottoCode: lotto.code,
+            dataIngresso: editSessionData.dataIngresso
+          }
+        });
+      }
+    }
+
+    const pedaneCollegate = state.pedane.filter(p => p.sessioneId === editingSession.id);
+    let shouldUpdateSnapshots = false;
+
+    if (pedaneCollegate.length > 0 && snapshotUpdates.length > 0) {
+      const labels = snapshotUpdates.map(su => su.label).join(', ');
+      shouldUpdateSnapshots = await showConfirm({
+        title: 'Aggiorna Pedane Esistenti?',
+        message: `Questa lavorazione ha ${pedaneCollegate.length} pedane già create. Stai modificando: ${labels}. Vuoi aggiornare anche i dati snapshot delle pedane?`,
+        variant: 'INFO',
+        confirmText: 'Sì, Aggiorna Tutte',
+        cancelText: 'No, Mantieni Originali'
+      });
+    }
+
     setState(prev => ({
       ...prev,
-      sessioni: prev.sessioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s)
+      sessioni: prev.sessioni.map(s => s.id === editingSession.id ? { ...s, ...editSessionData } : s),
+      pedane: shouldUpdateSnapshots
+        ? prev.pedane.map(p => {
+            if (p.sessioneId !== editingSession.id) return p;
+            const patched: Pedana = { ...p };
+            snapshotUpdates.forEach(su => {
+              if (su.key === 'snapshotArticolo') {
+                patched.snapshotArticolo = su.value as Pedana['snapshotArticolo'];
+              }
+              if (su.key === 'snapshotIngresso') {
+                patched.snapshotIngresso = su.value as Pedana['snapshotIngresso'];
+              }
+            });
+            return patched;
+          })
+        : prev.pedane
     }));
+
     setIsEditSessionMode(false);
     setEditingSession(null);
   };

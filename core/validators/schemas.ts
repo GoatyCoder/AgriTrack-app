@@ -42,9 +42,13 @@ const PedanaSchema = z.object({
   timestamp: z.string(),
   imballoId: z.string().optional(),
   calibro: z.string().optional(),
+  calibroId: z.string().optional(),
+  categoriaCommercialeId: z.string().optional(),
   snapshotImballo: z.object({ codice: z.string(), nome: z.string() }).optional(),
   snapshotArticolo: z.object({ id: z.string(), nome: z.string(), codice: z.string() }).optional(),
-  snapshotIngresso: z.object({ siglaLottoId: z.string(), lottoCode: z.string(), dataIngresso: z.string() }).optional()
+  snapshotIngresso: z.object({ siglaLottoId: z.string(), lottoCode: z.string(), dataIngresso: z.string() }).optional(),
+  snapshotCalibro: z.object({ nome: z.string() }).optional(),
+  snapshotCategoria: z.object({ nome: z.string() }).optional()
 });
 
 const BaseEntitySchema = z.object({
@@ -54,6 +58,7 @@ const BaseEntitySchema = z.object({
 });
 
 export const AppStateSchema = z.object({
+  schemaVersion: z.string().default('0.2.0'),
   turni: z.array(TurnoSchema),
   sessioni: z.array(SessioneSchema),
   pedane: z.array(PedanaSchema),
@@ -70,8 +75,10 @@ export const AppStateSchema = z.object({
   aree: z.array(z.object({ id: z.string(), nome: z.string(), attiva: z.boolean() })),
   linee: z.array(z.object({ id: z.string(), areaId: z.string(), nome: z.string(), attiva: z.boolean() })),
   prodotti: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), categorie: z.array(z.string()), calibri: z.array(z.string()), attivo: z.boolean().optional() })),
-  varieta: z.array(z.object({ id: z.string(), prodottoId: z.string(), codice: z.string(), nome: z.string(), categoria: z.string().optional(), attiva: z.boolean().optional() })),
-  articoli: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), prodottoId: z.string().optional(), varietaId: z.string().optional(), categoria: z.string().optional(), pesoColloTeorico: z.number(), tipoPeso: z.enum(['EGALIZZATO', 'USCENTE']), attivo: z.boolean().optional() })),
+  tipologie: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), ordinamento: z.number(), attivo: z.boolean() })).default([]),
+  calibri: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), ordinamento: z.number(), descrizione: z.string().optional(), attivo: z.boolean() })).default([]),
+  varieta: z.array(z.object({ id: z.string(), prodottoId: z.string(), codice: z.string(), nome: z.string(), categoria: z.string().optional(), tipologiaId: z.string().optional(), attiva: z.boolean().optional() })),
+  articoli: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), prodottoId: z.string().optional(), varietaId: z.string().optional(), categoria: z.string().optional(), tipologiaId: z.string().optional(), pesoColloTeorico: z.number(), tipoPeso: z.enum(['EGALIZZATO', 'USCENTE']), attivo: z.boolean().optional() })),
   sigleLotto: z.array(z.object({ id: z.string(), code: z.string(), produttore: z.string(), varietaId: z.string(), campo: z.string() })),
   imballi: z.array(BaseEntitySchema.extend({ taraKg: z.number().optional(), attivo: z.boolean().optional() })),
   tipologieScarto: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), prodottoId: z.string().optional(), attiva: z.boolean() }))

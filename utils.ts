@@ -7,6 +7,11 @@ export const computeDoy = (date = new Date()): number => {
   return Math.floor(diff / oneDay);
 };
 
+export const doyToDate = (doy: number, year: number): Date => {
+  const start = new Date(year, 0, 0);
+  return new Date(start.getTime() + doy * 24 * 60 * 60 * 1000);
+};
+
 export const generateStickerData = (pedaneCountToday: number): { stickerCode: string; doy: number; seq: number } => {
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);

@@ -20,12 +20,30 @@ export interface Prodotto {
   attivo?: boolean;
 }
 
+export interface Tipologia {
+  id: string;
+  nome: string;
+  prodottoId: string;
+  ordinamento: number;
+  attivo: boolean;
+}
+
+export interface Calibro {
+  id: string;
+  nome: string;
+  prodottoId: string;
+  ordinamento: number;
+  descrizione?: string;
+  attivo: boolean;
+}
+
 export interface Varieta {
   id: string;
   prodottoId: string;
   codice: string;
   nome: string;
-  categoria?: string;
+  categoria?: string; // legacy
+  tipologiaId?: string;
   attiva?: boolean;
 }
 
@@ -45,7 +63,8 @@ export interface Articolo {
   nome: string;
   prodottoId?: string;
   varietaId?: string;
-  categoria?: string;
+  categoria?: string; // legacy
+  tipologiaId?: string;
   pesoColloTeorico: number;
   tipoPeso: TipoPesoArticolo;
   attivo?: boolean;
@@ -108,10 +127,14 @@ export interface Pedana {
   pesoTotale: number;
   timestamp: string;
   imballoId?: string;
-  calibro?: string;
+  calibro?: string; // legacy
+  calibroId?: string;
+  categoriaCommercialeId?: string;
   snapshotImballo?: { codice: string; nome: string };
   snapshotArticolo?: { id: string; nome: string; codice: string };
   snapshotIngresso?: { siglaLottoId: string; lottoCode: string; dataIngresso: string };
+  snapshotCalibro?: { nome: string };
+  snapshotCategoria?: { nome: string };
 }
 
 export interface Scarto {
@@ -126,6 +149,7 @@ export interface Scarto {
 }
 
 export interface AppState {
+  schemaVersion: string;
   turni: Turno[];
   sessioni: SessioneLinea[];
   pedane: Pedana[];
@@ -133,6 +157,8 @@ export interface AppState {
   aree: Area[];
   linee: Linea[];
   prodotti: Prodotto[];
+  tipologie: Tipologia[];
+  calibri: Calibro[];
   varieta: Varieta[];
   articoli: Articolo[];
   sigleLotto: SiglaLotto[];
