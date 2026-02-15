@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, X, Pencil, RotateCcw, Factory } from 'lucide-react';
-import { AppState, Articolo, SiglaLotto, Prodotto, Varieta, Imballo, Area, Linea } from '../types';
+import { AppState, Articolo, SiglaLotto, ProdottoGrezzo, Varieta, Imballo, Area, Linea } from '../types';
 import { useDialog } from './DialogContext';
 
 interface SettingsDashboardProps {
@@ -14,7 +14,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Forms State
-  const [newProdotto, setNewProdotto] = useState<Partial<Prodotto>>({ categorie: [], calibri: [] });
+  const [newProdotto, setNewProdotto] = useState<Partial<ProdottoGrezzo>>({ categorie: [], calibri: [] });
   const [tempCat, setTempCat] = useState('');
   const [tempCal, setTempCal] = useState('');
 
@@ -33,8 +33,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const resetAllForms = () => {
     setEditingId(null);
     setNewProdotto({ nome: '', codice: '', categorie: [], calibri: [] });
-    setNewVarieta({ nome: '', codice: '', prodottoId: '', categoria: '' });
-    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', categoria: '' });
+    setNewVarieta({ nome: '', codice: '', prodottoId: '', tipologiaId: '' });
+    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', tipologiaId: '' });
     setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
     setNewImballo({ nome: '', codice: '', taraKg: 0 });
     setNewArea({ nome: '', attiva: true });
@@ -45,7 +45,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
   // --- Start Edit Handlers ---
   
-  const startEditProdotto = (p: Prodotto) => {
+  const startEditProdotto = (p: ProdottoGrezzo) => {
     setEditingId(p.id);
     setNewProdotto({ ...p });
     // Scroll to top
@@ -76,6 +76,15 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
 
+
+  const buildAuditFields = () => {
+    const now = new Date().toISOString();
+    return {
+      createdAt: now,
+      updatedAt: now
+    };
+  };
+
   // --- Save Handlers ---
 
   // Prodotti
@@ -100,42 +109,46 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
   const saveProdotto = () => {
     if (!newProdotto.nome || !newProdotto.codice) return;
-    
-    let updatedList = [...data.prodotti];
+    const now = new Date().toISOString();
+
+    let updatedList = [...data.prodottiGrezzi];
 
     if (editingId) {
         // Update
-        updatedList = updatedList.map(p => p.id === editingId ? { ...p, ...newProdotto } as Prodotto : p);
+        updatedList = updatedList.map(p => p.id === editingId ? { ...p, ...newProdotto, updatedAt: now } as ProdottoGrezzo : p);
     } else {
         // Create
-        const item: Prodotto = { 
+        const item: ProdottoGrezzo = { 
             id: crypto.randomUUID(), 
             codice: newProdotto.codice.toUpperCase(),
             nome: newProdotto.nome,
             categorie: newProdotto.categorie || [],
-            calibri: newProdotto.calibri || []
+            calibri: newProdotto.calibri || [],
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
     
-    onUpdateData({ prodotti: updatedList });
+    onUpdateData({ prodottiGrezzi: updatedList });
     resetAllForms();
   };
 
   const saveVarieta = () => {
+    const now = new Date().toISOString();
     if (!newVarieta.nome || !newVarieta.prodottoId || !newVarieta.codice) return;
     
     let updatedList = [...data.varieta];
 
     if (editingId) {
-        updatedList = updatedList.map(v => v.id === editingId ? { ...v, ...newVarieta } as Varieta : v);
+        updatedList = updatedList.map(v => v.id === editingId ? { ...v, ...newVarieta, updatedAt: now } as Varieta : v);
     } else {
         const item: Varieta = { 
             id: crypto.randomUUID(), 
             codice: newVarieta.codice.toUpperCase(),
             nome: newVarieta.nome, 
             prodottoId: newVarieta.prodottoId,
-            categoria: newVarieta.categoria 
+            tipologiaId: newVarieta.tipologiaId,
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -145,6 +158,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
   const saveArticolo = () => {
+    const now = new Date().toISOString();
     // Check required fields (prodottoId is now optional)
     if (!newArticolo.nome || !newArticolo.pesoColloTeorico || !newArticolo.codice) return;
     
@@ -154,21 +168,22 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     if (!cleanArticolo.prodottoId) {
       cleanArticolo.prodottoId = undefined;
       cleanArticolo.varietaId = undefined;
-      cleanArticolo.categoria = undefined;
+      cleanArticolo.tipologiaId = undefined;
     } else {
       // If product exists, check dependencies
-      if (cleanArticolo.varietaId) cleanArticolo.categoria = undefined;
-      if (cleanArticolo.categoria) cleanArticolo.varietaId = undefined;
+      if (cleanArticolo.varietaId) cleanArticolo.tipologiaId = undefined;
+      if (cleanArticolo.tipologiaId) cleanArticolo.varietaId = undefined;
     }
 
     let updatedList = [...data.articoli];
 
     if (editingId) {
         updatedList = updatedList.map(a => a.id === editingId ? {
-             ...a, 
+             ...a,
+             updatedAt: now, 
              ...cleanArticolo,
              prodottoId: cleanArticolo.prodottoId || undefined,
-             categoria: cleanArticolo.categoria || undefined, 
+             tipologiaId: cleanArticolo.tipologiaId || undefined, 
              varietaId: cleanArticolo.varietaId || undefined
         } as Articolo : a);
     } else {
@@ -178,9 +193,10 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             nome: cleanArticolo.nome!,
             prodottoId: cleanArticolo.prodottoId || undefined,
             varietaId: cleanArticolo.varietaId || undefined,
-            categoria: cleanArticolo.categoria || undefined,
+            tipologiaId: cleanArticolo.tipologiaId || undefined,
             pesoColloTeorico: Number(cleanArticolo.pesoColloTeorico),
-            tipoPeso: cleanArticolo.tipoPeso as 'EGALIZZATO' | 'USCENTE'
+            tipoPeso: cleanArticolo.tipoPeso as 'EGALIZZATO' | 'USCENTE',
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -190,19 +206,21 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
   const saveLotto = () => {
+    const now = new Date().toISOString();
     if (!newLotto.code || !newLotto.produttore || !newLotto.varietaId) return;
     
     let updatedList = [...data.sigleLotto];
 
     if (editingId) {
-         updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLotto } as SiglaLotto : l);
+         updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLotto, updatedAt: now } as SiglaLotto : l);
     } else {
         const item: SiglaLotto = {
             id: crypto.randomUUID(),
             code: newLotto.code,
             produttore: newLotto.produttore,
             varietaId: newLotto.varietaId,
-            campo: newLotto.campo || ''
+            campo: newLotto.campo || '',
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -212,17 +230,19 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
   const saveImballo = () => {
+    const now = new Date().toISOString();
     if (!newImballo.nome || !newImballo.codice) return;
 
     let updatedList = [...data.imballi];
 
     if (editingId) {
-        updatedList = updatedList.map(i => i.id === editingId ? { ...i, ...newImballo } as Imballo : i);
+        updatedList = updatedList.map(i => i.id === editingId ? { ...i, ...newImballo, updatedAt: now } as Imballo : i);
     } else {
         const item: Imballo = {
             id: crypto.randomUUID(),
             codice: newImballo.codice.toUpperCase(),
-            nome: newImballo.nome
+            nome: newImballo.nome,
+            ...buildAuditFields()
         };
         updatedList.push(item);
     }
@@ -243,24 +263,26 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
   const saveArea = () => {
+    const now = new Date().toISOString();
     if (!newArea.nome) return;
     let updatedList = [...data.aree];
     if (editingId) {
-      updatedList = updatedList.map(a => a.id === editingId ? { ...a, ...newArea } as Area : a);
+      updatedList = updatedList.map(a => a.id === editingId ? { ...a, ...newArea, updatedAt: now } as Area : a);
     } else {
-      updatedList.push({ id: crypto.randomUUID(), nome: newArea.nome, attiva: newArea.attiva !== false });
+      updatedList.push({ id: crypto.randomUUID(), nome: newArea.nome, attiva: newArea.attiva !== false, ...buildAuditFields() });
     }
     onUpdateData({ aree: updatedList });
     resetAllForms();
   };
 
   const saveLinea = () => {
+    const now = new Date().toISOString();
     if (!newLinea.nome || !newLinea.areaId) return;
     let updatedList = [...data.linee];
     if (editingId) {
-      updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLinea } as Linea : l);
+      updatedList = updatedList.map(l => l.id === editingId ? { ...l, ...newLinea, updatedAt: now } as Linea : l);
     } else {
-      updatedList.push({ id: crypto.randomUUID(), nome: newLinea.nome, areaId: newLinea.areaId, attiva: newLinea.attiva !== false });
+      updatedList.push({ id: crypto.randomUUID(), nome: newLinea.nome, areaId: newLinea.areaId, attiva: newLinea.attiva !== false, ...buildAuditFields() });
     }
     onUpdateData({ linee: updatedList });
     resetAllForms();
@@ -287,8 +309,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
   // Helper selectors
-  const selectedProdForVar = data.prodotti.find(p => p.id === newVarieta.prodottoId);
-  const selectedProdForArt = data.prodotti.find(p => p.id === newArticolo.prodottoId);
+  const selectedProdForVar = data.prodottiGrezzi.find(p => p.id === newVarieta.prodottoId);
+  const selectedProdForArt = data.prodottiGrezzi.find(p => p.id === newArticolo.prodottoId);
 
   // Common Button Component
   const ActionButtons = ({ onSave }: { onSave: () => void }) => (
@@ -386,7 +408,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         type="text" className="flex-1 border rounded p-2 text-sm" 
                         value={tempCat} onChange={e => setTempCat(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && addCategoryToProd()}
-                        placeholder="Aggiungi categoria..."
+                        placeholder="Aggiungi tipologia..."
                       />
                       <button onClick={addCategoryToProd} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16}/></button>
                     </div>
@@ -425,7 +447,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             </div>
 
             <ul className="divide-y divide-gray-200 border rounded-lg">
-                {data.prodotti.map(p => (
+                {data.prodottiGrezzi.map(p => (
                     <li key={p.id} className={`px-4 py-3 bg-white ${editingId === p.id ? 'ring-2 ring-orange-400 inset-0 z-10' : ''}`}>
                         <div className="flex justify-between items-start">
                           <div>
@@ -442,7 +464,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => startEditProdotto(p)} className="text-gray-400 hover:text-orange-500 p-2"><Pencil size={16} /></button>
-                            <button onClick={() => deleteItem('prodotti', p.id)} className="text-gray-400 hover:text-red-500 p-2"><Trash2 size={16} /></button>
+                            <button onClick={() => deleteItem('prodottiGrezzi', p.id)} className="text-gray-400 hover:text-red-500 p-2"><Trash2 size={16} /></button>
                           </div>
                         </div>
                     </li>
@@ -461,9 +483,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                <div className="grid grid-cols-4 gap-4">
                  <div className="col-span-2">
                     <label className="block text-xs font-bold text-gray-500 mb-1">Prodotto</label>
-                    <select className="w-full border rounded p-2 text-sm" value={newVarieta.prodottoId || ''} onChange={e => setNewVarieta({...newVarieta, prodottoId: e.target.value, categoria: ''})}>
+                    <select className="w-full border rounded p-2 text-sm" value={newVarieta.prodottoId || ''} onChange={e => setNewVarieta({...newVarieta, prodottoId: e.target.value, tipologiaId: ''})}>
                         <option value="">Seleziona...</option>
-                        {data.prodotti.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        {data.prodottiGrezzi.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                     </select>
                  </div>
                  <div className="col-span-1">
@@ -475,12 +497,12 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     <input type="text" className="w-full border rounded p-2 text-sm" placeholder="Es. Crimson" value={newVarieta.nome || ''} onChange={e => setNewVarieta({...newVarieta, nome: e.target.value})} />
                  </div>
                  <div className="col-span-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Categoria / Gruppo</label>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Tipologia / Gruppo</label>
                     {newVarieta.prodottoId ? (
                         <select 
                         className="w-full border rounded p-2 text-sm" 
-                        value={newVarieta.categoria || ''} 
-                        onChange={e => setNewVarieta({...newVarieta, categoria: e.target.value})}
+                        value={newVarieta.tipologiaId || ''} 
+                        onChange={e => setNewVarieta({...newVarieta, tipologiaId: e.target.value})}
                         >
                         <option value="">Nessuna / Generica</option>
                         {selectedProdForVar?.categorie.map(c => <option key={c} value={c}>{c}</option>)}
@@ -494,7 +516,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             </div>
             <ul className="divide-y divide-gray-200 border rounded-lg">
                 {data.varieta.map(v => {
-                    const pName = data.prodotti.find(p => p.id === v.prodottoId)?.nome || '?';
+                    const pName = data.prodottiGrezzi.find(p => p.id === v.prodottoId)?.nome || '?';
                     return (
                         <li key={v.id} className={`px-4 py-3 flex justify-between items-center bg-white ${editingId === v.id ? 'ring-2 ring-orange-400 inset-0 z-10' : ''}`}>
                             <div>
@@ -502,7 +524,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                                      <span className="bg-gray-200 px-2 py-0.5 rounded text-xs font-mono font-bold">{v.codice}</span>
                                      <span className="font-bold">{v.nome}</span>
                                 </div>
-                                {v.categoria && <span className="ml-2 text-xs text-white bg-blue-500 px-2 py-1 rounded">{v.categoria}</span>}
+                                {v.tipologiaId && <span className="ml-2 text-xs text-white bg-blue-500 px-2 py-1 rounded">{data.tipologie.find(t => t.id === v.tipologiaId)?.nome || v.tipologiaId}</span>}
                                 <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{pName}</span>
                             </div>
                             <div className="flex gap-2">
@@ -537,10 +559,10 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <select 
                           className="w-full border rounded p-2 text-sm" 
                           value={newArticolo.prodottoId || ''} 
-                          onChange={e => setNewArticolo({...newArticolo, prodottoId: e.target.value, varietaId: '', categoria: ''})}
+                          onChange={e => setNewArticolo({...newArticolo, prodottoId: e.target.value, varietaId: '', tipologiaId: ''})}
                         >
                             <option value="">Qualsiasi Prodotto (Generico)</option>
-                            {data.prodotti.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                            {data.prodottiGrezzi.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                         </select>
                     </div>
                     
@@ -549,11 +571,11 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <div className="space-y-2">
                             <select 
                                 className="w-full border rounded p-2 text-xs" 
-                                value={newArticolo.categoria || ''} 
-                                onChange={e => setNewArticolo({...newArticolo, categoria: e.target.value, varietaId: ''})} 
+                                value={newArticolo.tipologiaId || ''} 
+                                onChange={e => setNewArticolo({...newArticolo, tipologiaId: e.target.value, varietaId: ''})} 
                                 disabled={!newArticolo.prodottoId || !!newArticolo.varietaId}
                             >
-                                <option value="">Qualsiasi Categoria</option>
+                                <option value="">Qualsiasi Tipologia</option>
                                 {selectedProdForArt?.categorie.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
@@ -563,8 +585,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <select 
                                 className="w-full border rounded p-2 text-xs" 
                                 value={newArticolo.varietaId || ''} 
-                                onChange={e => setNewArticolo({...newArticolo, varietaId: e.target.value, categoria: ''})} 
-                                disabled={!newArticolo.prodottoId || !!newArticolo.categoria}
+                                onChange={e => setNewArticolo({...newArticolo, varietaId: e.target.value, tipologiaId: ''})} 
+                                disabled={!newArticolo.prodottoId || !!newArticolo.tipologiaId}
                             >
                                 <option value="">Qualsiasi Varietà</option>
                                 {data.varieta.filter(v => v.prodottoId === newArticolo.prodottoId).map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
@@ -591,9 +613,9 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {data.articoli.map(item => {
-                    const pName = data.prodotti.find(p => p.id === item.prodottoId)?.nome || 'Generico / Tutti';
+                    const pName = data.prodottiGrezzi.find(p => p.id === item.prodottoId)?.nome || 'Generico / Tutti';
                     let vincolo = "Tutti";
-                    if (item.categoria) vincolo = `Categ: ${item.categoria}`;
+                    if (item.tipologiaId) vincolo = `Tipologia: ${data.tipologie.find(t => t.id === item.tipologiaId)?.nome || item.tipologiaId}`;
                     if (item.varietaId) {
                          const v = data.varieta.find(v => v.id === item.varietaId);
                          vincolo = `Var: ${v?.nome || '?'}`;
@@ -641,7 +663,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                         <select className="w-full border rounded p-2 text-sm" value={newLotto.varietaId || ''} onChange={e => setNewLotto({...newLotto, varietaId: e.target.value})}>
                             <option value="">Seleziona...</option>
                             {data.varieta.map(v => (
-                                <option key={v.id} value={v.id}>{v.nome} {v.categoria ? `(${v.categoria})` : ''}</option>
+                                <option key={v.id} value={v.id}>{v.nome} {v.tipologiaId ? `(${data.tipologie.find(t => t.id === v.tipologiaId)?.nome || v.tipologiaId})` : ''}</option>
                             ))}
                         </select>
                     </div>

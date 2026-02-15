@@ -1,37 +1,37 @@
-import { Turno } from '../../../types';
+import { SessioneProduzione } from '../../../types';
 import { ITurnoRepository } from '../interfaces/ITurnoRepository';
 import { readState, writeState } from './stateStorage';
 
 export class LocalStorageTurnoRepository implements ITurnoRepository {
-  async getAll(): Promise<Turno[]> {
-    return readState().turni;
+  async getAll(): Promise<SessioneProduzione[]> {
+    return readState().sessioniProduzione;
   }
 
-  async getById(id: string): Promise<Turno | null> {
+  async getById(id: string): Promise<SessioneProduzione | null> {
     return (await this.getAll()).find(t => t.id === id) || null;
   }
 
-  async getActive(): Promise<Turno | null> {
+  async getActive(): Promise<SessioneProduzione | null> {
     return (await this.getAll()).find(t => t.status === 'APERTO' || t.status === 'PAUSA') || null;
   }
 
-  async create(turno: Turno): Promise<Turno> {
+  async create(turno: SessioneProduzione): Promise<SessioneProduzione> {
     const state = readState();
-    state.turni.push(turno);
+    state.sessioniProduzione.push(turno);
     writeState(state);
     return turno;
   }
 
-  async update(turno: Turno): Promise<Turno> {
+  async update(turno: SessioneProduzione): Promise<SessioneProduzione> {
     const state = readState();
-    state.turni = state.turni.map(t => (t.id === turno.id ? turno : t));
+    state.sessioniProduzione = state.sessioniProduzione.map(t => (t.id === turno.id ? turno : t));
     writeState(state);
     return turno;
   }
 
   async delete(id: string): Promise<void> {
     const state = readState();
-    state.turni = state.turni.filter(t => t.id !== id);
+    state.sessioniProduzione = state.sessioniProduzione.filter(t => t.id !== id);
     writeState(state);
   }
 }

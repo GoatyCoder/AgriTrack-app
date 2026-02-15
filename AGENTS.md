@@ -1614,7 +1614,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Added phased execution strategy for FASE 1
 - Introduced migration-first approach before full terminology refactor
 
-### Version 0.2.0 (Planned - Q2 2026)
+### Version 0.2.1 (Current - Q2 2026)
+- Removed runtime legacy mirrors (`turni`, `sessioni`, `prodotti`)
+- Standardized runtime model on `sessioniProduzione`, `lavorazioni`, `prodottiGrezzi`
+- Updated forms to persist `tipologiaId` for new records
+
+### Version 0.2.0 (Current - Q2 2026)
 - Schema versioning
 - Soft delete
 - Testing suite
@@ -1677,8 +1682,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-15
-**Version**: 0.1.1
+**Last Updated**: 2026-02-17
+**Version**: 0.2.1
 **Maintained by**: Development Team
 
 ---

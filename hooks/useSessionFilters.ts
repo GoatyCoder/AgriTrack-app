@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Articolo, SessioneLinea, SiglaLotto } from '../types';
+import { Articolo, Lavorazione, SiglaLotto } from '../types';
 
 interface UseSessionFiltersParams {
-  sessioni: SessioneLinea[];
-  activeTurnoId: string | null;
+  sessioni: Lavorazione[];
+  activeSessioneProduzioneId: string | null;
   articoli: Articolo[];
   sigleLotto: SiglaLotto[];
 }
 
-export const useSessionFilters = ({ sessioni, activeTurnoId, articoli, sigleLotto }: UseSessionFiltersParams) => {
+export const useSessionFilters = ({ sessioni, activeSessioneProduzioneId, articoli, sigleLotto }: UseSessionFiltersParams) => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'inizio', direction: 'desc' });
   const [filters, setFilters] = useState({ linea: '', articolo: '', lotto: '', stato: '', note: '' });
@@ -19,8 +19,8 @@ export const useSessionFilters = ({ sessioni, activeTurnoId, articoli, sigleLott
   });
 
   const shiftSessionsHistoryRaw = useMemo(
-    () => sessioni.filter(s => s.turnoId === activeTurnoId),
-    [sessioni, activeTurnoId]
+    () => sessioni.filter(s => s.sessioneProduzioneId === activeSessioneProduzioneId),
+    [sessioni, activeSessioneProduzioneId]
   );
 
   const processedSessions = useMemo(() => {

@@ -1,14 +1,14 @@
-import { SessioneLinea } from '../../types';
+import { Lavorazione } from '../../types';
 
 export const buildSessione = (params: {
-  turnoId: string;
+  sessioneProduzioneId: string;
   lineaId: string;
   articoloId: string;
   siglaLottoId: string;
   dataIngresso: string;
-}): SessioneLinea => ({
+}): Lavorazione => ({
   id: crypto.randomUUID(),
-  turnoId: params.turnoId,
+  sessioneProduzioneId: params.sessioneProduzioneId,
   lineaId: params.lineaId,
   articoloId: params.articoloId,
   siglaLottoId: params.siglaLottoId,
@@ -19,5 +19,5 @@ export const buildSessione = (params: {
   note: ''
 });
 
-export const getLineConflicts = (activeSessions: SessioneLinea[], lineaId: string): SessioneLinea[] =>
+export const getLineConflicts = (activeSessions: Lavorazione[], lineaId: string): Lavorazione[] =>
   activeSessions.filter(s => s.lineaId === lineaId);
