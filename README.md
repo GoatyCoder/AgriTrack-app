@@ -1,50 +1,78 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# AgriTrack
 
-# AgriTrack Pro
+Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di confezionamento agricolo.
 
-## Run locally
+## Stato del progetto
 
-**Prerequisites:** Node.js 20+
+Versione attuale: **v0.2-alpha**.
 
-1. Install dependencies:
+Funzionalità già disponibili:
+- Gestione sessioni di produzione e lavorazioni
+- Tracciabilità pedane con codici univoci
+- Anagrafiche base (prodotti, varietà, articoli, lotti)
+- Reportistica base
+- Persistenza locale tramite `localStorage`
+
+Per glossario di dominio, business rules e roadmap, consulta `AGENTS.md`.
+
+## Stack tecnico
+
+- React 19 + TypeScript
+- Vite
+- Recharts
+- Zod
+
+## Requisiti
+
+- Node.js 20+
+- npm 10+
+
+## Avvio locale
+
+1. Installa le dipendenze:
    ```bash
    npm install
    ```
-2. Set `GEMINI_API_KEY` in `.env.local`.
-3. Start dev server:
+2. Avvia il progetto in sviluppo:
    ```bash
    npm run dev
    ```
+3. Apri l'app su `http://localhost:5173`.
 
-## Build checks
+## Script disponibili
 
 ```bash
-npm run typecheck
-npm run build
+npm run dev        # avvio in sviluppo
+npm run typecheck  # controllo TypeScript
+npm run build      # build di produzione
+npm run preview    # anteprima build
 ```
 
-## Deploy on GitHub Pages
+## Deploy su GitHub Pages
 
-This repository now includes an automatic deploy workflow at:
+Il progetto è configurato per deploy automatico con GitHub Actions.
 
-- `.github/workflows/deploy-gh-pages.yml`
+Passi consigliati:
+1. In GitHub: **Settings → Pages**
+2. Imposta **Source: GitHub Actions**
+3. Esegui push su `main` oppure avvia manualmente il workflow da tab **Actions**
 
-### Required GitHub setup
+Workflow previsto:
+- `npm ci`
+- `npm run typecheck`
+- `npm run build`
+- publish della cartella `dist/`
 
-1. Go to **Settings → Pages**.
-2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-3. Add repository secret:
-   - `GEMINI_API_KEY`
+## Note architetturali
 
-### How deployment works
+Il codice segue una struttura orientata alla Clean Architecture (domain/application/infrastructure) con logica applicativa centralizzata in custom hooks e servizi.
 
-- On every push to `main`, GitHub Actions runs:
-  - install dependencies (`npm ci`)
-  - type check (`npm run typecheck`)
-  - build (`npm run build`)
-  - deploy `dist/` to GitHub Pages
-- You can also trigger deploy manually via **Actions → Deploy to GitHub Pages → Run workflow**.
+## Roadmap sintetica
 
-> Note: `vite.config.ts` auto-detects GitHub Actions and sets the correct `base` path using `GITHUB_REPOSITORY`.
+- Refactoring terminologia (`Turno` → `SessioneProduzione`, `SessioneLinea` → `Lavorazione`)
+- Introduzione entità separate per `Tipologia` e `Calibro`
+- Versionamento schema e migrazioni dati
+- Testing suite
+- Backend con database PostgreSQL
+
+Per il dettaglio completo: `AGENTS.md`.

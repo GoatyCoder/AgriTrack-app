@@ -1,4 +1,4 @@
-import { Articolo, SiglaLotto, Prodotto, Varieta, Imballo, Area, Linea, TipologiaScarto } from './types';
+import { Articolo, SiglaLotto, Prodotto, Varieta, Imballo, Area, Linea, TipologiaScarto, Tipologia, Calibro } from './types';
 
 export const INITIAL_AREE: Area[] = [
   { id: 'AR1', nome: 'Confezionamento', attiva: true },
@@ -39,24 +39,61 @@ export const INITIAL_PRODOTTI: Prodotto[] = [
   }
 ];
 
+
+
+export const INITIAL_TIPOLOGIE: Tipologia[] = [
+  { id: 'TIP1', nome: 'Bianca Con Semi', prodottoId: 'P1', ordinamento: 1, attivo: true },
+  { id: 'TIP2', nome: 'Bianca Senza Semi', prodottoId: 'P1', ordinamento: 2, attivo: true },
+  { id: 'TIP3', nome: 'Rossa Con Semi', prodottoId: 'P1', ordinamento: 3, attivo: true },
+  { id: 'TIP4', nome: 'Rossa Senza Semi', prodottoId: 'P1', ordinamento: 4, attivo: true },
+  { id: 'TIP5', nome: 'Nera Senza Semi', prodottoId: 'P1', ordinamento: 5, attivo: true },
+  { id: 'TIP6', nome: 'Clementine', prodottoId: 'P2', ordinamento: 1, attivo: true },
+  { id: 'TIP7', nome: 'Tardivo', prodottoId: 'P2', ordinamento: 2, attivo: true },
+  { id: 'TIP8', nome: 'Ibrido', prodottoId: 'P2', ordinamento: 3, attivo: true },
+  { id: 'TIP9', nome: 'Precoce', prodottoId: 'P3', ordinamento: 1, attivo: true },
+  { id: 'TIP10', nome: 'Tardiva', prodottoId: 'P3', ordinamento: 2, attivo: true },
+  { id: 'TIP11', nome: 'Rossa', prodottoId: 'P3', ordinamento: 3, attivo: true }
+];
+
+export const INITIAL_CALIBRI: Calibro[] = [
+  { id: 'CAL1', nome: 'S', prodottoId: 'P1', ordinamento: 1, attivo: true },
+  { id: 'CAL2', nome: 'M', prodottoId: 'P1', ordinamento: 2, attivo: true },
+  { id: 'CAL3', nome: 'L', prodottoId: 'P1', ordinamento: 3, attivo: true },
+  { id: 'CAL4', nome: 'XL', prodottoId: 'P1', ordinamento: 4, attivo: true },
+  { id: 'CAL5', nome: 'XXL', prodottoId: 'P1', ordinamento: 5, attivo: true },
+  { id: 'CAL6', nome: 'Misto', prodottoId: 'P1', ordinamento: 6, attivo: true },
+  { id: 'CAL7', nome: '1XX', prodottoId: 'P2', ordinamento: 1, attivo: true },
+  { id: 'CAL8', nome: '1X', prodottoId: 'P2', ordinamento: 2, attivo: true },
+  { id: 'CAL9', nome: '1', prodottoId: 'P2', ordinamento: 3, attivo: true },
+  { id: 'CAL10', nome: '2', prodottoId: 'P2', ordinamento: 4, attivo: true },
+  { id: 'CAL11', nome: '3', prodottoId: 'P2', ordinamento: 5, attivo: true },
+  { id: 'CAL12', nome: '4', prodottoId: 'P2', ordinamento: 6, attivo: true },
+  { id: 'CAL13', nome: '5', prodottoId: 'P2', ordinamento: 7, attivo: true },
+  { id: 'CAL14', nome: 'AAAA', prodottoId: 'P3', ordinamento: 1, attivo: true },
+  { id: 'CAL15', nome: 'AAA', prodottoId: 'P3', ordinamento: 2, attivo: true },
+  { id: 'CAL16', nome: 'AA', prodottoId: 'P3', ordinamento: 3, attivo: true },
+  { id: 'CAL17', nome: 'A', prodottoId: 'P3', ordinamento: 4, attivo: true },
+  { id: 'CAL18', nome: 'B', prodottoId: 'P3', ordinamento: 5, attivo: true },
+  { id: 'CAL19', nome: 'C', prodottoId: 'P3', ordinamento: 6, attivo: true }
+];
 export const INITIAL_VARIETA: Varieta[] = [
-  { id: 'V1', prodottoId: 'P1', codice: 'ITA', nome: 'Italia', categoria: 'Bianca Con Semi', attiva: true },
-  { id: 'V2', prodottoId: 'P1', codice: 'VIT', nome: 'Vittoria', categoria: 'Bianca Con Semi', attiva: true },
-  { id: 'V3', prodottoId: 'P1', codice: 'RED', nome: 'Red Globe', categoria: 'Rossa Con Semi', attiva: true },
-  { id: 'V4', prodottoId: 'P1', codice: 'CRI', nome: 'Crimson', categoria: 'Rossa Senza Semi', attiva: true },
-  { id: 'V5', prodottoId: 'P1', codice: 'AUT', nome: 'Autumn Crisp', categoria: 'Bianca Senza Semi', attiva: true },
-  { id: 'V6', prodottoId: 'P1', codice: 'SWT', nome: 'Sweet Celebration', categoria: 'Rossa Senza Semi', attiva: true },
-  { id: 'V7', prodottoId: 'P2', codice: 'NAD', nome: 'Nadorcott', categoria: 'Tardivo', attiva: true },
-  { id: 'V8', prodottoId: 'P2', codice: 'TAR', nome: 'Tarocco', categoria: 'Ibrido', attiva: true },
-  { id: 'V9', prodottoId: 'P2', codice: 'ORO', nome: 'Orogros', categoria: 'Clementine', attiva: true }
+  { id: 'V1', prodottoId: 'P1', codice: 'ITA', nome: 'Italia', categoria: 'Bianca Con Semi', tipologiaId: 'TIP1', attiva: true },
+  { id: 'V2', prodottoId: 'P1', codice: 'VIT', nome: 'Vittoria', categoria: 'Bianca Con Semi', tipologiaId: 'TIP1', attiva: true },
+  { id: 'V3', prodottoId: 'P1', codice: 'RED', nome: 'Red Globe', categoria: 'Rossa Con Semi', tipologiaId: 'TIP3', attiva: true },
+  { id: 'V4', prodottoId: 'P1', codice: 'CRI', nome: 'Crimson', categoria: 'Rossa Senza Semi', tipologiaId: 'TIP4', attiva: true },
+  { id: 'V5', prodottoId: 'P1', codice: 'AUT', nome: 'Autumn Crisp', categoria: 'Bianca Senza Semi', tipologiaId: 'TIP2', attiva: true },
+  { id: 'V6', prodottoId: 'P1', codice: 'SWT', nome: 'Sweet Celebration', categoria: 'Rossa Senza Semi', tipologiaId: 'TIP4', attiva: true },
+  { id: 'V7', prodottoId: 'P2', codice: 'NAD', nome: 'Nadorcott', categoria: 'Tardivo', tipologiaId: 'TIP7', attiva: true },
+  { id: 'V8', prodottoId: 'P2', codice: 'TAR', nome: 'Tarocco', categoria: 'Ibrido', tipologiaId: 'TIP8', attiva: true },
+  { id: 'V9', prodottoId: 'P2', codice: 'ORO', nome: 'Orogros', categoria: 'Clementine', tipologiaId: 'TIP6', attiva: true }
 ];
 
 export const INITIAL_ARTICOLI: Articolo[] = [
-  { id: 'ART1', codice: '10x500', nome: 'Cestini 10x500g (Bianca SS)', prodottoId: 'P1', categoria: 'Bianca Senza Semi', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true },
-  { id: 'ART2', codice: '5KG', nome: 'Cartone 30x40 5kg (Rossa SS)', prodottoId: 'P1', categoria: 'Rossa Senza Semi', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true },
+  { id: 'ART1', codice: '10x500', nome: 'Cestini 10x500g (Bianca SS)', prodottoId: 'P1', categoria: 'Bianca Senza Semi', tipologiaId: 'TIP2', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true },
+  { id: 'ART2', codice: '5KG', nome: 'Cartone 30x40 5kg (Rossa SS)', prodottoId: 'P1', categoria: 'Rossa Senza Semi', tipologiaId: 'TIP4', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true },
   { id: 'ART3', codice: 'SFUSO', nome: 'Plateau 60x40 Sfuso (Mista)', prodottoId: 'P1', pesoColloTeorico: 6.0, tipoPeso: 'USCENTE', attivo: true },
   { id: 'ART4', codice: 'FOG', nome: 'Mandarini con Foglia 2 Strati', prodottoId: 'P2', varietaId: 'V7', pesoColloTeorico: 10.0, tipoPeso: 'EGALIZZATO', attivo: true },
-  { id: 'ART5', codice: 'RETE', nome: 'Mandarini Defogliati Rete 1kg', prodottoId: 'P2', categoria: 'Tardivo', pesoColloTeorico: 8.0, tipoPeso: 'EGALIZZATO', attivo: true }
+  { id: 'ART5', codice: 'RETE', nome: 'Mandarini Defogliati Rete 1kg', prodottoId: 'P2', categoria: 'Tardivo', tipologiaId: 'TIP7', pesoColloTeorico: 8.0, tipoPeso: 'EGALIZZATO', attivo: true }
 ];
 
 export const INITIAL_SIGLE_LOTTO: SiglaLotto[] = [
