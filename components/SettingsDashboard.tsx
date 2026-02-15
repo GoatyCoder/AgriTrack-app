@@ -177,8 +177,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
     const removedTipologie = existingTipologie.filter((tipologia) => !nextTipologie.some((nextTipologia) => nextTipologia.id === tipologia.id));
     const tipologieInUso = removedTipologie.filter((tipologia) =>
-      data.varieta.some((varieta) => varieta.tipologiaId === tipologia.id) ||
-      data.articoli.some((articolo) => articolo.tipologiaId === tipologia.id)
+      data.varieta.some((varieta) => varieta.tipologiaId === tipologia.id && varieta.attiva !== false) ||
+      data.articoli.some((articolo) => articolo.tipologiaId === tipologia.id && articolo.attivo !== false)
     );
     const tipologieDisattivabili = removedTipologie.filter((tipologia) => !tipologieInUso.some((item) => item.id === tipologia.id));
 
