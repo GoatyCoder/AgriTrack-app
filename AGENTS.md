@@ -395,7 +395,7 @@ interface CategoriaCommerciale {
 **Regola**: Un articolo può lavorare un lotto SE:
 
 ```typescript
-function isCompatibile(
+function isCompatible(
   articolo: Articolo, 
   lotto: SiglaLotto, 
   varieta: Varieta,
