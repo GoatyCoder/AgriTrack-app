@@ -113,15 +113,6 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setNuovaTipologiaNome('');
   };
 
-  const moveTipologiaDraft = (index: number, direction: -1 | 1) => {
-    setDraftTipologie((prev) => {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= prev.length) return prev;
-      const updated = [...prev];
-      [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-      return updated;
-    });
-  };
 
   const removeTipologiaDraft = (nome: string) => {
     setDraftTipologie((prev) => prev.filter((tipologia) => tipologia.nome !== nome));
@@ -186,8 +177,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
     const removedTipologie = existingTipologie.filter((tipologia) => !nextTipologie.some((nextTipologia) => nextTipologia.id === tipologia.id));
     const tipologieInUso = removedTipologie.filter((tipologia) =>
-      data.varieta.some((varieta) => varieta.tipologiaId === tipologia.id) ||
-      data.articoli.some((articolo) => articolo.tipologiaId === tipologia.id)
+      data.varieta.some((varieta) => varieta.tipologiaId === tipologia.id && varieta.attiva !== false) ||
+      data.articoli.some((articolo) => articolo.tipologiaId === tipologia.id && articolo.attivo !== false)
     );
     const tipologieDisattivabili = removedTipologie.filter((tipologia) => !tipologieInUso.some((item) => item.id === tipologia.id));
 
@@ -210,20 +201,11 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     });
 
     const removedCalibri = existingCalibri.filter((calibro) => !nextCalibri.some((nextCalibro) => nextCalibro.id === calibro.id));
-    const calibriInUso = removedCalibri.filter((calibro) => data.pedane.some((pedana) => pedana.calibroId === calibro.id));
-    const calibriDisattivabili = removedCalibri.filter((calibro) => !calibriInUso.some((item) => item.id === calibro.id));
 
-    if (tipologieInUso.length > 0 || calibriInUso.length > 0) {
-      const parts: string[] = [];
-      if (tipologieInUso.length > 0) {
-        parts.push(`Tipologie in uso non rimosse: ${tipologieInUso.map((tipologia) => tipologia.nome).join(', ')}.`);
-      }
-      if (calibriInUso.length > 0) {
-        parts.push(`Calibri in uso non rimossi: ${calibriInUso.map((calibro) => calibro.nome).join(', ')}.`);
-      }
+    if (tipologieInUso.length > 0) {
       showAlert({
         title: 'Rimozione parziale',
-        message: parts.join(' '),
+        message: `Tipologie in uso non rimosse: ${tipologieInUso.map((tipologia) => tipologia.nome).join(', ')}.`,
         variant: 'INFO'
       });
     }
@@ -239,8 +221,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
       calibri: [
         ...preservedCalibri,
         ...nextCalibri,
-        ...calibriInUso.map((calibro) => ({ ...calibro, attivo: true, updatedAt: now })),
-        ...calibriDisattivabili.map((calibro) => ({ ...calibro, attivo: false, updatedAt: now }))
+        ...removedCalibri.map((calibro) => ({ ...calibro, attivo: false, updatedAt: now }))
       ]
     });
     resetAllForms();
@@ -410,18 +391,44 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   };
 
   const deleteItem = async (key: keyof AppState, id: string) => {
+    const prodotto = key === 'prodottiGrezzi'
+      ? data.prodottiGrezzi.find((item) => item.id === id)
+      : null;
+
+    if (prodotto) {
+      const isRestore = prodotto.attivo === false;
+      const confirmed = await showConfirm({
+        title: isRestore ? 'Riattiva Prodotto' : 'Disattiva Prodotto',
+        message: isRestore
+          ? 'Riattivando il prodotto verranno riattivati anche tipologie, calibri e varietà collegate.'
+          : 'Disattivando il prodotto verranno disattivati anche tipologie, calibri e varietà collegate.',
+        variant: 'INFO',
+        confirmText: isRestore ? 'Riattiva' : 'Disattiva',
+        cancelText: 'Annulla'
+      });
+
+      if (!confirmed) return;
+
+      const now = new Date().toISOString();
+      const nextStatus = isRestore;
+
+      onUpdateData({
+        prodottiGrezzi: data.prodottiGrezzi.map((item) => item.id === id ? { ...item, attivo: nextStatus, updatedAt: now } : item),
+        tipologie: data.tipologie.map((tipologia) => tipologia.prodottoId === id ? { ...tipologia, attivo: nextStatus, updatedAt: now } : tipologia),
+        calibri: data.calibri.map((calibro) => calibro.prodottoId === id ? { ...calibro, attivo: nextStatus, updatedAt: now } : calibro),
+        varieta: data.varieta.map((varieta) => varieta.prodottoId === id ? { ...varieta, attiva: nextStatus, updatedAt: now } : varieta)
+      });
+
+      if (id === editingId) {
+        resetAllForms();
+      }
+      return;
+    }
+
     const inUseMessages: Partial<Record<keyof AppState, string>> = {
-      prodottiGrezzi: data.tipologie.some((tipologia) => tipologia.prodottoId === id && tipologia.attivo)
-        || data.calibri.some((calibro) => calibro.prodottoId === id && calibro.attivo)
-        || data.varieta.some((varieta) => varieta.prodottoId === id && varieta.attiva !== false)
-        ? 'Prodotto in uso da tipologie, calibri o varietà attive.'
-        : '',
       tipologie: data.varieta.some((varieta) => varieta.tipologiaId === id && varieta.attiva !== false)
         || data.articoli.some((articolo) => articolo.tipologiaId === id && articolo.attivo !== false)
         ? 'Tipologia in uso da varietà o articoli attivi.'
-        : '',
-      calibri: data.pedane.some((pedana) => pedana.calibroId === id)
-        ? 'Calibro in uso da almeno una pedana.'
         : '',
       varieta: data.sigleLotto.some((lotto) => lotto.varietaId === id)
         ? 'Varietà in uso da almeno una sigla lotto.'
@@ -669,7 +676,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => startEditProdotto(p)} className="text-gray-400 hover:text-orange-500 p-2"><Pencil size={16} /></button>
-                      <button onClick={() => deleteItem('prodottiGrezzi', p.id)} className="text-gray-400 hover:text-red-500 p-2" title="Disattiva"><Trash2 size={16} /></button>
+                      <button onClick={() => deleteItem('prodottiGrezzi', p.id)} className="text-gray-400 hover:text-red-500 p-2" title={p.attivo === false ? 'Riattiva' : 'Disattiva'}>{p.attivo === false ? <RotateCcw size={16} /> : <Trash2 size={16} />}</button>
                     </div>
                   </div>
                 </li>

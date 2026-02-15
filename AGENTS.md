@@ -46,7 +46,7 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - ✅ Gestione sessioni produzione e lavorazioni
 - ✅ Tracciabilità pedane con codici univoci
 - ✅ Report base con grafici
-- ✅ Calibri e Tipologie come entità separate, gestite nella schermata Prodotto con ordinamento manuale da lista
+- ✅ Calibri e Tipologie come entità separate, gestite nella schermata Prodotto (calibri ordinabili a lista; tipologie non ordinate; in produzione il calibro viene salvato come testo singolo o range)
 - 🚧 Testing suite (da implementare)
 - 🚧 Backend + Database (pianificato)
 - 🚧 Multi-user auth (pianificato)
@@ -205,7 +205,7 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - **Contenuto**:
   - `numeroColli`: quanti colli/cartoni/ceste
   - `pesoTotale`: peso netto totale in kg
-  - `calibroId`: calibro del prodotto (FK, opzionale)
+  - `calibro`: calibro output come testo selezionabile (opzionale, singolo o range es. `1X-2`)
   - `categoriaCommercialeId`: qualità commerciale (FK, opzionale, futuro)
   - `imballoId`: tipo imballo utilizzato (FK)
 - **Snapshot immutabili** (per storico):
@@ -286,7 +286,7 @@ LAVORAZIONE ────1:N───→ PEDANA (genera)
 
 PEDANA ────N:1───→ LAVORAZIONE
 PEDANA ────N:1───→ IMBALLO (usa)
-PEDANA ────N:0..1───→ CALIBRO (opzionale)
+PEDANA ────N:0..1───→ CALIBRO (opzionale, usato come lista valori per selezione testo)
 PEDANA ────N:0..1───→ CATEGORIA_COMMERCIALE (opzionale, futuro)
 
 
@@ -607,8 +607,8 @@ await handleUpdateLavorazioneWithSnapshots(
 - Lavorazione → deve esistere Sigla Lotto valida
 
 **Implementazione corrente (frontend/localStorage):**
-- Tipologie non disattivabili se referenziate da Varietà o Articoli
-- Calibri non disattivabili se referenziati da Pedane
+- Disattivazione/Riattivazione Prodotto in cascata su Tipologie, Calibri e Varietà collegate
+- Tipologie non disattivabili singolarmente se referenziate da Varietà o Articoli
 - In fase di modifica Prodotto, le rimozioni non valide vengono bloccate con alert esplicito
 
 **Implementazione futura** (con backend):
@@ -648,9 +648,9 @@ varieta.tipologiaId
 articolo.tipologiaId 
   → tipologia.prodottoId === articolo.prodottoId
 
-// Pedana con calibro
-pedana.calibroId 
-  → calibro.prodottoId === prodottoDellaLavorazione
+// Pedana con calibro testuale
+pedana.calibro (stringa singola o range)
+  → deve derivare dalla lista calibri del prodotto al momento del salvataggio
 ```
 
 **Validazione**: Fare check in fase di salvataggio
@@ -997,10 +997,9 @@ setState(state);
   - Rinominare `categoria: string` → `tipologiaId: string`
   - FK a tabella Tipologia
 - [ ] **Aggiornare Pedana**
-  - Aggiungere `calibroId?: string` (FK)
+  - Usare `calibro?: string` come valore testuale (singolo o range)
   - Aggiungere `categoriaCommercialeId?: string` (FK, futuro)
   - Aggiungere snapshot: `snapshotCalibro`, `snapshotCategoria`
-  - Mantenere `calibro?: string` per backward compatibility temporanea
 
 #### 1.3 Audit Fields ✅ (Priority: HIGH)
 - [ ] Aggiungere a tutte le entità master data:
@@ -1701,8 +1700,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-15
-**Version**: 0.2.5
+**Last Updated**: 2026-02-17
+**Version**: 0.2.7
 **Maintained by**: Development Team
 
 ---

@@ -50,6 +50,8 @@ export const normalizeLegacyState = (raw: any): AppState => {
   const linee = applyAuditDefaults(raw.linee || INITIAL_LINEE);
   const defaultAreaId = aree[0]?.id || INITIAL_AREE[0].id;
   const tipologie = applyAuditDefaults(raw.tipologie || INITIAL_TIPOLOGIE);
+  const calibriRows = applyAuditDefaults(raw.calibri || INITIAL_CALIBRI);
+  const calibroNomeById = Object.fromEntries(calibriRows.map((calibro: any) => [calibro.id, calibro.nome]));
 
   return {
     ...buildInitialState(),
@@ -59,7 +61,7 @@ export const normalizeLegacyState = (raw: any): AppState => {
     linee,
     tipologieScarto: applyAuditDefaults(raw.tipologieScarto || INITIAL_TIPOLOGIE_SCARTO),
     tipologie,
-    calibri: applyAuditDefaults(raw.calibri || INITIAL_CALIBRI),
+    calibri: calibriRows,
     sessioniProduzione: (raw.sessioniProduzione || []).map((sessione: any) => ({
       ...sessione,
       areaId: sessione.areaId || defaultAreaId
@@ -86,7 +88,7 @@ export const normalizeLegacyState = (raw: any): AppState => {
       doy: pedana.doy ?? (parseInt((pedana.stickerCode || '').split('-')[1], 10) || 0),
       seq: pedana.seq ?? (parseInt((pedana.stickerCode || '').split('-')[2], 10) || idx + 1),
       imballoId: pedana.imballoId || undefined,
-      calibroId: pedana.calibroId || undefined,
+      calibro: pedana.calibro || calibroNomeById[pedana.calibroId] || pedana.snapshotCalibro?.nome || undefined,
       snapshotImballo: pedana.snapshotImballo,
       snapshotCalibro: pedana.snapshotCalibro
     })),

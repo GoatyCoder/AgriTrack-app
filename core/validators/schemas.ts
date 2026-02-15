@@ -49,7 +49,7 @@ const PedanaSchema = z.object({
   pesoTotale: z.number(),
   timestamp: z.string(),
   imballoId: z.string().optional(),
-  calibroId: z.string().optional(),
+  calibro: z.string().optional(),
   categoriaCommercialeId: z.string().optional(),
   snapshotImballo: z.object({ codice: z.string(), nome: z.string() }).optional(),
   snapshotArticolo: z.object({ id: z.string(), nome: z.string(), codice: z.string() }).optional(),
