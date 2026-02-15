@@ -113,6 +113,16 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setNuovaTipologiaNome('');
   };
 
+  const moveTipologiaDraft = (index: number, direction: -1 | 1) => {
+    setDraftTipologie((prev) => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const updated = [...prev];
+      [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+      return updated;
+    });
+  };
+
 
   const removeTipologiaDraft = (nome: string) => {
     setDraftTipologie((prev) => prev.filter((tipologia) => tipologia.nome !== nome));
