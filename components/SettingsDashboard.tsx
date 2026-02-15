@@ -10,7 +10,7 @@ interface SettingsDashboardProps {
 
 const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
   const { showConfirm, showAlert } = useDialog();
-  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
+  const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'TIPOLOGIE' | 'CALIBRI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [mostraDisattivati, setMostraDisattivati] = useState(false);
 
@@ -18,6 +18,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const [newProdotto, setNewProdotto] = useState<Partial<ProdottoGrezzo>>({ attivo: true });
 
   const [newVarieta, setNewVarieta] = useState<Partial<Varieta>>({});
+  const [newTipologia, setNewTipologia] = useState<Partial<Tipologia>>({ attivo: true });
+  const [newCalibro, setNewCalibro] = useState<Partial<Calibro>>({ attivo: true, ordinamento: 1 });
   const [draftTipologie, setDraftTipologie] = useState<Array<{ id?: string; nome: string }>>([]);
   const [draftCalibri, setDraftCalibri] = useState<Array<{ id?: string; nome: string }>>([]);
   const [nuovaTipologiaNome, setNuovaTipologiaNome] = useState('');
@@ -37,6 +39,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setEditingId(null);
     setNewProdotto({ nome: '', codice: '', attivo: true });
     setNewVarieta({ nome: '', codice: '', prodottoId: '', tipologiaId: '' });
+    setNewTipologia({ nome: '', prodottoId: '', ordinamento: 1, attivo: true });
+    setNewCalibro({ nome: '', prodottoId: '', ordinamento: 1, descrizione: '', attivo: true });
     setDraftTipologie([]);
     setDraftCalibri([]);
     setNuovaTipologiaNome('');
@@ -613,10 +617,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     <button onClick={addTipologiaDraft} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16} /></button>
                   </div>
                   <div className="space-y-1">
-                    {draftTipologie.map((tipologia) => (
+                    {draftTipologie.map((tipologia, index) => (
                       <div key={tipologia.nome} className="flex items-center justify-between bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
                         <span>{tipologia.nome}</span>
-                        <button onClick={() => removeTipologiaDraft(tipologia.nome)}><Trash2 size={12} /></button>
+                        <div className="flex items-center gap-1">
+                          <button disabled={index === 0} onClick={() => moveTipologiaDraft(index, -1)} className="disabled:opacity-40"><ChevronUp size={12} /></button>
+                          <button disabled={index === draftTipologie.length - 1} onClick={() => moveTipologiaDraft(index, 1)} className="disabled:opacity-40"><ChevronDown size={12} /></button>
+                          <button onClick={() => removeTipologiaDraft(tipologia.nome)}><Trash2 size={12} /></button>
+                        </div>
                       </div>
                     ))}
                   </div>
