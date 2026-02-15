@@ -1614,6 +1614,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Added phased execution strategy for FASE 1
 - Introduced migration-first approach before full terminology refactor
 
+### Version 0.2.2 (Current - Q2 2026)
+- Added Settings CRUD tabs for `Tipologie` and `Calibri` with full create/update/deactivate flows
+- Removed legacy inline product arrays management (`categorie`, `calibri`) from product form UI
+- Standardized soft-delete UX with referential integrity checks and "Mostra disattivati" filter
+- Renamed hook `useTurnoActions` to `useSessioneProduzioneActions` for terminology consistency
+
 ### Version 0.2.1 (Current - Q2 2026)
 - Removed runtime legacy mirrors (`turni`, `sessioni`, `prodotti`)
 - Standardized runtime model on `sessioniProduzione`, `lavorazioni`, `prodottiGrezzi`
@@ -1682,8 +1688,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-17
-**Version**: 0.2.1
+**Last Updated**: 2026-02-18
+**Version**: 0.2.2
 **Maintained by**: Development Team
 
 ---

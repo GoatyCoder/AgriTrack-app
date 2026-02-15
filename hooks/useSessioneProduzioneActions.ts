@@ -13,7 +13,7 @@ interface Params {
   setPausingTarget: (target: { type: 'SHIFT' | 'SESSION'; id: string } | null) => void;
 }
 
-export const useTurnoActions = ({ state, setState, activeTurnoId, setActiveTurnoId, setView, showConfirm, setPausingTarget }: Params) => {
+export const useSessioneProduzioneActions = ({ state, setState, activeTurnoId, setActiveTurnoId, setView, showConfirm, setPausingTarget }: Params) => {
   const activeTurno = useMemo(
     () => state.sessioniProduzione.find((sessioneProduzione) => sessioneProduzione.id === activeTurnoId),
     [state.sessioniProduzione, activeTurnoId]
