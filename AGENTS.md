@@ -46,7 +46,7 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - ✅ Gestione sessioni produzione e lavorazioni
 - ✅ Tracciabilità pedane con codici univoci
 - ✅ Report base con grafici
-- 🚧 Calibri e Tipologie come entità separate (in sviluppo)
+- ✅ Calibri e Tipologie come entità separate
 - 🚧 Testing suite (da implementare)
 - 🚧 Backend + Database (pianificato)
 - 🚧 Multi-user auth (pianificato)
@@ -721,7 +721,7 @@ src/
 │
 ├── hooks/                  # Custom hooks
 │   ├── useAppStateStore.ts
-│   ├── useTurnoActions.ts
+│   ├── useSessioneProduzioneActions.ts
 │   ├── useSessioneActions.ts
 │   └── ...
 │
@@ -841,7 +841,7 @@ lowercase.config   → Configs
 
 **Custom Hooks Structure**
 ```typescript
-export const useTurnoActions = ({ state, setState, ... }: Params) => {
+export const useSessioneProduzioneActions = ({ state, setState, ... }: Params) => {
   // 1. Derived state (useMemo, computations)
   const activeTurno = useMemo(() => ..., [state.turni]);
   
@@ -956,43 +956,43 @@ setState(state);
 **Obiettivo**: Base solida, terminologia coerente, schema pronto per database
 
 #### 1.1 Terminology Refactoring ⭐ (Priority: CRITICAL)
-- [ ] Rinominare `Turno` → `SessioneProduzione` ovunque
+- [x] Rinominare `Turno` → `SessioneProduzione` ovunque
   - Types, interfaces, components, hooks, services
   - DB fields: `turnoId` → `sessioneProduzioneId`
   - UI labels e testi
-- [ ] Rinominare `SessioneLinea` → `Lavorazione` ovunque
+- [x] Rinominare `SessioneLinea` → `Lavorazione` ovunque
   - Types, interfaces, components, hooks, services
   - Filenames: `useSessioneActions` → `useLavorazioneActions`
-- [ ] Rinominare `Prodotto` → `ProdottoGrezzo`
-- [ ] Rinominare campo `categoria` → `tipologiaId` (Varietà, Articolo)
+- [x] Rinominare `Prodotto` → `ProdottoGrezzo`
+- [x] Rinominare campo `categoria` → `tipologiaId` (Varietà, Articolo)
 - [ ] **Test**: Verificare nessun riferimento ai vecchi nomi
 - [ ] **Documentation**: Aggiornare README, commenti, JSDoc
 
 #### 1.2 Nuove Entità Master Data ⭐ (Priority: CRITICAL)
-- [ ] **Creare entità Tipologia**
+- [x] **Creare entità Tipologia**
   - Type definition in `types.ts`
   - Zod schema
   - Initial data in `constants.ts` (migrare da Prodotto.categorie)
   - Repository interface + localStorage impl
   - CRUD UI in SettingsPage
   - Migration script per convertire dati esistenti
-- [ ] **Creare entità Calibro**
+- [x] **Creare entità Calibro**
   - Type definition in `types.ts`
   - Zod schema  
   - Initial data in `constants.ts` (migrare da Prodotto.calibri)
   - Repository interface + localStorage impl
   - CRUD UI in SettingsPage
   - Migration script per convertire dati esistenti
-- [ ] **Aggiornare Prodotto Grezzo**
+- [x] **Aggiornare Prodotto Grezzo**
   - Rimuovere campi `categorie` e `calibri`
   - Le tipologie e calibri ora hanno FK `prodottoId`
-- [ ] **Aggiornare Varietà**
+- [x] **Aggiornare Varietà**
   - Rinominare `categoria: string` → `tipologiaId: string`
   - FK a tabella Tipologia
-- [ ] **Aggiornare Articolo**
+- [x] **Aggiornare Articolo**
   - Rinominare `categoria: string` → `tipologiaId: string`
   - FK a tabella Tipologia
-- [ ] **Aggiornare Pedana**
+- [x] **Aggiornare Pedana**
   - Aggiungere `calibroId?: string` (FK)
   - Aggiungere `categoriaCommercialeId?: string` (FK, futuro)
   - Aggiungere snapshot: `snapshotCalibro`, `snapshotCategoria`
@@ -1015,16 +1015,16 @@ setState(state);
 - [ ] Migration per dati esistenti (default: now)
 
 #### 1.4 Soft Delete ✅ (Priority: HIGH)
-- [ ] Già presente: `attivo: boolean` su molte entità
-- [ ] Estendere a tutte le anagrafiche mancanti
-- [ ] Implementare validazione: impedire eliminazione se in uso
+- [x] Già presente: `attivo: boolean` su molte entità
+- [x] Estendere a tutte le anagrafiche mancanti
+- [x] Implementare validazione: impedire eliminazione se in uso
   - Prodotto → se ha Tipologie/Calibri/Varietà
   - Tipologia → se usata in Varietà/Articoli
   - Calibro → se usato in Pedane
   - Varietà → se usata in SigleLotto
   - Articolo → se usato in Lavorazioni
-- [ ] UI: Pulsante "Disattiva" invece di "Elimina"
-- [ ] UI: Filtro "Mostra disattivati" (solo admin futuro)
+- [x] UI: Pulsante "Disattiva" invece di "Elimina"
+- [x] UI: Filtro "Mostra disattivati" (solo admin futuro)
 
 #### 1.5 Schema Versioning ✅ (Priority: HIGH)
 - [ ] Aggiungere `schemaVersion: string` a AppState
@@ -1614,7 +1614,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Added phased execution strategy for FASE 1
 - Introduced migration-first approach before full terminology refactor
 
-### Version 0.2.0 (Planned - Q2 2026)
+### Version 0.2.1 (Current - Q2 2026)
+- Removed runtime legacy mirrors (`turni`, `sessioni`, `prodotti`)
+- Standardized runtime model on `sessioniProduzione`, `lavorazioni`, `prodottiGrezzi`
+- Updated forms to persist `tipologiaId` for new records
+
+### Version 0.2.0 (Current - Q2 2026)
 - Schema versioning
 - Soft delete
 - Testing suite
@@ -1678,7 +1683,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-15
-**Version**: 0.1.1
+**Version**: 0.2.2
 **Maintained by**: Development Team
 
 ---

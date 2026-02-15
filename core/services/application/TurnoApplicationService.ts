@@ -1,15 +1,15 @@
 import { ITurnoRepository } from '../../repositories/interfaces/ITurnoRepository';
 import { ISessioneRepository } from '../../repositories/interfaces/ISessioneRepository';
-import { Turno } from '../../../types';
+import { SessioneProduzione } from '../../../types';
 
-export class TurnoApplicationService {
+export class SessioneProduzioneApplicationService {
   constructor(private turnoRepo: ITurnoRepository, private sessioneRepo: ISessioneRepository) {}
 
-  async startTurno(operatore: string, areaId: string): Promise<Turno> {
+  async startSessioneProduzione(operatore: string, areaId: string): Promise<SessioneProduzione> {
     const active = await this.turnoRepo.getActive();
-    if (active) throw new Error('R1.1: Turno già attivo');
+    if (active) throw new Error('R1.1: SessioneProduzione già attivo');
 
-    const turno: Turno = {
+    const turno: SessioneProduzione = {
       id: crypto.randomUUID(),
       inizio: new Date().toISOString(),
       operatore,
@@ -21,12 +21,12 @@ export class TurnoApplicationService {
     return this.turnoRepo.create(turno);
   }
 
-  async closeTurno(turnoId: string): Promise<void> {
-    const turno = await this.turnoRepo.getById(turnoId);
-    if (!turno) throw new Error('Turno non trovato');
+  async closeSessioneProduzione(sessioneProduzioneId: string): Promise<void> {
+    const turno = await this.turnoRepo.getById(sessioneProduzioneId);
+    if (!turno) throw new Error('SessioneProduzione non trovato');
 
     const now = new Date().toISOString();
-    const sessioni = await this.sessioneRepo.getByTurno(turnoId);
+    const sessioni = await this.sessioneRepo.getBySessioneProduzione(sessioneProduzioneId);
     for (const s of sessioni.filter(x => x.status !== 'CHIUSA')) {
       await this.sessioneRepo.update({ ...s, status: 'CHIUSA', fine: now });
     }

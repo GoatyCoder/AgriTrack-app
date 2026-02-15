@@ -15,6 +15,8 @@ Funzionalità già disponibili:
 
 Per glossario di dominio, business rules e roadmap, consulta `AGENTS.md`.
 
+Per il log delle migrazioni schema, consulta `MIGRATIONS.md`.
+
 ## Stack tecnico
 
 - React 19 + TypeScript

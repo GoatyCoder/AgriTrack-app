@@ -1,10 +1,10 @@
 import React from 'react';
 import { Play, Square, PlusCircle, RefreshCw, Pencil, Pause, Trash2 } from 'lucide-react';
-import { SessioneLinea, Articolo, Pedana } from '../types';
+import { Lavorazione, Articolo, Pedana } from '../types';
 import { formatTime } from '../utils';
 
 interface SessionCardProps {
-  sessione: SessioneLinea;
+  sessione: Lavorazione;
   articolo: Articolo;
   siglaLottoCode: string;
   dataIngresso: string;

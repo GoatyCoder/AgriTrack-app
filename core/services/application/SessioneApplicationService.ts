@@ -1,7 +1,7 @@
 import { ISessioneRepository } from '../../repositories/interfaces/ISessioneRepository';
 import { ITurnoRepository } from '../../repositories/interfaces/ITurnoRepository';
 import { IMasterDataRepository } from '../../repositories/interfaces/IMasterDataRepository';
-import { SessioneLinea } from '../../../types';
+import { Lavorazione } from '../../../types';
 import { buildSessione } from '../SessioneService';
 import { ArticoloLottoCompatibilityService } from '../domain/ArticoloLottoCompatibilityService';
 import { SessioneConflictService } from '../domain/SessioneConflictService';
@@ -16,14 +16,14 @@ export class SessioneApplicationService {
   ) {}
 
   async startSessione(params: {
-    turnoId: string;
+    sessioneProduzioneId: string;
     lineaId: string;
     articoloId: string;
     siglaLottoId: string;
     dataIngresso: string;
-  }): Promise<{ sessione: SessioneLinea; conflicts: SessioneLinea[] }> {
-    const turno = await this.turnoRepo.getById(params.turnoId);
-    if (!turno || turno.status === 'CHIUSO') throw new Error('R2.3: Turno non valido');
+  }): Promise<{ sessione: Lavorazione; conflicts: Lavorazione[] }> {
+    const turno = await this.turnoRepo.getById(params.sessioneProduzioneId);
+    if (!turno || turno.status === 'CHIUSO') throw new Error('R2.3: SessioneProduzione non valido');
 
     const [articoli, lotti, varieta] = await Promise.all([
       this.masterDataRepo.getArticoli(),
@@ -42,7 +42,7 @@ export class SessioneApplicationService {
     const activeLineSessions = await this.sessioneRepo.getActiveByLinea(params.lineaId);
     const conflicts = this.conflictService.findConflicts(params.lineaId, activeLineSessions);
 
-    const sessione = buildSessione(params);
+    const sessione = buildSessione({ ...params, sessioneProduzioneId: params.sessioneProduzioneId });
     return { sessione, conflicts };
   }
 }
