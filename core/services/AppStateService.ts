@@ -72,7 +72,10 @@ export const normalizeLegacyState = (raw: any): AppState => {
       lineaId: lavorazione.lineaId || LEGACY_LINEA_TO_LINEA_ID[lavorazione.linea] || linee[0]?.id || INITIAL_LINEE[0].id,
       doyIngresso: lavorazione.doyIngresso ?? getSafeDoy(lavorazione.dataIngresso),
       imballoId: lavorazione.imballoId || undefined,
-      pesoColloStandard: typeof lavorazione.pesoColloStandard === 'number' ? lavorazione.pesoColloStandard : undefined
+      pesoColloStandard: typeof lavorazione.pesoColloStandard === 'number' ? lavorazione.pesoColloStandard : undefined,
+      categoria: lavorazione.categoria || undefined,
+      calibro: lavorazione.calibro || undefined,
+      noteSticker: lavorazione.noteSticker || undefined
     })),
     varieta: applyAuditDefaults((raw.varieta || INITIAL_VARIETA).map((varieta: any) => ({
       ...varieta,
@@ -80,7 +83,9 @@ export const normalizeLegacyState = (raw: any): AppState => {
     }))),
     articoli: applyAuditDefaults((raw.articoli || INITIAL_ARTICOLI).map((articolo: any) => ({
       ...articolo,
-      tipologiaId: articolo.tipologiaId
+      tipologiaId: articolo.tipologiaId,
+      ean: articolo.ean || undefined,
+      categoria: articolo.categoria || undefined
     }))),
     sigleLotto: applyAuditDefaults(raw.sigleLotto || INITIAL_SIGLE_LOTTO),
     imballi: applyAuditDefaults(raw.imballi || INITIAL_IMBALLI),

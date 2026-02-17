@@ -76,11 +76,11 @@ export const INITIAL_VARIETA: Varieta[] = [
 ];
 
 export const INITIAL_ARTICOLI: Articolo[] = [
-  withAudit({ id: 'ART1', codice: '10x500', nome: 'Cestini 10x500g (Bianca SS)', prodottoId: 'P1', tipologiaId: 'TIP2', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
-  withAudit({ id: 'ART2', codice: '5KG', nome: 'Cartone 30x40 5kg (Rossa SS)', prodottoId: 'P1', tipologiaId: 'TIP4', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
-  withAudit({ id: 'ART3', codice: 'SFUSO', nome: 'Plateau 60x40 Sfuso (Mista)', prodottoId: 'P1', pesoColloTeorico: 6.0, tipoPeso: 'USCENTE', attivo: true }),
-  withAudit({ id: 'ART4', codice: 'FOG', nome: 'Mandarini con Foglia 2 Strati', prodottoId: 'P2', varietaId: 'V7', pesoColloTeorico: 10.0, tipoPeso: 'EGALIZZATO', attivo: true }),
-  withAudit({ id: 'ART5', codice: 'RETE', nome: 'Mandarini Defogliati Rete 1kg', prodottoId: 'P2', tipologiaId: 'TIP7', pesoColloTeorico: 8.0, tipoPeso: 'EGALIZZATO', attivo: true })
+  withAudit({ id: 'ART1', codice: '10x500', ean: '2800001000011', categoria: 'EXPORT', nome: 'Cestini 10x500g (Bianca SS)', prodottoId: 'P1', tipologiaId: 'TIP2', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
+  withAudit({ id: 'ART2', codice: '5KG', ean: '2800001000028', categoria: 'PRIMA', nome: 'Cartone 30x40 5kg (Rossa SS)', prodottoId: 'P1', tipologiaId: 'TIP4', pesoColloTeorico: 5.0, tipoPeso: 'EGALIZZATO', attivo: true }),
+  withAudit({ id: 'ART3', codice: 'SFUSO', ean: '2800001000035', categoria: 'SECONDA', nome: 'Plateau 60x40 Sfuso (Mista)', prodottoId: 'P1', pesoColloTeorico: 6.0, tipoPeso: 'USCENTE', attivo: true }),
+  withAudit({ id: 'ART4', codice: 'FOG', ean: '2800001000042', categoria: 'EXTRA', nome: 'Mandarini con Foglia 2 Strati', prodottoId: 'P2', varietaId: 'V7', pesoColloTeorico: 10.0, tipoPeso: 'EGALIZZATO', attivo: true }),
+  withAudit({ id: 'ART5', codice: 'RETE', ean: '2800001000059', categoria: 'PRIMA', nome: 'Mandarini Defogliati Rete 1kg', prodottoId: 'P2', tipologiaId: 'TIP7', pesoColloTeorico: 8.0, tipoPeso: 'EGALIZZATO', attivo: true })
 ];
 
 export const INITIAL_SIGLE_LOTTO: SiglaLotto[] = [

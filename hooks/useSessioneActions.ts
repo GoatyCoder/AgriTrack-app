@@ -31,7 +31,7 @@ export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId
   const conflictService = useMemo(() => new SessioneConflictService(), []);
   const validationService = useMemo(() => new ProductionValidationService(), []);
 
-  const handleStartSession = (newSessionData: { lineaId: string; articoloId: string; siglaLottoId: string; siglaLottoCode: string; produttoreLotto: string; campoLotto: string; varietaId: string; dataIngresso: string; doyIngresso?: number; imballoId: string; pesoColloStandard: number }) => {
+  const handleStartSession = (newSessionData: { lineaId: string; articoloId: string; articoloCode: string; articoloEan: string; siglaLottoId: string; siglaLottoCode: string; produttoreLotto: string; campoLotto: string; prodottoId: string; prodottoCode: string; varietaId: string; varietaCode: string; dataIngresso: string; doyIngresso?: number; imballoId: string; imballoCode: string; pesoColloStandard: number; categoria: string; calibro: string; note: string; noteSticker: string }) => {
     try {
     validationService.ensureRequired(newSessionData.articoloId, 'Articolo');
     validationService.ensureRequired(newSessionData.lineaId, 'Linea');
@@ -48,6 +48,7 @@ export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId
     if (!resolvedSiglaLottoId) {
       validationService.ensureRequired(newSessionData.produttoreLotto, 'Produttore');
       validationService.ensureRequired(newSessionData.varietaId, 'Varietà');
+      validationService.ensureRequired(newSessionData.campoLotto, 'Campo');
 
       const existingByCode = state.sigleLotto.find((lotto) => lotto.code === newSessionData.siglaLottoCode);
       if (existingByCode) {
@@ -76,7 +77,11 @@ export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId
       dataIngresso: newSessionData.dataIngresso,
       doyIngresso: newSessionData.doyIngresso,
       imballoId: newSessionData.imballoId || undefined,
-      pesoColloStandard: newSessionData.pesoColloStandard
+      pesoColloStandard: newSessionData.pesoColloStandard,
+      categoria: newSessionData.categoria || undefined,
+      calibro: newSessionData.calibro || undefined,
+      note: newSessionData.note || '',
+      noteSticker: newSessionData.noteSticker || undefined
     });
 
     const overlaps = conflictService.findConflicts(proposedSession.lineaId, activeSessions);

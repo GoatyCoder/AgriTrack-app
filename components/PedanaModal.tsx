@@ -31,6 +31,7 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
   const [doy, setDoy] = useState(0);
   const [seq, setSeq] = useState(0);
   const [showSticker, setShowSticker] = useState(false);
+  const [noteSticker, setNoteSticker] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -41,16 +42,18 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
       setShowSticker(false);
       setNumeroColli(72);
       setPesoManuale(0);
-      setImballoId(imballiOptions[0]?.id || '');
+      setImballoId(sessione.imballoId || imballiOptions[0]?.id || '');
       const defaultCalibro = calibriOptions[0] || '';
       setModalitaCalibro('SINGOLO');
       setCalibroSingolo(defaultCalibro);
       setCalibroDa(defaultCalibro);
       setCalibroA(defaultCalibro);
+      setNoteSticker(sessione.noteSticker || '');
     }
-  }, [isOpen, pedaneTodayCount, imballiOptions, calibriOptions]);
+  }, [isOpen, pedaneTodayCount, imballiOptions, calibriOptions, sessione.imballoId, sessione.noteSticker]);
 
-  const pesoTeorico = pesoManuale > 0 ? pesoManuale : numeroColli * articolo.pesoColloTeorico;
+  const pesoRiferimento = sessione.pesoColloStandard || articolo.pesoColloTeorico;
+  const pesoTeorico = pesoManuale > 0 ? pesoManuale : numeroColli * pesoRiferimento;
 
   const selectedCalibro = useMemo(() => {
     if (calibriOptions.length === 0) return '';
@@ -83,7 +86,8 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
       snapshotArticolo: { id: articolo.id, nome: articolo.nome, codice: articolo.codice },
       snapshotIngresso: { siglaLottoId: sessione.siglaLottoId, lottoCode, dataIngresso: sessione.dataIngresso },
       calibro: selectedCalibro,
-      snapshotCalibro: selectedCalibro ? { nome: selectedCalibro } : undefined
+      snapshotCalibro: selectedCalibro ? { nome: selectedCalibro } : undefined,
+      noteSticker: noteSticker || undefined
     });
     setShowSticker(true);
   };
@@ -149,6 +153,11 @@ const PedanaModal: React.FC<PedanaModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Peso Netto Totale (Kg) - opzionale</label>
                 <input type="number" value={pesoManuale} onChange={(e) => setPesoManuale(parseFloat(e.target.value) || 0)} className="w-full border-gray-300 border rounded-lg p-2 font-bold" placeholder="Lascia 0 per peso teorico" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Annotazione Sticker</label>
+                <textarea value={noteSticker} onChange={(e) => setNoteSticker(e.target.value)} className="w-full border-gray-300 border rounded-lg p-2" rows={2} placeholder="Annotazione stampata su sticker" />
               </div>
 
               <div className="pt-2">

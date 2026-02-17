@@ -192,6 +192,7 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - Può avere **note** testuali libere
 - Può avere `imballoId` predefinito per la lavorazione (usato come default in creazione pedana)
 - Può avere `pesoColloStandard` specifico di lavorazione (inizializzato dal peso teorico articolo ma sovrascrivibile)
+- Può avere `categoria`, `calibro`, `note` e `noteSticker` per supportare operatività e stampa sticker
 - **Business Rule**: Più lavorazioni possono essere attive sulla stessa linea contemporaneamente (sovrapposizioni permesse)
 - **Esempio**: Linea 2 lavora "Cestini 10x500g" dal lotto "12345" entrato il 15/03
 - **Nel codice**: Type `Lavorazione` (da rinominare da `SessioneLinea`)
@@ -603,6 +604,7 @@ await handleUpdateLavorazioneWithSnapshots(
 - La creazione di una nuova lavorazione avviene in **dialog modale** (no sezione collapsible inline)
 - Campi obbligatori: `lineaId`, `siglaLottoCode`, `dataIngresso`/`doyIngresso`, `articoloId`, `imballoId`, `pesoColloStandard`
 - Se `siglaLottoCode` non esiste in anagrafica, il dialog consente la creazione contestuale del nuovo lotto con `produttore`, `campo`, `prodottoId`, `varietaId`
+- Il dialog espone anche inserimento rapido per codici (`prodottoCode`, `varietaCode`, `articoloCode`, `imballoCode`) e lookup tramite `ean` articolo
 
 **Regole di calcolo automatico**:
 - `dataIngresso` e `doyIngresso` sono due input sincronizzati bidirezionalmente
@@ -613,8 +615,9 @@ await handleUpdateLavorazioneWithSnapshots(
   - `prodottoGrezzo`
   - `produttore`
 - Se la sigla non esiste, `prodotto` e `varieta` restano compilabili dall'operatore per la creazione del lotto
-- Da `articoloId` si propone automaticamente `pesoColloStandard = articolo.pesoColloTeorico`
+- Da `articoloId` si propone automaticamente `pesoColloStandard = articolo.pesoColloTeorico` e `categoria = articolo.categoria`
   - l'operatore può sovrascrivere il valore per la specifica lavorazione
+- In creazione pedana, `noteSticker` della lavorazione precompila l'annotazione sticker
 
 **Validazioni minime**:
 - `pesoColloStandard > 0`
@@ -1639,6 +1642,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.10 (Current - Q2 2026)
+- Rimosso box riepilogo statico dal dialog nuova lavorazione per ridurre rumore visivo
+- Aggiunti campi operativi: codice prodotto/varietà, codice articolo, EAN articolo, codice imballaggio, calibro, categoria, note lavorazione, noteSticker
+- Supportato lookup rapido per codice/EAN senza svuotare input dopo Enter/scan
+- Esteso dominio Articolo con `ean` e `categoria`; estesa Lavorazione con `categoria`, `calibro`, `noteSticker`
+
 ### Version 0.2.9 (Current - Q2 2026)
 - Esteso il dialog di nuova lavorazione con gestione Sigla Lotto "esistente o nuova"
 - Aggiunti campi editabili `prodotto`, `varietà`, `produttore`, `campo` per creazione lotto contestuale
@@ -1738,7 +1747,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-17
-**Version**: 0.2.9
+**Version**: 0.2.10
 **Maintained by**: Development Team
 
 ---

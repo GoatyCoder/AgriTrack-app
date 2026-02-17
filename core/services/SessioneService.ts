@@ -9,6 +9,10 @@ export const buildSessione = (params: {
   doyIngresso?: number;
   imballoId?: string;
   pesoColloStandard?: number;
+  categoria?: string;
+  calibro?: string;
+  note?: string;
+  noteSticker?: string;
 }): Lavorazione => ({
   id: crypto.randomUUID(),
   sessioneProduzioneId: params.sessioneProduzioneId,
@@ -19,10 +23,13 @@ export const buildSessione = (params: {
   doyIngresso: params.doyIngresso,
   imballoId: params.imballoId,
   pesoColloStandard: params.pesoColloStandard,
+  categoria: params.categoria,
+  calibro: params.calibro,
+  noteSticker: params.noteSticker,
   inizio: new Date().toISOString(),
   status: 'ATTIVA',
   pause: [],
-  note: ''
+  note: params.note || ''
 });
 
 export const getLineConflicts = (activeSessions: Lavorazione[], lineaId: string): Lavorazione[] =>

@@ -44,24 +44,33 @@ export const useSessionForm = (
     areaId: state.aree[0]?.id || '',
     lineaId: state.linee[0]?.id || '',
     articoloId: '',
+    articoloCode: '',
+    articoloEan: '',
     siglaLottoId: '',
     siglaLottoCode: '',
     produttoreLotto: '',
     campoLotto: '',
     prodottoId: '',
+    prodottoCode: '',
     varietaId: '',
+    varietaCode: '',
     dataIngresso: formatDateInput(today),
     doyIngresso: computeDoy(today) as number | undefined,
     imballoId: '',
-    pesoColloStandard: 0
+    imballoCode: '',
+    pesoColloStandard: 0,
+    categoria: '',
+    calibro: '',
+    note: '',
+    noteSticker: ''
   });
 
   const compatibilityService = useMemo(() => new ArticoloLottoCompatibilityService(), []);
 
   useEffect(() => {
     if (!activeSessioneProduzione) return;
-    const firstLineaArea = state.linee.find(l => l.areaId === activeSessioneProduzione.areaId && l.attiva !== false)?.id || state.linee[0]?.id || '';
-    setNewSessionData(prev => ({ ...prev, areaId: activeSessioneProduzione.areaId, lineaId: firstLineaArea || prev.lineaId }));
+    const firstLineaArea = state.linee.find((l) => l.areaId === activeSessioneProduzione.areaId && l.attiva !== false)?.id || state.linee[0]?.id || '';
+    setNewSessionData((prev) => ({ ...prev, areaId: activeSessioneProduzione.areaId, lineaId: firstLineaArea || prev.lineaId }));
   }, [activeSessioneProduzione, state.linee]);
 
   const selectedLottoById = state.sigleLotto.find((lotto) => lotto.id === newSessionData.siglaLottoId);
@@ -75,11 +84,12 @@ export const useSessionForm = (
     return buildDraftLotto(newSessionData.siglaLottoCode, newSessionData.produttoreLotto, selectedVarieta.id, newSessionData.campoLotto);
   }, [selectedLottoById, selectedVarieta, newSessionData.siglaLottoCode, newSessionData.produttoreLotto, newSessionData.campoLotto]);
 
-  const filteredArticoli = useMemo(() => state.articoli.filter((art) => {
-    return compatibilityService.isCompatible(art, effectiveLotto, selectedVarieta || undefined);
-  }), [state.articoli, effectiveLotto, selectedVarieta, compatibilityService]);
+  const filteredArticoli = useMemo(
+    () => state.articoli.filter((art) => compatibilityService.isCompatible(art, effectiveLotto, selectedVarieta || undefined)),
+    [state.articoli, effectiveLotto, selectedVarieta, compatibilityService]
+  );
 
-  const lottoOptions = useMemo(() => state.sigleLotto.map(s => ({ ...s, codice: s.code, nome: `${s.produttore} (${s.campo})` })), [state.sigleLotto]);
+  const lottoOptions = useMemo(() => state.sigleLotto.map((s) => ({ ...s, codice: s.code, nome: `${s.produttore} (${s.campo})` })), [state.sigleLotto]);
   const imballiOptions = useMemo(
     () => state.imballi.filter((imballo) => imballo.attivo !== false).map((imballo) => ({ ...imballo, codice: imballo.codice, nome: imballo.nome })),
     [state.imballi]
@@ -89,17 +99,22 @@ export const useSessionForm = (
     [state.prodottiGrezzi]
   );
   const varietaOptions = useMemo(
-    () => state.varieta
-      .filter((varieta) => varieta.attiva !== false && (!newSessionData.prodottoId || varieta.prodottoId === newSessionData.prodottoId))
-      .map((varieta) => ({ id: varieta.id, codice: varieta.codice, nome: varieta.nome })),
+    () =>
+      state.varieta
+        .filter((varieta) => varieta.attiva !== false && (!newSessionData.prodottoId || varieta.prodottoId === newSessionData.prodottoId))
+        .map((varieta) => ({ id: varieta.id, codice: varieta.codice, nome: varieta.nome })),
     [state.varieta, newSessionData.prodottoId]
+  );
+
+  const calibroOptions = useMemo(
+    () => state.calibri.filter((calibro) => calibro.attivo && calibro.prodottoId === newSessionData.prodottoId).map((calibro) => calibro.nome),
+    [state.calibri, newSessionData.prodottoId]
   );
 
   const compatibleLottoOptions = useMemo(() => {
     if (!sessionToSwitchLotto) return [];
-    const currentArt = state.articoli.find(a => a.id === sessionToSwitchLotto.articoloId);
+    const currentArt = state.articoli.find((a) => a.id === sessionToSwitchLotto.articoloId);
     if (!currentArt) return lottoOptions;
-
     return compatibilityService.getCompatibleLotti(currentArt, lottoOptions, state.varieta);
   }, [sessionToSwitchLotto, lottoOptions, state.articoli, state.varieta, compatibilityService]);
 
@@ -108,8 +123,33 @@ export const useSessionForm = (
     setNewSessionData((prev) => ({
       ...prev,
       articoloId: id,
-      pesoColloStandard: articolo?.pesoColloTeorico ?? prev.pesoColloStandard
+      articoloCode: articolo?.codice || prev.articoloCode,
+      articoloEan: articolo?.ean || prev.articoloEan,
+      pesoColloStandard: articolo?.pesoColloTeorico ?? prev.pesoColloStandard,
+      categoria: articolo?.categoria || prev.categoria
     }));
+  };
+
+  const handleArticoloCodeCommit = () => {
+    const code = newSessionData.articoloCode.trim().toUpperCase();
+    if (!code) return;
+    const articolo = filteredArticoli.find((item) => item.codice.toUpperCase() === code);
+    if (articolo) handleSelectArticolo(articolo.id);
+  };
+
+  const handleArticoloEanCommit = () => {
+    const ean = newSessionData.articoloEan.trim();
+    if (!ean) return;
+    const articolo = filteredArticoli.find((item) => (item.ean || '').trim() === ean);
+    if (articolo) handleSelectArticolo(articolo.id);
+  };
+
+  const handleImballoCodeCommit = () => {
+    const code = newSessionData.imballoCode.trim().toUpperCase();
+    if (!code) return;
+    const imballo = state.imballi.find((item) => item.codice.toUpperCase() === code && item.attivo !== false);
+    if (!imballo) return;
+    setNewSessionData((prev) => ({ ...prev, imballoId: imballo.id, imballoCode: imballo.codice }));
   };
 
   const handleDataIngressoChange = (dataIngresso: string) => {
@@ -163,7 +203,9 @@ export const useSessionForm = (
         produttoreLotto: '',
         campoLotto: '',
         prodottoId: '',
+        prodottoCode: '',
         varietaId: '',
+        varietaCode: '',
         articoloId: ''
       }));
       return;
@@ -171,15 +213,13 @@ export const useSessionForm = (
 
     const existing = state.sigleLotto.find((lotto) => lotto.code === normalizedCode);
     if (!existing) {
-      setNewSessionData((prev) => ({
-        ...prev,
-        siglaLottoId: '',
-        articoloId: ''
-      }));
+      setNewSessionData((prev) => ({ ...prev, siglaLottoId: '', articoloId: '' }));
       return;
     }
 
     const varieta = state.varieta.find((item) => item.id === existing.varietaId);
+    const prodotto = varieta ? state.prodottiGrezzi.find((item) => item.id === varieta.prodottoId) : undefined;
+
     setNewSessionData((prev) => ({
       ...prev,
       siglaLottoId: existing.id,
@@ -187,28 +227,61 @@ export const useSessionForm = (
       produttoreLotto: existing.produttore,
       campoLotto: existing.campo,
       varietaId: existing.varietaId,
+      varietaCode: varieta?.codice || prev.varietaCode,
       prodottoId: varieta?.prodottoId || prev.prodottoId,
-      articoloId: ''
+      prodottoCode: prodotto?.codice || prev.prodottoCode,
+      articoloId: '',
+      articoloCode: '',
+      articoloEan: ''
     }));
   };
 
   const handleProdottoChange = (prodottoId: string) => {
+    const prodotto = state.prodottiGrezzi.find((item) => item.id === prodottoId);
     setNewSessionData((prev) => ({
       ...prev,
       prodottoId,
+      prodottoCode: prodotto?.codice || '',
       varietaId: state.varieta.some((varieta) => varieta.id === prev.varietaId && varieta.prodottoId === prodottoId) ? prev.varietaId : '',
-      articoloId: ''
+      varietaCode: state.varieta.some((varieta) => varieta.id === prev.varietaId && varieta.prodottoId === prodottoId)
+        ? prev.varietaCode
+        : '',
+      articoloId: '',
+      articoloCode: '',
+      articoloEan: '',
+      calibro: ''
     }));
+  };
+
+  const handleProdottoCodeCommit = () => {
+    const code = newSessionData.prodottoCode.trim().toUpperCase();
+    if (!code) return;
+    const prodotto = state.prodottiGrezzi.find((item) => item.codice.toUpperCase() === code && item.attivo !== false);
+    if (prodotto) handleProdottoChange(prodotto.id);
   };
 
   const handleVarietaChange = (varietaId: string) => {
     const varieta = state.varieta.find((item) => item.id === varietaId);
+    const prodotto = varieta ? state.prodottiGrezzi.find((item) => item.id === varieta.prodottoId) : undefined;
     setNewSessionData((prev) => ({
       ...prev,
       varietaId,
+      varietaCode: varieta?.codice || '',
       prodottoId: varieta?.prodottoId || prev.prodottoId,
-      articoloId: ''
+      prodottoCode: prodotto?.codice || prev.prodottoCode,
+      articoloId: '',
+      articoloCode: '',
+      articoloEan: ''
     }));
+  };
+
+  const handleVarietaCodeCommit = () => {
+    const code = newSessionData.varietaCode.trim().toUpperCase();
+    if (!code) return;
+    const varieta = state.varieta.find(
+      (item) => item.codice.toUpperCase() === code && item.attiva !== false && (!newSessionData.prodottoId || item.prodottoId === newSessionData.prodottoId)
+    );
+    if (varieta) handleVarietaChange(varieta.id);
   };
 
   const isExistingLotto = Boolean(newSessionData.siglaLottoId);
@@ -227,13 +300,19 @@ export const useSessionForm = (
     imballiOptions,
     prodottoOptions,
     varietaOptions,
+    calibroOptions,
     isExistingLotto,
     handleSelectArticolo,
+    handleArticoloCodeCommit,
+    handleArticoloEanCommit,
+    handleImballoCodeCommit,
     handleDataIngressoChange,
     handleDoyIngressoChange,
     handleSiglaLottoCodeChange,
     handleSiglaLottoCodeCommit,
     handleProdottoChange,
-    handleVarietaChange
+    handleProdottoCodeCommit,
+    handleVarietaChange,
+    handleVarietaCodeCommit
   };
 };
