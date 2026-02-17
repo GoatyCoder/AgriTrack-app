@@ -6,6 +6,9 @@ export const buildSessione = (params: {
   articoloId: string;
   siglaLottoId: string;
   dataIngresso: string;
+  doyIngresso?: number;
+  imballoId?: string;
+  pesoColloStandard?: number;
 }): Lavorazione => ({
   id: crypto.randomUUID(),
   sessioneProduzioneId: params.sessioneProduzioneId,
@@ -13,6 +16,9 @@ export const buildSessione = (params: {
   articoloId: params.articoloId,
   siglaLottoId: params.siglaLottoId,
   dataIngresso: params.dataIngresso,
+  doyIngresso: params.doyIngresso,
+  imballoId: params.imballoId,
+  pesoColloStandard: params.pesoColloStandard,
   inizio: new Date().toISOString(),
   status: 'ATTIVA',
   pause: [],

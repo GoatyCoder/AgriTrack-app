@@ -70,7 +70,9 @@ export const normalizeLegacyState = (raw: any): AppState => {
       ...lavorazione,
       sessioneProduzioneId: lavorazione.sessioneProduzioneId || lavorazione.turnoId,
       lineaId: lavorazione.lineaId || LEGACY_LINEA_TO_LINEA_ID[lavorazione.linea] || linee[0]?.id || INITIAL_LINEE[0].id,
-      doyIngresso: lavorazione.doyIngresso ?? getSafeDoy(lavorazione.dataIngresso)
+      doyIngresso: lavorazione.doyIngresso ?? getSafeDoy(lavorazione.dataIngresso),
+      imballoId: lavorazione.imballoId || undefined,
+      pesoColloStandard: typeof lavorazione.pesoColloStandard === 'number' ? lavorazione.pesoColloStandard : undefined
     })),
     varieta: applyAuditDefaults((raw.varieta || INITIAL_VARIETA).map((varieta: any) => ({
       ...varieta,

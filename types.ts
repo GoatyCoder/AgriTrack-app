@@ -123,6 +123,8 @@ export interface Lavorazione {
   dataIngresso: string;
   doyIngresso?: number;
   articoloId: string;
+  imballoId?: string;
+  pesoColloStandard?: number;
   inizio: string;
   fine?: string;
   status: 'ATTIVA' | 'PAUSA' | 'CHIUSA';
