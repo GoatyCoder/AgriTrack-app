@@ -314,8 +314,9 @@ const App: React.FC = () => {
                                 <h3 className="font-bold text-lg">Nuova Lavorazione</h3>
                                 <button onClick={() => setIsNewSessionMode(false)}><X size={20}/></button>
                             </div>
-                            <div className="p-4 space-y-4">
-                                <div className="grid md:grid-cols-3 gap-3">
+
+                            <div className="p-5 space-y-4">
+                                <div className="grid md:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Area</label>
                                         <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.areaId} onChange={e => setNewSessionData({...newSessionData, areaId: e.target.value, lineaId: state.linee.find(l => l.areaId === e.target.value)?.id || ''})}>
@@ -327,6 +328,23 @@ const App: React.FC = () => {
                                         <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.lineaId} onChange={e => setNewSessionData({...newSessionData, lineaId: e.target.value})}>
                                             {state.linee.filter(l => l.areaId === newSessionData.areaId && l.attiva !== false).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
                                         </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Data ingresso</label>
+                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.dataIngresso} onChange={e => handleDataIngressoChange(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">DOY ingresso</label>
+                                        <input type="number" min="1" max="366" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.doyIngresso ?? ''} onChange={e => handleDoyIngressoChange(e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm font-semibold text-gray-700">Lotto ingresso</p>
+                                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${isExistingLotto ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                          {isExistingLotto ? 'Sigla esistente' : 'Nuova sigla'}
+                                        </span>
                                     </div>
 
                                     <div>
@@ -346,7 +364,9 @@ const App: React.FC = () => {
                                           placeholder="Es: 12345"
                                         />
                                     </div>
-                                    <div>
+
+                                    <div className="grid md:grid-cols-2 gap-3">
+                                      <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Produttore</label>
                                         <input
                                           type="text"
@@ -355,8 +375,8 @@ const App: React.FC = () => {
                                           onChange={e => setNewSessionData({ ...newSessionData, produttoreLotto: e.target.value })}
                                           disabled={isExistingLotto}
                                         />
-                                    </div>
-                                    <div>
+                                      </div>
+                                      <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Campo</label>
                                         <input
                                           type="text"
@@ -365,33 +385,45 @@ const App: React.FC = () => {
                                           onChange={e => setNewSessionData({ ...newSessionData, campoLotto: e.target.value })}
                                           disabled={isExistingLotto}
                                         />
-                                    </div>
-
-                                    <SmartSelect
-                                      label="Prodotto Grezzo"
-                                      options={prodottoOptions}
-                                      value={newSessionData.prodottoId}
-                                      onSelect={handleProdottoChange}
-                                      placeholder="Prodotto..."
-                                      disabled={isExistingLotto}
-                                    />
-                                    <SmartSelect
-                                      label="Varietà"
-                                      options={varietaOptions}
-                                      value={newSessionData.varietaId}
-                                      onSelect={handleVarietaChange}
-                                      placeholder="Varietà..."
-                                      disabled={isExistingLotto || !newSessionData.prodottoId}
-                                    />
-
-                                    <div className="md:col-span-2 space-y-2">
+                                      </div>
                                       <SmartSelect
-                                        label="Articolo"
-                                        options={filteredArticoli}
-                                        value={newSessionData.articoloId}
-                                        onSelect={handleSelectArticolo}
-                                        placeholder="Articolo..."
-                                        disabled={!newSessionData.varietaId}
+                                        label="Prodotto Grezzo"
+                                        options={prodottoOptions}
+                                        value={newSessionData.prodottoId}
+                                        onSelect={handleProdottoChange}
+                                        placeholder="Prodotto..."
+                                        disabled={isExistingLotto}
+                                      />
+                                      <SmartSelect
+                                        label="Varietà"
+                                        options={varietaOptions}
+                                        value={newSessionData.varietaId}
+                                        onSelect={handleVarietaChange}
+                                        placeholder="Varietà..."
+                                        disabled={isExistingLotto || !newSessionData.prodottoId}
+                                      />
+                                    </div>
+                                </div>
+
+                                <div className="grid md:grid-cols-2 gap-3">
+                                  <div className="space-y-2">
+                                    <SmartSelect
+                                      label="Articolo"
+                                      options={filteredArticoli}
+                                      value={newSessionData.articoloId}
+                                      onSelect={handleSelectArticolo}
+                                      placeholder="Articolo..."
+                                      disabled={!newSessionData.varietaId}
+                                    />
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-500 mb-1">Scanner EAN (opzionale)</label>
+                                      <input
+                                        type="text"
+                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono"
+                                        value={newSessionData.articoloEan}
+                                        onChange={e => setNewSessionData({ ...newSessionData, articoloEan: e.target.value })}
+                                        onBlur={handleArticoloEanCommit}
+                                        placeholder="Scansiona EAN articolo"
                                       />
                                       <div>
                                         <label className="block text-xs font-medium text-gray-500 mb-1">Scanner EAN (opzionale)</label>
@@ -405,7 +437,9 @@ const App: React.FC = () => {
                                         />
                                       </div>
                                     </div>
+                                  </div>
 
+                                  <div className="space-y-2">
                                     <SmartSelect
                                       label="Imballaggio"
                                       options={imballiOptions}
@@ -416,7 +450,22 @@ const App: React.FC = () => {
                                       }}
                                       placeholder="Imballaggio..."
                                     />
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Peso collo (kg)</label>
+                                        <input type="number" min="0" step="0.01" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.pesoColloStandard} onChange={e => setNewSessionData({...newSessionData, pesoColloStandard: Number(e.target.value)})} />
+                                      </div>
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Tipo peso</label>
+                                        <input type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium bg-gray-50" value={selectedArticoloForm?.tipoPeso || ''} readOnly />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
 
+                                <details className="rounded-lg border border-gray-200 p-3">
+                                  <summary className="cursor-pointer text-sm font-semibold text-gray-700">Dettagli opzionali</summary>
+                                  <div className="mt-3 grid md:grid-cols-2 gap-3">
                                     <div>
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Categoria</label>
                                       <input type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.categoria} onChange={e => setNewSessionData({...newSessionData, categoria: e.target.value})} />
@@ -428,26 +477,7 @@ const App: React.FC = () => {
                                         {calibroOptions.map((calibro) => <option key={calibro} value={calibro} />)}
                                       </datalist>
                                     </div>
-
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">Peso collo standard (kg)</label>
-                                      <input type="number" min="0" step="0.01" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.pesoColloStandard} onChange={e => setNewSessionData({...newSessionData, pesoColloStandard: Number(e.target.value)})} />
-                                    </div>
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">Tipo peso articolo</label>
-                                      <input type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium bg-gray-50" value={selectedArticoloForm?.tipoPeso || ''} readOnly />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">Data ingresso</label>
-                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.dataIngresso} onChange={e => handleDataIngressoChange(e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">DOY ingresso</label>
-                                        <input type="number" min="1" max="366" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.doyIngresso ?? ''} onChange={e => handleDoyIngressoChange(e.target.value)} />
-                                    </div>
-
-                                    <div className="md:col-span-3">
+                                    <div className="md:col-span-2">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>
                                       <textarea className="w-full p-2 border border-gray-300 rounded-lg font-medium" rows={2} value={newSessionData.note} onChange={e => setNewSessionData({...newSessionData, note: e.target.value})} />
                                     </div>
@@ -455,7 +485,9 @@ const App: React.FC = () => {
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Annotazione predefinita sticker pedana</label>
                                       <textarea className="w-full p-2 border border-gray-300 rounded-lg font-medium" rows={2} value={newSessionData.noteSticker} onChange={e => setNewSessionData({...newSessionData, noteSticker: e.target.value})} placeholder="Es: Cliente X - Controllo qualità" />
                                     </div>
-                                </div>
+                                  </div>
+                                </details>
+
                                 <div className="flex justify-end gap-3">
                                     <button onClick={() => setIsNewSessionMode(false)} className="px-4 py-2 text-gray-500 font-medium">Annulla</button>
                                     <button onClick={() => handleStartSession(newSessionData)} className="px-6 py-2 bg-agri-600 text-white rounded-lg font-bold shadow hover:bg-agri-700">Avvia Lavorazione</button>

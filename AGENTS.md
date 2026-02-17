@@ -1642,6 +1642,11 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.12 (Current - Q2 2026)
+- Semplificato il dialog "Nuova Lavorazione" con layout a sezioni: base, lotto, articolo/imballo
+- Introdotto blocco "Dettagli opzionali" collassabile per ridurre il rumore visivo in uso operativo
+- Evidenziato stato sigla lotto (esistente vs nuova) con badge sintetico nel dialog
+
 ### Version 0.2.11 (Current - Q2 2026)
 - Dialog "Nuova Lavorazione" reso più compatto (layout a 3 colonne, spacing ridotto)
 - Rimossi messaggi descrittivi sotto "Sigla Lotto" nel dialog per ridurre rumore visivo
@@ -1753,7 +1758,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-17
-**Version**: 0.2.11
+**Version**: 0.2.12
 **Maintained by**: Development Team
 
 ---
