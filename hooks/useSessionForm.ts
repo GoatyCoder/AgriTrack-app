@@ -31,7 +31,16 @@ export const useSessionForm = (
   const today = new Date();
 
   const [isNewSessionMode, setIsNewSessionMode] = useState(false);
-  const [newSessionData, setNewSessionData] = useState({
+  const [newSessionData, setNewSessionData] = useState<{
+    areaId: string;
+    lineaId: string;
+    articoloId: string;
+    siglaLottoId: string;
+    dataIngresso: string;
+    doyIngresso?: number;
+    imballoId: string;
+    pesoColloStandard: number;
+  }>({
     areaId: state.aree[0]?.id || '',
     lineaId: state.linee[0]?.id || '',
     articoloId: '',

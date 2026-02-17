@@ -11,7 +11,7 @@ import ScartoModal from './components/ScartoModal';
 import SmartSelect from './components/SmartSelect';
 import { LayoutDashboard, Factory, History, Plus, LogOut, FileText, Settings, PlayCircle, RefreshCw, Archive, Play, X, AlertTriangle, CheckSquare, Square, Activity, Pencil, StickyNote, ArrowUp, ArrowDown, Filter, XCircle, Clock, RotateCcw, Pause, Trash2 } from 'lucide-react';
 import { useDialog } from './components/DialogContext';
-import { formatTime, formatDateTime, updateIsoTime } from './utils';
+import { computeDoy, formatTime, formatDateTime, updateIsoTime } from './utils';
 import { useAppStateStore } from './hooks/useAppStateStore';
 import { useSessionFilters } from './hooks/useSessionFilters';
 import { useSessionForm } from './hooks/useSessionForm';
