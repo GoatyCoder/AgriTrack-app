@@ -604,7 +604,7 @@ await handleUpdateLavorazioneWithSnapshots(
 - La creazione di una nuova lavorazione avviene in **dialog modale** (no sezione collapsible inline)
 - Campi obbligatori: `lineaId`, `siglaLottoCode`, `dataIngresso`/`doyIngresso`, `articoloId`, `imballoId`, `pesoColloStandard`
 - Se `siglaLottoCode` non esiste in anagrafica, il dialog consente la creazione contestuale del nuovo lotto con `produttore`, `campo`, `prodottoId`, `varietaId`
-- Il dialog usa selettori compatti code+descrizione (SmartSelect) per `prodotto`, `varieta`, `articolo`, `imballo`; per articolo resta disponibile lookup scanner tramite `ean` nello stesso blocco
+- Il dialog usa selettori compatti code+descrizione (SmartSelect) per `prodotto`, `varieta`, `articolo`, `imballo`
 
 **Regole di calcolo automatico**:
 - `dataIngresso` e `doyIngresso` sono due input sincronizzati bidirezionalmente
@@ -1642,6 +1642,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.13 (Current - Q2 2026)
+- Ulteriore semplificazione dialog "Nuova Lavorazione" per ridurre confusione operativa
+- Rimossa integrazione scanner EAN dal dialog (temporaneamente) per evitare duplicazione/ambiguità
+- Rimossa visualizzazione "Tipo peso" dal flusso principale
+- Riordinati campi lotto: `sigla lotto` + `data ingresso` + `lotto ingresso` affiancati; `prodotto/varietà` prima di `produttore/campo`
+
 ### Version 0.2.12 (Current - Q2 2026)
 - Semplificato il dialog "Nuova Lavorazione" con layout a sezioni: base, lotto, articolo/imballo
 - Introdotto blocco "Dettagli opzionali" collassabile per ridurre il rumore visivo in uso operativo
@@ -1758,7 +1764,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-17
-**Version**: 0.2.12
+**Version**: 0.2.13
 **Maintained by**: Development Team
 
 ---

@@ -116,14 +116,12 @@ const App: React.FC = () => {
     lottoOptions,
     filteredArticoli,
     compatibleLottoOptions,
-    selectedArticoloForm,
     imballiOptions,
     prodottoOptions,
     varietaOptions,
     calibroOptions,
     isExistingLotto,
     handleSelectArticolo,
-    handleArticoloEanCommit,
     handleDataIngressoChange,
     handleDoyIngressoChange,
     handleSiglaLottoCodeChange,
@@ -329,25 +327,18 @@ const App: React.FC = () => {
                                             {state.linee.filter(l => l.areaId === newSessionData.areaId && l.attiva !== false).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">Data ingresso</label>
-                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.dataIngresso} onChange={e => handleDataIngressoChange(e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">DOY ingresso</label>
-                                        <input type="number" min="1" max="366" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.doyIngresso ?? ''} onChange={e => handleDoyIngressoChange(e.target.value)} />
-                                    </div>
                                 </div>
 
                                 <div className="rounded-lg border border-gray-200 p-3 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-sm font-semibold text-gray-700">Lotto ingresso</p>
+                                        <p className="text-sm font-semibold text-gray-700">Dati lotto</p>
                                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${isExistingLotto ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                                           {isExistingLotto ? 'Sigla esistente' : 'Nuova sigla'}
                                         </span>
                                     </div>
 
-                                    <div>
+                                    <div className="grid md:grid-cols-3 gap-3">
+                                      <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Sigla Lotto</label>
                                         <input
                                           type="text"
@@ -363,9 +354,34 @@ const App: React.FC = () => {
                                           }}
                                           placeholder="Es: 12345"
                                         />
+                                      </div>
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Lotto ingresso</label>
+                                        <input type="number" min="1" max="366" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.doyIngresso ?? ''} onChange={e => handleDoyIngressoChange(e.target.value)} />
+                                      </div>
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Data ingresso</label>
+                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.dataIngresso} onChange={e => handleDataIngressoChange(e.target.value)} />
+                                      </div>
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-3">
+                                      <SmartSelect
+                                        label="Prodotto Grezzo"
+                                        options={prodottoOptions}
+                                        value={newSessionData.prodottoId}
+                                        onSelect={handleProdottoChange}
+                                        placeholder="Prodotto..."
+                                        disabled={isExistingLotto}
+                                      />
+                                      <SmartSelect
+                                        label="Varietà"
+                                        options={varietaOptions}
+                                        value={newSessionData.varietaId}
+                                        onSelect={handleVarietaChange}
+                                        placeholder="Varietà..."
+                                        disabled={isExistingLotto || !newSessionData.prodottoId}
+                                      />
                                       <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Produttore</label>
                                         <input
@@ -386,22 +402,6 @@ const App: React.FC = () => {
                                           disabled={isExistingLotto}
                                         />
                                       </div>
-                                      <SmartSelect
-                                        label="Prodotto Grezzo"
-                                        options={prodottoOptions}
-                                        value={newSessionData.prodottoId}
-                                        onSelect={handleProdottoChange}
-                                        placeholder="Prodotto..."
-                                        disabled={isExistingLotto}
-                                      />
-                                      <SmartSelect
-                                        label="Varietà"
-                                        options={varietaOptions}
-                                        value={newSessionData.varietaId}
-                                        onSelect={handleVarietaChange}
-                                        placeholder="Varietà..."
-                                        disabled={isExistingLotto || !newSessionData.prodottoId}
-                                      />
                                     </div>
                                 </div>
 
@@ -415,28 +415,6 @@ const App: React.FC = () => {
                                       placeholder="Articolo..."
                                       disabled={!newSessionData.varietaId}
                                     />
-                                    <div>
-                                      <label className="block text-xs font-medium text-gray-500 mb-1">Scanner EAN (opzionale)</label>
-                                      <input
-                                        type="text"
-                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono"
-                                        value={newSessionData.articoloEan}
-                                        onChange={e => setNewSessionData({ ...newSessionData, articoloEan: e.target.value })}
-                                        onBlur={handleArticoloEanCommit}
-                                        placeholder="Scansiona EAN articolo"
-                                      />
-                                      <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Scanner EAN (opzionale)</label>
-                                        <input
-                                          type="text"
-                                          className="w-full p-2 border border-gray-300 rounded-lg font-mono"
-                                          value={newSessionData.articoloEan}
-                                          onChange={e => setNewSessionData({ ...newSessionData, articoloEan: e.target.value })}
-                                          onBlur={handleArticoloEanCommit}
-                                          placeholder="Scansiona EAN articolo"
-                                        />
-                                      </div>
-                                    </div>
                                   </div>
 
                                   <div className="space-y-2">
@@ -450,15 +428,9 @@ const App: React.FC = () => {
                                       }}
                                       placeholder="Imballaggio..."
                                     />
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">Peso collo (kg)</label>
-                                        <input type="number" min="0" step="0.01" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.pesoColloStandard} onChange={e => setNewSessionData({...newSessionData, pesoColloStandard: Number(e.target.value)})} />
-                                      </div>
-                                      <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">Tipo peso</label>
-                                        <input type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium bg-gray-50" value={selectedArticoloForm?.tipoPeso || ''} readOnly />
-                                      </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-500 mb-1">Peso collo (kg)</label>
+                                      <input type="number" min="0" step="0.01" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.pesoColloStandard} onChange={e => setNewSessionData({...newSessionData, pesoColloStandard: Number(e.target.value)})} />
                                     </div>
                                   </div>
                                 </div>
