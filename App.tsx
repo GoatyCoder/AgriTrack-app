@@ -11,7 +11,7 @@ import ScartoModal from './components/ScartoModal';
 import SmartSelect from './components/SmartSelect';
 import { LayoutDashboard, Factory, History, Plus, LogOut, FileText, Settings, PlayCircle, RefreshCw, Archive, Play, X, AlertTriangle, CheckSquare, Square, Activity, Pencil, StickyNote, ArrowUp, ArrowDown, Filter, XCircle, Clock, RotateCcw, Pause, Trash2 } from 'lucide-react';
 import { useDialog } from './components/DialogContext';
-import { formatTime, formatDateTime, updateIsoTime } from './utils';
+import { computeDoy, formatTime, formatDateTime, updateIsoTime } from './utils';
 import { useAppStateStore } from './hooks/useAppStateStore';
 import { useSessionFilters } from './hooks/useSessionFilters';
 import { useSessionForm } from './hooks/useSessionForm';
@@ -115,7 +115,15 @@ const App: React.FC = () => {
     setNewSessionData,
     lottoOptions,
     filteredArticoli,
-    compatibleLottoOptions
+    compatibleLottoOptions,
+    selectedLottoVarieta,
+    selectedProdotto,
+    selectedArticoloForm,
+    imballiOptions,
+    handleSelectLotto,
+    handleSelectArticolo,
+    handleDataIngressoChange,
+    handleDoyIngressoChange
   } = useSessionForm(state, activeTurno, sessionToSwitchLotto);
 
   const {
@@ -293,31 +301,67 @@ const App: React.FC = () => {
                 </div>
 
                 {isNewSessionMode && (
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-agri-100 animate-in slide-in-from-top-4">
-                        <h3 className="font-bold text-lg mb-4 text-gray-800">Avvia Nuova Sessione</h3>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-500 mb-1">Area</label>
-                                <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.areaId} onChange={e => setNewSessionData({...newSessionData, areaId: e.target.value, lineaId: state.linee.find(l => l.areaId === e.target.value)?.id || ''})}>
-                                    {state.aree.filter(a => a.attiva !== false).map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
-                                </select>
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden">
+                            <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-white">
+                                <h3 className="font-bold text-lg">Nuova Lavorazione</h3>
+                                <button onClick={() => setIsNewSessionMode(false)}><X size={20}/></button>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-500 mb-1">Linea</label>
-                                <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.lineaId} onChange={e => setNewSessionData({...newSessionData, lineaId: e.target.value})}>
-                                    {state.linee.filter(l => l.areaId === newSessionData.areaId && l.attiva !== false).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
-                                </select>
+                            <div className="p-6 space-y-5">
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Area</label>
+                                        <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.areaId} onChange={e => setNewSessionData({...newSessionData, areaId: e.target.value, lineaId: state.linee.find(l => l.areaId === e.target.value)?.id || ''})}>
+                                            {state.aree.filter(a => a.attiva !== false).map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Linea</label>
+                                        <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.lineaId} onChange={e => setNewSessionData({...newSessionData, lineaId: e.target.value})}>
+                                            {state.linee.filter(l => l.areaId === newSessionData.areaId && l.attiva !== false).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+                                        </select>
+                                    </div>
+                                    <SmartSelect label="Sigla Lotto" options={lottoOptions} value={newSessionData.siglaLottoId} onSelect={handleSelectLotto} placeholder="Lotto..." />
+                                    <SmartSelect label="Articolo" options={filteredArticoli} value={newSessionData.articoloId} onSelect={handleSelectArticolo} placeholder="Articolo..." disabled={!newSessionData.siglaLottoId} />
+                                    <SmartSelect label="Imballaggio" options={imballiOptions} value={newSessionData.imballoId} onSelect={(id) => setNewSessionData({...newSessionData, imballoId: id})} placeholder="Imballaggio..." />
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-500 mb-1">Peso collo standard (kg)</label>
+                                      <input type="number" min="0" step="0.01" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.pesoColloStandard} onChange={e => setNewSessionData({...newSessionData, pesoColloStandard: Number(e.target.value)})} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Data ingresso</label>
+                                        <input type="date" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.dataIngresso} onChange={e => handleDataIngressoChange(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">DOY ingresso</label>
+                                        <input type="number" min="1" max="366" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.doyIngresso ?? ''} onChange={e => handleDoyIngressoChange(e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <div className="grid md:grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                  <div>
+                                    <p className="text-xs uppercase tracking-wide text-gray-400">Prodotto grezzo</p>
+                                    <p className="font-semibold text-gray-800">{selectedProdotto?.nome || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs uppercase tracking-wide text-gray-400">Varietà</p>
+                                    <p className="font-semibold text-gray-800">{selectedLottoVarieta?.nome || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs uppercase tracking-wide text-gray-400">Tipologia peso articolo</p>
+                                    <p className="font-semibold text-gray-800">{selectedArticoloForm?.tipoPeso || '-'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs uppercase tracking-wide text-gray-400">DOY calcolato da data</p>
+                                    <p className="font-semibold text-gray-800">{newSessionData.dataIngresso ? computeDoy(new Date(newSessionData.dataIngresso)) : '-'}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={() => setIsNewSessionMode(false)} className="px-4 py-2 text-gray-500 font-medium">Annulla</button>
+                                    <button onClick={() => handleStartSession(newSessionData)} className="px-6 py-2 bg-agri-600 text-white rounded-lg font-bold shadow hover:bg-agri-700">Avvia Lavorazione</button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-500 mb-1">Data Ingresso</label>
-                                <input type="date" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.dataIngresso} onChange={e => setNewSessionData({...newSessionData, dataIngresso: e.target.value})} />
-                            </div>
-                            <div><SmartSelect label="Sigla Lotto" options={lottoOptions} value={newSessionData.siglaLottoId} onSelect={(id) => setNewSessionData({...newSessionData, siglaLottoId: id, articoloId: ''})} placeholder="Lotto..." /></div>
-                            <div><SmartSelect label="Articolo" options={filteredArticoli} value={newSessionData.articoloId} onSelect={(id) => setNewSessionData({...newSessionData, articoloId: id})} placeholder="Articolo..." disabled={!newSessionData.siglaLottoId} /></div>
-                        </div>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => setIsNewSessionMode(false)} className="px-4 py-2 text-gray-500 font-medium">Annulla</button>
-                            <button onClick={() => handleStartSession(newSessionData)} className="px-6 py-2 bg-agri-600 text-white rounded-lg font-bold shadow hover:bg-agri-700">Avvia Sessione</button>
                         </div>
                     </div>
                 )}

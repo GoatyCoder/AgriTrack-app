@@ -31,18 +31,23 @@ export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId
   const conflictService = useMemo(() => new SessioneConflictService(), []);
   const validationService = useMemo(() => new ProductionValidationService(), []);
 
-  const handleStartSession = (newSessionData: { lineaId: string; articoloId: string; siglaLottoId: string; dataIngresso: string }) => {
+  const handleStartSession = (newSessionData: { lineaId: string; articoloId: string; siglaLottoId: string; dataIngresso: string; doyIngresso?: number; imballoId: string; pesoColloStandard: number }) => {
     try {
     validationService.ensureRequired(newSessionData.articoloId, 'Articolo');
     validationService.ensureRequired(newSessionData.siglaLottoId, 'Sigla lotto');
     validationService.ensureRequired(newSessionData.lineaId, 'Linea');
+    validationService.ensureRequired(newSessionData.imballoId, 'Imballaggio');
+    validationService.ensurePositive(newSessionData.pesoColloStandard, 'Peso collo standard');
     if (!activeSessioneProduzioneId) return;
     const proposedSession = buildSessione({
       sessioneProduzioneId: activeSessioneProduzioneId,
       lineaId: newSessionData.lineaId,
       articoloId: newSessionData.articoloId,
       siglaLottoId: newSessionData.siglaLottoId,
-      dataIngresso: newSessionData.dataIngresso
+      dataIngresso: newSessionData.dataIngresso,
+      doyIngresso: newSessionData.doyIngresso,
+      imballoId: newSessionData.imballoId || undefined,
+      pesoColloStandard: newSessionData.pesoColloStandard
     });
 
     const overlaps = conflictService.findConflicts(proposedSession.lineaId, activeSessions);

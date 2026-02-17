@@ -190,6 +190,8 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
   - 1 Lavorazione → 1 Sigla Lotto + Data Ingresso
 - **Stati**: `ATTIVA` → `PAUSA` ↔ `CHIUSA` (finale, irreversibile)
 - Può avere **note** testuali libere
+- Può avere `imballoId` predefinito per la lavorazione (usato come default in creazione pedana)
+- Può avere `pesoColloStandard` specifico di lavorazione (inizializzato dal peso teorico articolo ma sovrascrivibile)
 - **Business Rule**: Più lavorazioni possono essere attive sulla stessa linea contemporaneamente (sovrapposizioni permesse)
 - **Esempio**: Linea 2 lavora "Cestini 10x500g" dal lotto "12345" entrato il 15/03
 - **Nel codice**: Type `Lavorazione` (da rinominare da `SessioneLinea`)
@@ -592,6 +594,28 @@ await handleUpdateLavorazioneWithSnapshots(
   ]
 );
 ```
+
+---
+
+### R9. Creazione Lavorazione da Dialog Guidato
+
+**Regola UI/UX**:
+- La creazione di una nuova lavorazione avviene in **dialog modale** (no sezione collapsible inline)
+- Campi obbligatori: `lineaId`, `siglaLottoId`, `dataIngresso`/`doyIngresso`, `articoloId`, `imballoId`, `pesoColloStandard`
+
+**Regole di calcolo automatico**:
+- `dataIngresso` e `doyIngresso` sono due input sincronizzati bidirezionalmente
+  - se operatore modifica `dataIngresso` → calcolo immediato `doyIngresso`
+  - se operatore modifica `doyIngresso` → calcolo immediato `dataIngresso` (anno corrente)
+- Da `siglaLottoId` si derivano automaticamente:
+  - `varieta`
+  - `prodottoGrezzo`
+- Da `articoloId` si propone automaticamente `pesoColloStandard = articolo.pesoColloTeorico`
+  - l'operatore può sovrascrivere il valore per la specifica lavorazione
+
+**Validazioni minime**:
+- `pesoColloStandard > 0`
+- `imballoId` obbligatorio in avvio lavorazione
 
 ---
 
@@ -1612,6 +1636,11 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.8 (Current - Q2 2026)
+- Nuova creazione lavorazione tramite dialog modale guidato
+- Aggiunti campi lavorazione `imballoId` e `pesoColloStandard` in avvio
+- Inserito flusso bidirezionale Data Ingresso ↔ DOY Ingresso e autocompilazione Prodotto/Varietà da Sigla Lotto
+
 ### Version 0.1.1 (Current - Internal Alignment)
 - Added phased execution strategy for FASE 1
 - Introduced migration-first approach before full terminology refactor
@@ -1701,7 +1730,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-17
-**Version**: 0.2.7
+**Version**: 0.2.8
 **Maintained by**: Development Team
 
 ---

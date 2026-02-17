@@ -31,6 +31,8 @@ const LavorazioneSchema = z.object({
   dataIngresso: z.string(),
   doyIngresso: z.number().optional(),
   articoloId: z.string(),
+  imballoId: z.string().optional(),
+  pesoColloStandard: z.number().optional(),
   inizio: z.string(),
   fine: z.string().optional(),
   status: z.enum(['ATTIVA', 'PAUSA', 'CHIUSA']),
