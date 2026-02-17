@@ -453,7 +453,7 @@ const App: React.FC = () => {
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>
                                       <textarea className="w-full p-2 border border-gray-300 rounded-lg font-medium" rows={2} value={newSessionData.note} onChange={e => setNewSessionData({...newSessionData, note: e.target.value})} />
                                     </div>
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-3">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Annotazione predefinita sticker pedana</label>
                                       <textarea className="w-full p-2 border border-gray-300 rounded-lg font-medium" rows={2} value={newSessionData.noteSticker} onChange={e => setNewSessionData({...newSessionData, noteSticker: e.target.value})} placeholder="Es: Cliente X - Controllo qualità" />
                                     </div>
