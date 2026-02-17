@@ -604,7 +604,7 @@ await handleUpdateLavorazioneWithSnapshots(
 - La creazione di una nuova lavorazione avviene in **dialog modale** (no sezione collapsible inline)
 - Campi obbligatori: `lineaId`, `siglaLottoCode`, `dataIngresso`/`doyIngresso`, `articoloId`, `imballoId`, `pesoColloStandard`
 - Se `siglaLottoCode` non esiste in anagrafica, il dialog consente la creazione contestuale del nuovo lotto con `produttore`, `campo`, `prodottoId`, `varietaId`
-- Il dialog espone anche inserimento rapido per codici (`prodottoCode`, `varietaCode`, `articoloCode`, `imballoCode`) e lookup tramite `ean` articolo
+- Il dialog usa selettori compatti code+descrizione (SmartSelect) per `prodotto`, `varieta`, `articolo`, `imballo`; per articolo resta disponibile lookup scanner tramite `ean` nello stesso blocco
 
 **Regole di calcolo automatico**:
 - `dataIngresso` e `doyIngresso` sono due input sincronizzati bidirezionalmente
@@ -1642,6 +1642,17 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.12 (Current - Q2 2026)
+- Semplificato il dialog "Nuova Lavorazione" con layout a sezioni: base, lotto, articolo/imballo
+- Introdotto blocco "Dettagli opzionali" collassabile per ridurre il rumore visivo in uso operativo
+- Evidenziato stato sigla lotto (esistente vs nuova) con badge sintetico nel dialog
+
+### Version 0.2.11 (Current - Q2 2026)
+- Dialog "Nuova Lavorazione" reso più compatto (layout a 3 colonne, spacing ridotto)
+- Rimossi messaggi descrittivi sotto "Sigla Lotto" nel dialog per ridurre rumore visivo
+- In caso di sigla lotto non trovata, il form svuota automaticamente produttore/campo/prodotto/varietà
+- Unificata UX selezione con SmartSelect per prodotto, varietà, articolo e imballaggio; EAN articolo mantenuto come input scanner opzionale nello stesso blocco
+
 ### Version 0.2.10 (Current - Q2 2026)
 - Rimosso box riepilogo statico dal dialog nuova lavorazione per ridurre rumore visivo
 - Aggiunti campi operativi: codice prodotto/varietà, codice articolo, EAN articolo, codice imballaggio, calibro, categoria, note lavorazione, noteSticker
@@ -1747,7 +1758,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-17
-**Version**: 0.2.10
+**Version**: 0.2.12
 **Maintained by**: Development Team
 
 ---
