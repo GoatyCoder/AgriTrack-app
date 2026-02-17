@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Lavorazione, 
   PausaEvento 
@@ -34,7 +34,6 @@ const App: React.FC = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isScartoModalOpen, setIsScartoModalOpen] = useState(false);
   const [pausingTarget, setPausingTarget] = useState<{ type: 'SHIFT' | 'SESSION', id: string } | null>(null);
-  const produttoreInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loadError) return;
@@ -124,17 +123,14 @@ const App: React.FC = () => {
     calibroOptions,
     isExistingLotto,
     handleSelectArticolo,
-    handleArticoloCodeCommit,
     handleArticoloEanCommit,
-    handleImballoCodeCommit,
     handleDataIngressoChange,
     handleDoyIngressoChange,
     handleSiglaLottoCodeChange,
     handleSiglaLottoCodeCommit,
     handleProdottoChange,
-    handleProdottoCodeCommit,
     handleVarietaChange,
-    handleVarietaCodeCommit
+    
   } = useSessionForm(state, activeTurno, sessionToSwitchLotto);
 
   const {
@@ -313,13 +309,13 @@ const App: React.FC = () => {
 
                 {isNewSessionMode && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
                             <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-white">
                                 <h3 className="font-bold text-lg">Nuova Lavorazione</h3>
                                 <button onClick={() => setIsNewSessionMode(false)}><X size={20}/></button>
                             </div>
-                            <div className="p-6 space-y-5">
-                                <div className="grid md:grid-cols-2 gap-4">
+                            <div className="p-4 space-y-4">
+                                <div className="grid md:grid-cols-3 gap-3">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Area</label>
                                         <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.areaId} onChange={e => setNewSessionData({...newSessionData, areaId: e.target.value, lineaId: state.linee.find(l => l.areaId === e.target.value)?.id || ''})}>
@@ -345,19 +341,14 @@ const App: React.FC = () => {
                                             if (e.key === 'Enter') {
                                               e.preventDefault();
                                               handleSiglaLottoCodeCommit();
-                                              produttoreInputRef.current?.focus();
                                             }
                                           }}
                                           placeholder="Es: 12345"
                                         />
-                                        <p className="text-xs mt-1 text-gray-500">
-                                          {isExistingLotto ? 'Sigla lotto esistente: campi compilati automaticamente.' : 'Sigla non trovata: verrà creato un nuovo lotto al salvataggio.'}
-                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Produttore</label>
                                         <input
-                                          ref={produttoreInputRef}
                                           type="text"
                                           className="w-full p-2 border border-gray-300 rounded-lg font-medium"
                                           value={newSessionData.produttoreLotto}
@@ -365,45 +356,6 @@ const App: React.FC = () => {
                                           disabled={isExistingLotto}
                                         />
                                     </div>
-
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">Codice Prodotto</label>
-                                      <input
-                                        type="text"
-                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono uppercase"
-                                        value={newSessionData.prodottoCode}
-                                        onChange={e => setNewSessionData({...newSessionData, prodottoCode: e.target.value.toUpperCase()})}
-                                        onBlur={handleProdottoCodeCommit}
-                                        disabled={isExistingLotto}
-                                      />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">Prodotto Grezzo</label>
-                                        <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.prodottoId} onChange={e => handleProdottoChange(e.target.value)} disabled={isExistingLotto}>
-                                            <option value="">Seleziona prodotto</option>
-                                            {prodottoOptions.map((prodotto) => <option key={prodotto.id} value={prodotto.id}>{prodotto.nome}</option>)}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">Codice Varietà</label>
-                                      <input
-                                        type="text"
-                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono uppercase"
-                                        value={newSessionData.varietaCode}
-                                        onChange={e => setNewSessionData({...newSessionData, varietaCode: e.target.value.toUpperCase()})}
-                                        onBlur={handleVarietaCodeCommit}
-                                        disabled={isExistingLotto || !newSessionData.prodottoId}
-                                      />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-500 mb-1">Varietà</label>
-                                        <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.varietaId} onChange={e => handleVarietaChange(e.target.value)} disabled={isExistingLotto || !newSessionData.prodottoId}>
-                                            <option value="">Seleziona varietà</option>
-                                            {varietaOptions.map((varieta) => <option key={varieta.id} value={varieta.id}>{varieta.nome}</option>)}
-                                        </select>
-                                    </div>
-
                                     <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Campo</label>
                                         <input
@@ -415,43 +367,55 @@ const App: React.FC = () => {
                                         />
                                     </div>
 
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">Codice Articolo</label>
-                                      <input
-                                        type="text"
-                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono uppercase"
-                                        value={newSessionData.articoloCode}
-                                        onChange={e => setNewSessionData({...newSessionData, articoloCode: e.target.value.toUpperCase()})}
-                                        onBlur={handleArticoloCodeCommit}
+                                    <SmartSelect
+                                      label="Prodotto Grezzo"
+                                      options={prodottoOptions}
+                                      value={newSessionData.prodottoId}
+                                      onSelect={handleProdottoChange}
+                                      placeholder="Prodotto..."
+                                      disabled={isExistingLotto}
+                                    />
+                                    <SmartSelect
+                                      label="Varietà"
+                                      options={varietaOptions}
+                                      value={newSessionData.varietaId}
+                                      onSelect={handleVarietaChange}
+                                      placeholder="Varietà..."
+                                      disabled={isExistingLotto || !newSessionData.prodottoId}
+                                    />
+
+                                    <div className="md:col-span-2 space-y-2">
+                                      <SmartSelect
+                                        label="Articolo"
+                                        options={filteredArticoli}
+                                        value={newSessionData.articoloId}
+                                        onSelect={handleSelectArticolo}
+                                        placeholder="Articolo..."
+                                        disabled={!newSessionData.varietaId}
                                       />
-                                    </div>
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">EAN Articolo (scanner)</label>
-                                      <input
-                                        type="text"
-                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono"
-                                        value={newSessionData.articoloEan}
-                                        onChange={e => setNewSessionData({...newSessionData, articoloEan: e.target.value})}
-                                        onBlur={handleArticoloEanCommit}
-                                      />
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Scanner EAN (opzionale)</label>
+                                        <input
+                                          type="text"
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-mono"
+                                          value={newSessionData.articoloEan}
+                                          onChange={e => setNewSessionData({ ...newSessionData, articoloEan: e.target.value })}
+                                          onBlur={handleArticoloEanCommit}
+                                          placeholder="Scansiona EAN articolo"
+                                        />
+                                      </div>
                                     </div>
 
-                                    <SmartSelect label="Articolo" options={filteredArticoli} value={newSessionData.articoloId} onSelect={handleSelectArticolo} placeholder="Articolo..." disabled={!newSessionData.varietaId} />
-
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-500 mb-1">Codice Imballaggio</label>
-                                      <input
-                                        type="text"
-                                        className="w-full p-2 border border-gray-300 rounded-lg font-mono uppercase"
-                                        value={newSessionData.imballoCode}
-                                        onChange={e => setNewSessionData({...newSessionData, imballoCode: e.target.value.toUpperCase()})}
-                                        onBlur={handleImballoCodeCommit}
-                                      />
-                                    </div>
-                                    <SmartSelect label="Imballaggio" options={imballiOptions} value={newSessionData.imballoId} onSelect={(id) => {
-                                      const imballo = state.imballi.find((item) => item.id === id);
-                                      setNewSessionData({...newSessionData, imballoId: id, imballoCode: imballo?.codice || newSessionData.imballoCode});
-                                    }} placeholder="Imballaggio..." />
+                                    <SmartSelect
+                                      label="Imballaggio"
+                                      options={imballiOptions}
+                                      value={newSessionData.imballoId}
+                                      onSelect={(id) => {
+                                        const imballo = state.imballi.find((item) => item.id === id);
+                                        setNewSessionData({ ...newSessionData, imballoId: id, imballoCode: imballo?.codice || '' });
+                                      }}
+                                      placeholder="Imballaggio..."
+                                    />
 
                                     <div>
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Categoria</label>
@@ -483,11 +447,11 @@ const App: React.FC = () => {
                                         <input type="number" min="1" max="366" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.doyIngresso ?? ''} onChange={e => handleDoyIngressoChange(e.target.value)} />
                                     </div>
 
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-3">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>
                                       <textarea className="w-full p-2 border border-gray-300 rounded-lg font-medium" rows={2} value={newSessionData.note} onChange={e => setNewSessionData({...newSessionData, note: e.target.value})} />
                                     </div>
-                                    <div className="md:col-span-2">
+                                    <div className="md:col-span-3">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Annotazione predefinita sticker pedana</label>
                                       <textarea className="w-full p-2 border border-gray-300 rounded-lg font-medium" rows={2} value={newSessionData.noteSticker} onChange={e => setNewSessionData({...newSessionData, noteSticker: e.target.value})} placeholder="Es: Cliente X - Controllo qualità" />
                                     </div>

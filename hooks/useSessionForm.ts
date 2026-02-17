@@ -213,7 +213,20 @@ export const useSessionForm = (
 
     const existing = state.sigleLotto.find((lotto) => lotto.code === normalizedCode);
     if (!existing) {
-      setNewSessionData((prev) => ({ ...prev, siglaLottoId: '', articoloId: '' }));
+      setNewSessionData((prev) => ({
+        ...prev,
+        siglaLottoId: '',
+        produttoreLotto: '',
+        campoLotto: '',
+        prodottoId: '',
+        prodottoCode: '',
+        varietaId: '',
+        varietaCode: '',
+        articoloId: '',
+        articoloCode: '',
+        articoloEan: '',
+        calibro: ''
+      }));
       return;
     }
 
