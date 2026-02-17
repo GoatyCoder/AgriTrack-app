@@ -67,6 +67,8 @@ export interface Articolo extends AuditFields {
   id: string;
   codice: string;
   nome: string;
+  ean?: string;
+  categoria?: string;
   prodottoId?: string;
   varietaId?: string;
   tipologiaId?: string;
@@ -123,6 +125,11 @@ export interface Lavorazione {
   dataIngresso: string;
   doyIngresso?: number;
   articoloId: string;
+  imballoId?: string;
+  pesoColloStandard?: number;
+  categoria?: string;
+  calibro?: string;
+  noteSticker?: string;
   inizio: string;
   fine?: string;
   status: 'ATTIVA' | 'PAUSA' | 'CHIUSA';
@@ -148,6 +155,7 @@ export interface Pedana {
   snapshotIngresso?: { siglaLottoId: string; lottoCode: string; dataIngresso: string };
   snapshotCalibro?: { nome: string };
   snapshotCategoria?: { nome: string };
+  noteSticker?: string;
 }
 
 export interface Scarto {

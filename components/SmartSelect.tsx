@@ -46,15 +46,21 @@ const SmartSelect = <T extends Option>({
       const exactMatch = options.find(o => o.codice.toUpperCase() === code);
       if (exactMatch) {
         onSelect(exactMatch.id);
-        setInputValue(''); // Clear input on success to show selection
+        setInputValue(exactMatch.codice);
       } else {
         // Not found, open modal with pre-filled search
         setSearchQuery(inputValue);
         setIsModalOpen(true);
-        setInputValue('');
       }
     }
   };
+
+
+  useEffect(() => {
+    if (selectedItem) {
+      setInputValue(selectedItem.codice);
+    }
+  }, [selectedItem?.id]);
 
   const filteredOptions = options.filter(o => {
     const q = searchQuery.toLowerCase();
@@ -128,6 +134,7 @@ const SmartSelect = <T extends Option>({
                                     key={opt.id}
                                     onClick={() => {
                                         onSelect(opt.id);
+                                        setInputValue(opt.codice);
                                         setIsModalOpen(false);
                                         setSearchQuery('');
                                     }}

@@ -31,6 +31,11 @@ const LavorazioneSchema = z.object({
   dataIngresso: z.string(),
   doyIngresso: z.number().optional(),
   articoloId: z.string(),
+  imballoId: z.string().optional(),
+  pesoColloStandard: z.number().optional(),
+  categoria: z.string().optional(),
+  calibro: z.string().optional(),
+  noteSticker: z.string().optional(),
   inizio: z.string(),
   fine: z.string().optional(),
   status: z.enum(['ATTIVA', 'PAUSA', 'CHIUSA']),
@@ -55,7 +60,8 @@ const PedanaSchema = z.object({
   snapshotArticolo: z.object({ id: z.string(), nome: z.string(), codice: z.string() }).optional(),
   snapshotIngresso: z.object({ siglaLottoId: z.string(), lottoCode: z.string(), dataIngresso: z.string() }).optional(),
   snapshotCalibro: z.object({ nome: z.string() }).optional(),
-  snapshotCategoria: z.object({ nome: z.string() }).optional()
+  snapshotCategoria: z.object({ nome: z.string() }).optional(),
+  noteSticker: z.string().optional()
 });
 
 const BaseEntitySchema = z.object({
@@ -85,7 +91,7 @@ export const AppStateSchema = z.object({
   tipologie: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), ordinamento: z.number(), attivo: z.boolean() }).merge(AuditFieldsSchema)).default([]),
   calibri: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), ordinamento: z.number(), descrizione: z.string().optional(), attivo: z.boolean() }).merge(AuditFieldsSchema)).default([]),
   varieta: z.array(z.object({ id: z.string(), prodottoId: z.string(), codice: z.string(), nome: z.string(), tipologiaId: z.string().optional(), attiva: z.boolean().optional() }).merge(AuditFieldsSchema)),
-  articoli: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), prodottoId: z.string().optional(), varietaId: z.string().optional(), tipologiaId: z.string().optional(), pesoColloTeorico: z.number(), tipoPeso: z.enum(['EGALIZZATO', 'USCENTE']), attivo: z.boolean().optional() }).merge(AuditFieldsSchema)),
+  articoli: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), ean: z.string().optional(), categoria: z.string().optional(), prodottoId: z.string().optional(), varietaId: z.string().optional(), tipologiaId: z.string().optional(), pesoColloTeorico: z.number(), tipoPeso: z.enum(['EGALIZZATO', 'USCENTE']), attivo: z.boolean().optional() }).merge(AuditFieldsSchema)),
   sigleLotto: z.array(z.object({ id: z.string(), code: z.string().regex(/^\d{4,5}$/, 'Sigla lotto non valida'), produttore: z.string(), varietaId: z.string(), campo: z.string() }).merge(AuditFieldsSchema)),
   imballi: z.array(BaseEntitySchema.extend({ taraKg: z.number().optional(), attivo: z.boolean().optional() })),
   tipologieScarto: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), prodottoId: z.string().optional(), attiva: z.boolean() }).merge(AuditFieldsSchema))

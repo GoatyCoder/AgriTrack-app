@@ -24,7 +24,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const [draftCalibri, setDraftCalibri] = useState<Array<{ id?: string; nome: string }>>([]);
   const [nuovaTipologiaNome, setNuovaTipologiaNome] = useState('');
   const [nuovoCalibroNome, setNuovoCalibroNome] = useState('');
-  const [newArticolo, setNewArticolo] = useState<Partial<Articolo>>({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0 });
+  const [newArticolo, setNewArticolo] = useState<Partial<Articolo>>({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, ean: '', categoria: '' });
   const [newLotto, setNewLotto] = useState<Partial<SiglaLotto>>({});
   const [newImballo, setNewImballo] = useState<Partial<Imballo>>({});
   const [newArea, setNewArea] = useState<Partial<Area>>({ attiva: true });
@@ -45,7 +45,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setDraftCalibri([]);
     setNuovaTipologiaNome('');
     setNuovoCalibroNome('');
-    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', prodottoId: '', varietaId: '', tipologiaId: '' });
+    setNewArticolo({ tipoPeso: 'EGALIZZATO', pesoColloTeorico: 0, codice: '', nome: '', ean: '', categoria: '', prodottoId: '', varietaId: '', tipologiaId: '' });
     setNewLotto({ code: '', produttore: '', varietaId: '', campo: '' });
     setNewImballo({ nome: '', codice: '', taraKg: 0 });
     setNewArea({ nome: '', attiva: true });
@@ -295,6 +295,8 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
             id: crypto.randomUUID(),
             codice: cleanArticolo.codice.toUpperCase(),
             nome: cleanArticolo.nome!,
+            ean: cleanArticolo.ean || undefined,
+            categoria: cleanArticolo.categoria || undefined,
             prodottoId: cleanArticolo.prodottoId || undefined,
             varietaId: cleanArticolo.varietaId || undefined,
             tipologiaId: cleanArticolo.tipologiaId || undefined,
@@ -815,6 +817,15 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                             </select>
                     </div>
 
+                    <div className="col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">EAN</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm font-mono" value={newArticolo.ean || ''} onChange={e => setNewArticolo({...newArticolo, ean: e.target.value})} />
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Categoria articolo</label>
+                        <input type="text" className="w-full border rounded p-2 text-sm" value={newArticolo.categoria || ''} onChange={e => setNewArticolo({...newArticolo, categoria: e.target.value})} />
+                    </div>
+
                     <div className="col-span-4">
                         <label className="block text-xs font-bold text-gray-500 mb-1">Peso (Kg)</label>
                         <input type="number" className="w-full border rounded p-2 text-sm" value={newArticolo.pesoColloTeorico || ''} onChange={e => setNewArticolo({...newArticolo, pesoColloTeorico: parseFloat(e.target.value)})} />
@@ -829,6 +840,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     <th className="px-4 py-2 text-left">Codice</th>
                     <th className="px-4 py-2 text-left">Nome</th>
                     <th className="px-4 py-2 text-left">Vincoli</th>
+                    <th className="px-4 py-2 text-left">Categoria/EAN</th>
                     <th className="px-4 py-2 text-left">Peso</th>
                     <th></th>
                 </tr>
@@ -851,6 +863,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                                 <span className={`block text-xs font-bold ${!item.prodottoId ? 'text-green-600' : 'text-gray-500'}`}>{pName}</span>
                                 {item.prodottoId && <span className={`text-xs px-2 py-0.5 rounded ${vincolo === 'Tutti' ? 'bg-gray-100' : 'bg-blue-100 text-blue-800'}`}>{vincolo}</span>}
                             </td>
+                            <td className="px-4 py-2"><div className="text-xs"><div>{item.categoria || '-'}</div><div className="font-mono text-gray-500">{item.ean || '-'}</div></div></td>
                             <td className="px-4 py-2">{item.pesoColloTeorico} kg</td>
                             <td className="px-4 py-2 flex gap-2">
                                 <button onClick={() => startEditArticolo(item)} className="text-gray-400 hover:text-orange-500"><Pencil size={16} /></button>
