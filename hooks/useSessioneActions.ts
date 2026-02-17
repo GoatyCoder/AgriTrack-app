@@ -31,19 +31,48 @@ export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId
   const conflictService = useMemo(() => new SessioneConflictService(), []);
   const validationService = useMemo(() => new ProductionValidationService(), []);
 
-  const handleStartSession = (newSessionData: { lineaId: string; articoloId: string; siglaLottoId: string; dataIngresso: string; doyIngresso?: number; imballoId: string; pesoColloStandard: number }) => {
+  const handleStartSession = (newSessionData: { lineaId: string; articoloId: string; siglaLottoId: string; siglaLottoCode: string; produttoreLotto: string; campoLotto: string; varietaId: string; dataIngresso: string; doyIngresso?: number; imballoId: string; pesoColloStandard: number }) => {
     try {
     validationService.ensureRequired(newSessionData.articoloId, 'Articolo');
-    validationService.ensureRequired(newSessionData.siglaLottoId, 'Sigla lotto');
     validationService.ensureRequired(newSessionData.lineaId, 'Linea');
     validationService.ensureRequired(newSessionData.imballoId, 'Imballaggio');
     validationService.ensurePositive(newSessionData.pesoColloStandard, 'Peso collo standard');
+    validationService.ensureRequired(newSessionData.siglaLottoCode, 'Sigla lotto');
+    if (!/^\d{4,5}$/.test(newSessionData.siglaLottoCode)) {
+      throw new Error('Sigla lotto non valida');
+    }
+
+    let resolvedSiglaLottoId = newSessionData.siglaLottoId;
+    let newSiglaLotto: AppState['sigleLotto'][number] | null = null;
+
+    if (!resolvedSiglaLottoId) {
+      validationService.ensureRequired(newSessionData.produttoreLotto, 'Produttore');
+      validationService.ensureRequired(newSessionData.varietaId, 'Varietà');
+
+      const existingByCode = state.sigleLotto.find((lotto) => lotto.code === newSessionData.siglaLottoCode);
+      if (existingByCode) {
+        resolvedSiglaLottoId = existingByCode.id;
+      } else {
+        const now = new Date().toISOString();
+        newSiglaLotto = {
+          id: crypto.randomUUID(),
+          code: newSessionData.siglaLottoCode,
+          produttore: newSessionData.produttoreLotto,
+          campo: newSessionData.campoLotto,
+          varietaId: newSessionData.varietaId,
+          createdAt: now,
+          updatedAt: now
+        };
+        resolvedSiglaLottoId = newSiglaLotto.id;
+      }
+    }
+
     if (!activeSessioneProduzioneId) return;
     const proposedSession = buildSessione({
       sessioneProduzioneId: activeSessioneProduzioneId,
       lineaId: newSessionData.lineaId,
       articoloId: newSessionData.articoloId,
-      siglaLottoId: newSessionData.siglaLottoId,
+      siglaLottoId: resolvedSiglaLottoId,
       dataIngresso: newSessionData.dataIngresso,
       doyIngresso: newSessionData.doyIngresso,
       imballoId: newSessionData.imballoId || undefined,
@@ -58,20 +87,24 @@ export const useSessioneActions = ({ state, setState, activeSessioneProduzioneId
       return;
     }
 
-    executeStartSession(proposedSession, []);
+    executeStartSession(proposedSession, [], newSiglaLotto);
     } catch {
       return;
     }
   };
 
-  const executeStartSession = (sessionToStart: Lavorazione, idsToClose: string[]) => {
+  const executeStartSession = (sessionToStart: Lavorazione, idsToClose: string[], newSiglaLotto?: AppState['sigleLotto'][number] | null) => {
     const now = new Date().toISOString();
     setState(prev => {
       const updatedSessions = prev.lavorazioni.map(s =>
         idsToClose.includes(s.id) ? { ...s, fine: now, status: 'CHIUSA' as const } : s
       );
       updatedSessions.push(sessionToStart);
-      return { ...prev, lavorazioni: updatedSessions };
+      const nextSigleLotto = newSiglaLotto && !prev.sigleLotto.some((lotto) => lotto.code === newSiglaLotto.code)
+        ? [...prev.sigleLotto, newSiglaLotto]
+        : prev.sigleLotto;
+
+      return { ...prev, lavorazioni: updatedSessions, sigleLotto: nextSigleLotto };
     });
     setPendingSession(null);
     setConflictingSessions([]);

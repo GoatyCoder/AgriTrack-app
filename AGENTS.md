@@ -601,15 +601,18 @@ await handleUpdateLavorazioneWithSnapshots(
 
 **Regola UI/UX**:
 - La creazione di una nuova lavorazione avviene in **dialog modale** (no sezione collapsible inline)
-- Campi obbligatori: `lineaId`, `siglaLottoId`, `dataIngresso`/`doyIngresso`, `articoloId`, `imballoId`, `pesoColloStandard`
+- Campi obbligatori: `lineaId`, `siglaLottoCode`, `dataIngresso`/`doyIngresso`, `articoloId`, `imballoId`, `pesoColloStandard`
+- Se `siglaLottoCode` non esiste in anagrafica, il dialog consente la creazione contestuale del nuovo lotto con `produttore`, `campo`, `prodottoId`, `varietaId`
 
 **Regole di calcolo automatico**:
 - `dataIngresso` e `doyIngresso` sono due input sincronizzati bidirezionalmente
   - se operatore modifica `dataIngresso` → calcolo immediato `doyIngresso`
   - se operatore modifica `doyIngresso` → calcolo immediato `dataIngresso` (anno corrente)
-- Da `siglaLottoId` si derivano automaticamente:
+- Da `siglaLottoCode` si derivano automaticamente (se sigla esistente):
   - `varieta`
   - `prodottoGrezzo`
+  - `produttore`
+- Se la sigla non esiste, `prodotto` e `varieta` restano compilabili dall'operatore per la creazione del lotto
 - Da `articoloId` si propone automaticamente `pesoColloStandard = articolo.pesoColloTeorico`
   - l'operatore può sovrascrivere il valore per la specifica lavorazione
 
@@ -1636,6 +1639,11 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.9 (Current - Q2 2026)
+- Esteso il dialog di nuova lavorazione con gestione Sigla Lotto "esistente o nuova"
+- Aggiunti campi editabili `prodotto`, `varietà`, `produttore`, `campo` per creazione lotto contestuale
+- Migliorato UX input sigla lotto: Enter mantiene il valore e sposta focus al campo successivo
+
 ### Version 0.2.8 (Current - Q2 2026)
 - Nuova creazione lavorazione tramite dialog modale guidato
 - Aggiunti campi lavorazione `imballoId` e `pesoColloStandard` in avvio
@@ -1730,7 +1738,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-17
-**Version**: 0.2.8
+**Version**: 0.2.9
 **Maintained by**: Development Team
 
 ---

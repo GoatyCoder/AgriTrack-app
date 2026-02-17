@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Lavorazione, 
   PausaEvento 
@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isScartoModalOpen, setIsScartoModalOpen] = useState(false);
   const [pausingTarget, setPausingTarget] = useState<{ type: 'SHIFT' | 'SESSION', id: string } | null>(null);
+  const produttoreInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loadError) return;
@@ -116,14 +117,20 @@ const App: React.FC = () => {
     lottoOptions,
     filteredArticoli,
     compatibleLottoOptions,
-    selectedLottoVarieta,
+    selectedVarieta,
     selectedProdotto,
     selectedArticoloForm,
     imballiOptions,
-    handleSelectLotto,
+    prodottoOptions,
+    varietaOptions,
+    isExistingLotto,
     handleSelectArticolo,
     handleDataIngressoChange,
-    handleDoyIngressoChange
+    handleDoyIngressoChange,
+    handleSiglaLottoCodeChange,
+    handleSiglaLottoCodeCommit,
+    handleProdottoChange,
+    handleVarietaChange
   } = useSessionForm(state, activeTurno, sessionToSwitchLotto);
 
   const {
@@ -321,8 +328,63 @@ const App: React.FC = () => {
                                             {state.linee.filter(l => l.areaId === newSessionData.areaId && l.attiva !== false).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
                                         </select>
                                     </div>
-                                    <SmartSelect label="Sigla Lotto" options={lottoOptions} value={newSessionData.siglaLottoId} onSelect={handleSelectLotto} placeholder="Lotto..." />
-                                    <SmartSelect label="Articolo" options={filteredArticoli} value={newSessionData.articoloId} onSelect={handleSelectArticolo} placeholder="Articolo..." disabled={!newSessionData.siglaLottoId} />
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Sigla Lotto</label>
+                                        <input
+                                          type="text"
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium"
+                                          value={newSessionData.siglaLottoCode}
+                                          onChange={e => handleSiglaLottoCodeChange(e.target.value)}
+                                          onBlur={handleSiglaLottoCodeCommit}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              handleSiglaLottoCodeCommit();
+                                              produttoreInputRef.current?.focus();
+                                            }
+                                          }}
+                                          placeholder="Es: 12345"
+                                        />
+                                        <p className="text-xs mt-1 text-gray-500">
+                                          {isExistingLotto ? 'Sigla lotto esistente: campi compilati automaticamente.' : 'Sigla non trovata: verrà creato un nuovo lotto al salvataggio.'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Produttore</label>
+                                        <input
+                                          ref={produttoreInputRef}
+                                          type="text"
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium"
+                                          value={newSessionData.produttoreLotto}
+                                          onChange={e => setNewSessionData({ ...newSessionData, produttoreLotto: e.target.value })}
+                                          disabled={isExistingLotto}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Prodotto Grezzo</label>
+                                        <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.prodottoId} onChange={e => handleProdottoChange(e.target.value)} disabled={isExistingLotto}>
+                                            <option value="">Seleziona prodotto</option>
+                                            {prodottoOptions.map((prodotto) => <option key={prodotto.id} value={prodotto.id}>{prodotto.nome}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Varietà</label>
+                                        <select className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.varietaId} onChange={e => handleVarietaChange(e.target.value)} disabled={isExistingLotto || !newSessionData.prodottoId}>
+                                            <option value="">Seleziona varietà</option>
+                                            {varietaOptions.map((varieta) => <option key={varieta.id} value={varieta.id}>{varieta.nome}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">Campo</label>
+                                        <input
+                                          type="text"
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium"
+                                          value={newSessionData.campoLotto}
+                                          onChange={e => setNewSessionData({ ...newSessionData, campoLotto: e.target.value })}
+                                          disabled={isExistingLotto}
+                                        />
+                                    </div>
+                                    <SmartSelect label="Articolo" options={filteredArticoli} value={newSessionData.articoloId} onSelect={handleSelectArticolo} placeholder="Articolo..." disabled={!newSessionData.varietaId} />
                                     <SmartSelect label="Imballaggio" options={imballiOptions} value={newSessionData.imballoId} onSelect={(id) => setNewSessionData({...newSessionData, imballoId: id})} placeholder="Imballaggio..." />
                                     <div>
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Peso collo standard (kg)</label>
@@ -345,7 +407,7 @@ const App: React.FC = () => {
                                   </div>
                                   <div>
                                     <p className="text-xs uppercase tracking-wide text-gray-400">Varietà</p>
-                                    <p className="font-semibold text-gray-800">{selectedLottoVarieta?.nome || '-'}</p>
+                                    <p className="font-semibold text-gray-800">{selectedVarieta?.nome || '-'}</p>
                                   </div>
                                   <div>
                                     <p className="text-xs uppercase tracking-wide text-gray-400">Tipologia peso articolo</p>
