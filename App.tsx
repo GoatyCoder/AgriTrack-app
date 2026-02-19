@@ -160,89 +160,62 @@ const App: React.FC = () => {
     [varietaOptions]
   );
 
-  const [calibroMode, setCalibroMode] = useState<'SINGOLO' | 'RANGE'>('SINGOLO');
-  const [calibroSingolo, setCalibroSingolo] = useState('');
-  const [calibroRangeStart, setCalibroRangeStart] = useState('');
-  const [calibroRangeEnd, setCalibroRangeEnd] = useState('');
+  const [calibroDa, setCalibroDa] = useState('');
+  const [calibroA, setCalibroA] = useState('');
 
   useEffect(() => {
     if (!isNewSessionMode) return;
     if (!newSessionData.calibro) {
-      setCalibroMode('SINGOLO');
-      setCalibroSingolo('');
-      setCalibroRangeStart('');
-      setCalibroRangeEnd('');
+      setCalibroDa('');
+      setCalibroA('');
       return;
     }
 
     if (newSessionData.calibro.includes('-')) {
       const [from, to] = newSessionData.calibro.split('-');
-      setCalibroMode('RANGE');
-      setCalibroRangeStart(from || '');
-      setCalibroRangeEnd(to || '');
-      setCalibroSingolo('');
+      setCalibroDa(from || '');
+      setCalibroA(to || '');
       return;
     }
 
-    setCalibroMode('SINGOLO');
-    setCalibroSingolo(newSessionData.calibro);
-    setCalibroRangeStart('');
-    setCalibroRangeEnd('');
-  }, [isNewSessionMode]);
+    setCalibroDa(newSessionData.calibro);
+    setCalibroA(newSessionData.calibro);
+  }, [isNewSessionMode, newSessionData.calibro]);
 
   useEffect(() => {
-    if (calibroOptions.length === 0) {
-      if (newSessionData.calibro !== '') setNewSessionData((prev) => ({ ...prev, calibro: '' }));
-      return;
-    }
+    const hasInvalidValue =
+      (calibroDa && !calibroOptions.includes(calibroDa)) ||
+      (calibroA && !calibroOptions.includes(calibroA));
 
-    if (calibroMode === 'SINGOLO') {
-      if (calibroSingolo && !calibroOptions.includes(calibroSingolo)) {
-        setCalibroSingolo('');
-        setNewSessionData((prev) => ({ ...prev, calibro: '' }));
-      }
-      return;
-    }
-
-    const hasInvalidRangeValue =
-      (calibroRangeStart && !calibroOptions.includes(calibroRangeStart)) ||
-      (calibroRangeEnd && !calibroOptions.includes(calibroRangeEnd));
-    if (hasInvalidRangeValue) {
-      setCalibroRangeStart('');
-      setCalibroRangeEnd('');
+    if (hasInvalidValue) {
+      setCalibroDa('');
+      setCalibroA('');
       setNewSessionData((prev) => ({ ...prev, calibro: '' }));
     }
-  }, [calibroOptions, calibroMode, calibroSingolo, calibroRangeStart, calibroRangeEnd, newSessionData.calibro, setNewSessionData]);
+  }, [calibroA, calibroDa, calibroOptions, setNewSessionData]);
 
-  const updateSessionCalibro = (nextMode: 'SINGOLO' | 'RANGE', payload: { single?: string; start?: string; end?: string } = {}) => {
-    if (nextMode === 'SINGOLO') {
-      const single = payload.single ?? calibroSingolo;
-      setCalibroSingolo(single);
-      setCalibroRangeStart('');
-      setCalibroRangeEnd('');
-      setNewSessionData((prev) => ({ ...prev, calibro: single || '' }));
-      return;
-    }
+  const updateSessionCalibro = (nextDa: string, nextA: string) => {
+    setCalibroDa(nextDa);
+    setCalibroA(nextA);
 
-    const start = payload.start ?? calibroRangeStart;
-    const end = payload.end ?? calibroRangeEnd;
-    setCalibroRangeStart(start);
-    setCalibroRangeEnd(end);
-
-    if (!start || !end) {
+    if (!nextDa && !nextA) {
       setNewSessionData((prev) => ({ ...prev, calibro: '' }));
       return;
     }
 
-    const startIndex = calibroOptions.indexOf(start);
-    const endIndex = calibroOptions.indexOf(end);
-    if (startIndex === -1 || endIndex === -1) {
+    const effectiveDa = nextDa || nextA;
+    const effectiveA = nextA || nextDa;
+
+
+    const daIndex = calibroOptions.indexOf(effectiveDa);
+    const aIndex = calibroOptions.indexOf(effectiveA);
+    if (daIndex === -1 || aIndex === -1) {
       setNewSessionData((prev) => ({ ...prev, calibro: '' }));
       return;
     }
 
-    const from = startIndex <= endIndex ? start : end;
-    const to = startIndex <= endIndex ? end : start;
+    const from = daIndex <= aIndex ? effectiveDa : effectiveA;
+    const to = daIndex <= aIndex ? effectiveA : effectiveDa;
     setNewSessionData((prev) => ({ ...prev, calibro: from === to ? from : `${from}-${to}` }));
   };
 
@@ -538,70 +511,32 @@ const App: React.FC = () => {
                                     </div>
                                     <div>
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Calibro</label>
-                                      <div className="space-y-2">
-                                        <div className="inline-flex rounded-lg bg-gray-100 p-1">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setCalibroMode('SINGOLO');
-                                              updateSessionCalibro('SINGOLO');
-                                            }}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-md transition ${calibroMode === 'SINGOLO' ? 'bg-white text-agri-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
-                                          >
-                                            Singolo
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setCalibroMode('RANGE');
-                                              updateSessionCalibro('RANGE');
-                                            }}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-md transition ${calibroMode === 'RANGE' ? 'bg-white text-agri-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
-                                          >
-                                            Range
-                                          </button>
-                                        </div>
-
-                                        {calibroMode === 'SINGOLO' ? (
-                                          <select
-                                            className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
-                                            value={calibroSingolo}
-                                            onChange={(event) => updateSessionCalibro('SINGOLO', { single: event.target.value })}
-                                            disabled={calibroOptions.length === 0}
-                                          >
-                                            <option value="">Seleziona calibro</option>
-                                            {calibroOptions.map((calibro) => (
-                                              <option key={calibro} value={calibro}>{calibro}</option>
-                                            ))}
-                                          </select>
-                                        ) : (
-                                          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                                            <select
-                                              className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
-                                              value={calibroRangeStart}
-                                              onChange={(event) => updateSessionCalibro('RANGE', { start: event.target.value })}
-                                              disabled={calibroOptions.length === 0}
-                                            >
-                                              <option value="">Da</option>
-                                              {calibroOptions.map((calibro) => (
-                                                <option key={`from-${calibro}`} value={calibro}>{calibro}</option>
-                                              ))}
-                                            </select>
-                                            <span className="text-gray-500 text-sm font-medium">→</span>
-                                            <select
-                                              className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
-                                              value={calibroRangeEnd}
-                                              onChange={(event) => updateSessionCalibro('RANGE', { end: event.target.value })}
-                                              disabled={calibroOptions.length === 0}
-                                            >
-                                              <option value="">A</option>
-                                              {calibroOptions.map((calibro) => (
-                                                <option key={`to-${calibro}`} value={calibro}>{calibro}</option>
-                                              ))}
-                                            </select>
-                                          </div>
-                                        )}
+                                      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                                        <select
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                          value={calibroDa}
+                                          onChange={(event) => updateSessionCalibro(event.target.value, calibroA)}
+                                          disabled={calibroOptions.length === 0}
+                                        >
+                                          <option value="">Da</option>
+                                          {calibroOptions.map((calibro) => (
+                                            <option key={`from-${calibro}`} value={calibro}>{calibro}</option>
+                                          ))}
+                                        </select>
+                                        <span className="text-gray-500 text-sm font-medium">→</span>
+                                        <select
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                          value={calibroA}
+                                          onChange={(event) => updateSessionCalibro(calibroDa, event.target.value)}
+                                          disabled={calibroOptions.length === 0}
+                                        >
+                                          <option value="">A</option>
+                                          {calibroOptions.map((calibro) => (
+                                            <option key={`to-${calibro}`} value={calibro}>{calibro}</option>
+                                          ))}
+                                        </select>
                                       </div>
+                                      <p className="text-xs text-gray-500 mt-1">Seleziona un solo valore o un range: il formato viene normalizzato automaticamente.</p>
                                     </div>
                                     <div className="md:col-span-2">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>
