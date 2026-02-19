@@ -88,7 +88,7 @@ export const AppStateSchema = z.object({
   aree: z.array(z.object({ id: z.string(), nome: z.string(), attiva: z.boolean() }).merge(AuditFieldsSchema)),
   linee: z.array(z.object({ id: z.string(), areaId: z.string(), nome: z.string(), attiva: z.boolean() }).merge(AuditFieldsSchema)),
   prodottiGrezzi: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), categorie: z.array(z.string()).optional(), calibri: z.array(z.string()).optional(), attivo: z.boolean().optional() }).merge(AuditFieldsSchema)).optional(),
-  tipologie: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), ordinamento: z.number(), attivo: z.boolean() }).merge(AuditFieldsSchema)).default([]),
+  tipologie: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), attivo: z.boolean() }).merge(AuditFieldsSchema)).default([]),
   calibri: z.array(z.object({ id: z.string(), nome: z.string(), prodottoId: z.string(), ordinamento: z.number(), descrizione: z.string().optional(), attivo: z.boolean() }).merge(AuditFieldsSchema)).default([]),
   varieta: z.array(z.object({ id: z.string(), prodottoId: z.string(), codice: z.string(), nome: z.string(), tipologiaId: z.string().optional(), attiva: z.boolean().optional() }).merge(AuditFieldsSchema)),
   articoli: z.array(z.object({ id: z.string(), codice: z.string(), nome: z.string(), ean: z.string().optional(), categoria: z.string().optional(), prodottoId: z.string().optional(), varietaId: z.string().optional(), tipologiaId: z.string().optional(), pesoColloTeorico: z.number(), tipoPeso: z.enum(['EGALIZZATO', 'USCENTE']), attivo: z.boolean().optional() }).merge(AuditFieldsSchema)),
