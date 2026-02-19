@@ -1665,6 +1665,10 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.18 (Current - Q2 2026)
+- Compattata la selezione calibro in Nuova Lavorazione: input unico con coppia `Da → A` senza toggle modalità
+- Normalizzazione automatica del range calibro in salvataggio (es. selezione `2` → `1X` salvata come `1X-2`)
+
 ### Version 0.2.17 (Current - Q2 2026)
 - Ripristinato deploy GitHub Pages automatico solo su branch `main` per rispettare le environment protection rules
 - Mantenuto trigger manuale `workflow_dispatch` per avvio on-demand del workflow
@@ -1800,7 +1804,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.2.17
+**Version**: 0.2.18
 **Maintained by**: Development Team
 
 ---
