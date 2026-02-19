@@ -28,17 +28,17 @@ export const INITIAL_PRODOTTI: ProdottoGrezzo[] = [
 ];
 
 export const INITIAL_TIPOLOGIE: Tipologia[] = [
-  withAudit({ id: 'TIP1', nome: 'Bianca Con Semi', prodottoId: 'P1', ordinamento: 1, attivo: true }),
-  withAudit({ id: 'TIP2', nome: 'Bianca Senza Semi', prodottoId: 'P1', ordinamento: 2, attivo: true }),
-  withAudit({ id: 'TIP3', nome: 'Rossa Con Semi', prodottoId: 'P1', ordinamento: 3, attivo: true }),
-  withAudit({ id: 'TIP4', nome: 'Rossa Senza Semi', prodottoId: 'P1', ordinamento: 4, attivo: true }),
-  withAudit({ id: 'TIP5', nome: 'Nera Senza Semi', prodottoId: 'P1', ordinamento: 5, attivo: true }),
-  withAudit({ id: 'TIP6', nome: 'Clementine', prodottoId: 'P2', ordinamento: 1, attivo: true }),
-  withAudit({ id: 'TIP7', nome: 'Tardivo', prodottoId: 'P2', ordinamento: 2, attivo: true }),
-  withAudit({ id: 'TIP8', nome: 'Ibrido', prodottoId: 'P2', ordinamento: 3, attivo: true }),
-  withAudit({ id: 'TIP9', nome: 'Precoce', prodottoId: 'P3', ordinamento: 1, attivo: true }),
-  withAudit({ id: 'TIP10', nome: 'Tardiva', prodottoId: 'P3', ordinamento: 2, attivo: true }),
-  withAudit({ id: 'TIP11', nome: 'Rossa', prodottoId: 'P3', ordinamento: 3, attivo: true })
+  withAudit({ id: 'TIP1', nome: 'Bianca Con Semi', prodottoId: 'P1', attivo: true }),
+  withAudit({ id: 'TIP2', nome: 'Bianca Senza Semi', prodottoId: 'P1', attivo: true }),
+  withAudit({ id: 'TIP3', nome: 'Rossa Con Semi', prodottoId: 'P1', attivo: true }),
+  withAudit({ id: 'TIP4', nome: 'Rossa Senza Semi', prodottoId: 'P1', attivo: true }),
+  withAudit({ id: 'TIP5', nome: 'Nera Senza Semi', prodottoId: 'P1', attivo: true }),
+  withAudit({ id: 'TIP6', nome: 'Clementine', prodottoId: 'P2', attivo: true }),
+  withAudit({ id: 'TIP7', nome: 'Tardivo', prodottoId: 'P2', attivo: true }),
+  withAudit({ id: 'TIP8', nome: 'Ibrido', prodottoId: 'P2', attivo: true }),
+  withAudit({ id: 'TIP9', nome: 'Precoce', prodottoId: 'P3', attivo: true }),
+  withAudit({ id: 'TIP10', nome: 'Tardiva', prodottoId: 'P3', attivo: true }),
+  withAudit({ id: 'TIP11', nome: 'Rossa', prodottoId: 'P3', attivo: true })
 ];
 
 export const INITIAL_CALIBRI: Calibro[] = [
