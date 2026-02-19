@@ -1667,6 +1667,11 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.15 (Current - Q2 2026)
+- Workflow GitHub Pages aggiornato: deploy automatico su push da qualsiasi branch (inclusi feature branch)
+- Mantenuto trigger manuale `workflow_dispatch` per pubblicazione on-demand
+- Documentato che un deploy da branch non-main sostituisce temporaneamente la versione online corrente
+
 ### Version 0.2.13 (Current - Q2 2026)
 - Ulteriore semplificazione dialog "Nuova Lavorazione" per ridurre confusione operativa
 - Rimossa integrazione scanner EAN dal dialog (temporaneamente) per evitare duplicazione/ambiguità
@@ -1789,7 +1794,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.2.14
+**Version**: 0.2.15
 **Maintained by**: Development Team
 
 ---
