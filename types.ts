@@ -31,7 +31,6 @@ export interface Tipologia extends AuditFields {
   id: string;
   nome: string;
   prodottoId: string;
-  ordinamento: number;
   attivo: boolean;
 }
 
