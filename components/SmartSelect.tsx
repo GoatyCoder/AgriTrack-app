@@ -5,6 +5,7 @@ interface Option {
   id: string;
   codice: string;
   nome: string;
+  descrizioneSecondaria?: string;
   [key: string]: any;
 }
 
@@ -43,15 +44,16 @@ const SmartSelect = <T extends Option>({
       const code = inputValue.trim().toUpperCase();
       if (!code) return;
 
-      const exactMatch = options.find(o => o.codice.toUpperCase() === code);
-      if (exactMatch) {
-        onSelect(exactMatch.id);
-        setInputValue(exactMatch.codice);
-      } else {
-        // Not found, open modal with pre-filled search
-        setSearchQuery(inputValue);
-        setIsModalOpen(true);
+      const exactMatches = options.filter(o => o.codice.toUpperCase() === code);
+      if (exactMatches.length === 1) {
+        onSelect(exactMatches[0].id);
+        setInputValue(exactMatches[0].codice);
+        return;
       }
+
+      // Nessuna corrispondenza o codice ambiguo: apri dialog di scelta
+      setSearchQuery(inputValue);
+      setIsModalOpen(true);
     }
   };
 
@@ -143,6 +145,7 @@ const SmartSelect = <T extends Option>({
                                     <div>
                                         <div className="font-bold text-gray-800">{opt.nome}</div>
                                         <div className="text-xs text-gray-500 font-mono">Cod: {opt.codice}</div>
+                                        {opt.descrizioneSecondaria && <div className="text-xs text-gray-500">{opt.descrizioneSecondaria}</div>}
                                     </div>
                                     {opt.id === value && <Check size={18} className="text-agri-600" />}
                                 </button>

@@ -101,9 +101,19 @@ export const useSessionForm = (
   const varietaOptions = useMemo(
     () =>
       state.varieta
-        .filter((varieta) => varieta.attiva !== false && (!newSessionData.prodottoId || varieta.prodottoId === newSessionData.prodottoId))
-        .map((varieta) => ({ id: varieta.id, codice: varieta.codice, nome: varieta.nome })),
-    [state.varieta, newSessionData.prodottoId]
+        .filter((varieta) => varieta.attiva !== false)
+        .map((varieta) => {
+          const prodotto = state.prodottiGrezzi.find((item) => item.id === varieta.prodottoId);
+          return {
+            id: varieta.id,
+            codice: varieta.codice,
+            nome: varieta.nome,
+            prodottoId: varieta.prodottoId,
+            prodottoCode: prodotto?.codice || '',
+            prodottoNome: prodotto?.nome || ''
+          };
+        }),
+    [state.varieta, state.prodottiGrezzi]
   );
 
   const calibroOptions = useMemo(
@@ -288,13 +298,25 @@ export const useSessionForm = (
     }));
   };
 
+  const getVarietaByCodeMatches = (code: string) => {
+    const normalizedCode = code.trim().toUpperCase();
+    if (!normalizedCode) return [];
+
+    return state.varieta.filter((item) => {
+      if (item.attiva === false) return false;
+      if (item.codice.toUpperCase() !== normalizedCode) return false;
+      if (!newSessionData.prodottoId) return true;
+      return item.prodottoId === newSessionData.prodottoId;
+    });
+  };
+
   const handleVarietaCodeCommit = () => {
     const code = newSessionData.varietaCode.trim().toUpperCase();
     if (!code) return;
-    const varieta = state.varieta.find(
-      (item) => item.codice.toUpperCase() === code && item.attiva !== false && (!newSessionData.prodottoId || item.prodottoId === newSessionData.prodottoId)
-    );
-    if (varieta) handleVarietaChange(varieta.id);
+    const matches = getVarietaByCodeMatches(code);
+    if (matches.length === 1) {
+      handleVarietaChange(matches[0].id);
+    }
   };
 
   const isExistingLotto = Boolean(newSessionData.siglaLottoId);
@@ -326,6 +348,7 @@ export const useSessionForm = (
     handleProdottoChange,
     handleProdottoCodeCommit,
     handleVarietaChange,
-    handleVarietaCodeCommit
+    handleVarietaCodeCommit,
+    getVarietaByCodeMatches
   };
 };

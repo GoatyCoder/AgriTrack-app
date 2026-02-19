@@ -152,6 +152,14 @@ const App: React.FC = () => {
 
   const { pedaneTodayCount, handleSavePedana, handleSaveScarto } = useProductionRecords(state, setState);
 
+  const varietaOptionsForSession = useMemo(
+    () => varietaOptions.map((varieta) => ({
+      ...varieta,
+      descrizioneSecondaria: varieta.prodottoCode ? `${varieta.prodottoCode} · ${varieta.prodottoNome}` : undefined
+    })),
+    [varietaOptions]
+  );
+
   // --- Handlers ---
 
   // --- Inline Edit Handlers ---
@@ -376,11 +384,11 @@ const App: React.FC = () => {
                                       />
                                       <SmartSelect
                                         label="Varietà"
-                                        options={varietaOptions}
+                                        options={varietaOptionsForSession}
                                         value={newSessionData.varietaId}
                                         onSelect={handleVarietaChange}
                                         placeholder="Varietà..."
-                                        disabled={isExistingLotto || !newSessionData.prodottoId}
+                                        disabled={isExistingLotto}
                                       />
                                       <div>
                                         <label className="block text-sm font-medium text-gray-500 mb-1">Produttore</label>

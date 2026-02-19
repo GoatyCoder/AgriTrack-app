@@ -625,6 +625,31 @@ await handleUpdateLavorazioneWithSnapshots(
 
 ---
 
+
+### R10. Unicità Codici Anagrafiche
+
+**Regola**:
+- `ProdottoGrezzo.codice` deve essere univoco globale
+- `Articolo.codice` deve essere univoco globale
+- `Imballo.codice` deve essere univoco globale
+- `Varieta.codice` deve essere univoco **solo all'interno dello stesso prodotto** (`prodottoId`)
+
+**Eccezione Varietà**:
+- Sono ammessi codici uguali tra varietà di prodotti diversi
+- Esempio valido: `Crimson` codice `CRI` su `UVA` e `Clementine` codice `CRI` su `AGR`
+
+**Regola UI Nuova Lavorazione**:
+- L'operatore può selezionare/inserire la varietà anche senza aver selezionato prima il prodotto
+- La selezione varietà compila automaticamente prodotto (codice + descrizione)
+- Se il codice varietà corrisponde a più prodotti, il sistema apre un dialog di scelta per il prodotto/varietà corretti
+
+**Implementazione**:
+- `CodeUniquenessService`
+- Validazione in salvataggio anagrafiche (Prodotti, Varietà, Articoli, Imballi)
+- Dialog di SmartSelect in caso di codice ambiguo
+
+---
+
 ### R6. Referential Integrity
 
 **Constraint forti** (no eliminazione se in uso):
@@ -1763,8 +1788,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-17
-**Version**: 0.2.13
+**Last Updated**: 2026-02-19
+**Version**: 0.2.14
 **Maintained by**: Development Team
 
 ---

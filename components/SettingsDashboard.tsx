@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, Package, Tags, Box, Sprout, Apple, Plus, Pencil, RotateCcw, Factory, ChevronUp, ChevronDown } from 'lucide-react';
 import { AppState, Articolo, SiglaLotto, ProdottoGrezzo, Varieta, Imballo, Area, Linea, Tipologia, Calibro } from '../types';
 import { useDialog } from './DialogContext';
+import { CodeUniquenessService } from '../core/services/domain/CodeUniquenessService';
 
 interface SettingsDashboardProps {
   data: AppState;
@@ -10,6 +11,7 @@ interface SettingsDashboardProps {
 
 const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
   const { showConfirm, showAlert } = useDialog();
+  const codeUniquenessService = React.useMemo(() => new CodeUniquenessService(), []);
   const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'TIPOLOGIE' | 'CALIBRI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [mostraDisattivati, setMostraDisattivati] = useState(false);
@@ -152,6 +154,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
   const saveProdotto = () => {
     if (!newProdotto.nome || !newProdotto.codice) return;
+    if (!codeUniquenessService.isProdottoCodeUnique(data.prodottiGrezzi, newProdotto.codice, editingId || undefined)) {
+      showAlert({
+        title: 'Codice già in uso',
+        message: `Il codice prodotto "${newProdotto.codice.toUpperCase()}" è già assegnato a un altro prodotto.`,
+        variant: 'DANGER'
+      });
+      return;
+    }
     const now = new Date().toISOString();
     const prodottoId = editingId || crypto.randomUUID();
 
@@ -240,6 +250,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const saveVarieta = () => {
     const now = new Date().toISOString();
     if (!newVarieta.nome || !newVarieta.prodottoId || !newVarieta.codice) return;
+    if (!codeUniquenessService.isVarietaCodeUniquePerProdotto(data.varieta, newVarieta.prodottoId, newVarieta.codice, editingId || undefined)) {
+      showAlert({
+        title: 'Codice già in uso',
+        message: `Il codice varietà "${newVarieta.codice.toUpperCase()}" è già presente per questo prodotto.`,
+        variant: 'DANGER'
+      });
+      return;
+    }
     
     let updatedList = [...data.varieta];
 
@@ -265,6 +283,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     const now = new Date().toISOString();
     // Check required fields (prodottoId is now optional)
     if (!newArticolo.nome || !newArticolo.pesoColloTeorico || !newArticolo.codice) return;
+    if (!codeUniquenessService.isArticoloCodeUnique(data.articoli, newArticolo.codice, editingId || undefined)) {
+      showAlert({
+        title: 'Codice già in uso',
+        message: `Il codice articolo "${newArticolo.codice.toUpperCase()}" è già assegnato a un altro articolo.`,
+        variant: 'DANGER'
+      });
+      return;
+    }
     
     const cleanArticolo = { ...newArticolo };
     
@@ -346,6 +372,14 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
   const saveImballo = () => {
     const now = new Date().toISOString();
     if (!newImballo.nome || !newImballo.codice) return;
+    if (!codeUniquenessService.isImballoCodeUnique(data.imballi, newImballo.codice, editingId || undefined)) {
+      showAlert({
+        title: 'Codice già in uso',
+        message: `Il codice imballaggio "${newImballo.codice.toUpperCase()}" è già assegnato a un altro imballaggio.`,
+        variant: 'DANGER'
+      });
+      return;
+    }
 
     let updatedList = [...data.imballi];
 
