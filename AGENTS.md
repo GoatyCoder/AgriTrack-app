@@ -1665,6 +1665,10 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.17 (Current - Q2 2026)
+- Ripristinato deploy GitHub Pages automatico solo su branch `main` per rispettare le environment protection rules
+- Mantenuto trigger manuale `workflow_dispatch` per avvio on-demand del workflow
+
 ### Version 0.2.16 (Current - Q2 2026)
 - Rimosso il concetto di ordinamento dalle Tipologie prodotto (gestione come elenco non ordinato)
 - Migliorata la UI di creazione Nuova Lavorazione con selezione calibro singolo o range (Da → A) in modalità guidata
@@ -1796,7 +1800,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.2.16
+**Version**: 0.2.17
 **Maintained by**: Development Team
 
 ---
