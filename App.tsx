@@ -160,6 +160,92 @@ const App: React.FC = () => {
     [varietaOptions]
   );
 
+  const [calibroMode, setCalibroMode] = useState<'SINGOLO' | 'RANGE'>('SINGOLO');
+  const [calibroSingolo, setCalibroSingolo] = useState('');
+  const [calibroRangeStart, setCalibroRangeStart] = useState('');
+  const [calibroRangeEnd, setCalibroRangeEnd] = useState('');
+
+  useEffect(() => {
+    if (!isNewSessionMode) return;
+    if (!newSessionData.calibro) {
+      setCalibroMode('SINGOLO');
+      setCalibroSingolo('');
+      setCalibroRangeStart('');
+      setCalibroRangeEnd('');
+      return;
+    }
+
+    if (newSessionData.calibro.includes('-')) {
+      const [from, to] = newSessionData.calibro.split('-');
+      setCalibroMode('RANGE');
+      setCalibroRangeStart(from || '');
+      setCalibroRangeEnd(to || '');
+      setCalibroSingolo('');
+      return;
+    }
+
+    setCalibroMode('SINGOLO');
+    setCalibroSingolo(newSessionData.calibro);
+    setCalibroRangeStart('');
+    setCalibroRangeEnd('');
+  }, [isNewSessionMode]);
+
+  useEffect(() => {
+    if (calibroOptions.length === 0) {
+      if (newSessionData.calibro !== '') setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      return;
+    }
+
+    if (calibroMode === 'SINGOLO') {
+      if (calibroSingolo && !calibroOptions.includes(calibroSingolo)) {
+        setCalibroSingolo('');
+        setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      }
+      return;
+    }
+
+    const hasInvalidRangeValue =
+      (calibroRangeStart && !calibroOptions.includes(calibroRangeStart)) ||
+      (calibroRangeEnd && !calibroOptions.includes(calibroRangeEnd));
+    if (hasInvalidRangeValue) {
+      setCalibroRangeStart('');
+      setCalibroRangeEnd('');
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+    }
+  }, [calibroOptions, calibroMode, calibroSingolo, calibroRangeStart, calibroRangeEnd, newSessionData.calibro, setNewSessionData]);
+
+  const updateSessionCalibro = (nextMode: 'SINGOLO' | 'RANGE', payload: { single?: string; start?: string; end?: string } = {}) => {
+    if (nextMode === 'SINGOLO') {
+      const single = payload.single ?? calibroSingolo;
+      setCalibroSingolo(single);
+      setCalibroRangeStart('');
+      setCalibroRangeEnd('');
+      setNewSessionData((prev) => ({ ...prev, calibro: single || '' }));
+      return;
+    }
+
+    const start = payload.start ?? calibroRangeStart;
+    const end = payload.end ?? calibroRangeEnd;
+    setCalibroRangeStart(start);
+    setCalibroRangeEnd(end);
+
+    if (!start || !end) {
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      return;
+    }
+
+    const startIndex = calibroOptions.indexOf(start);
+    const endIndex = calibroOptions.indexOf(end);
+    if (startIndex === -1 || endIndex === -1) {
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      return;
+    }
+
+    const from = startIndex <= endIndex ? start : end;
+    const to = startIndex <= endIndex ? end : start;
+    setNewSessionData((prev) => ({ ...prev, calibro: from === to ? from : `${from}-${to}` }));
+  };
+
   // --- Handlers ---
 
   // --- Inline Edit Handlers ---
@@ -452,10 +538,70 @@ const App: React.FC = () => {
                                     </div>
                                     <div>
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Calibro</label>
-                                      <input list="calibri-lavorazione" type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.calibro} onChange={e => setNewSessionData({...newSessionData, calibro: e.target.value})} />
-                                      <datalist id="calibri-lavorazione">
-                                        {calibroOptions.map((calibro) => <option key={calibro} value={calibro} />)}
-                                      </datalist>
+                                      <div className="space-y-2">
+                                        <div className="inline-flex rounded-lg bg-gray-100 p-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setCalibroMode('SINGOLO');
+                                              updateSessionCalibro('SINGOLO');
+                                            }}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-md transition ${calibroMode === 'SINGOLO' ? 'bg-white text-agri-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
+                                          >
+                                            Singolo
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setCalibroMode('RANGE');
+                                              updateSessionCalibro('RANGE');
+                                            }}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-md transition ${calibroMode === 'RANGE' ? 'bg-white text-agri-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
+                                          >
+                                            Range
+                                          </button>
+                                        </div>
+
+                                        {calibroMode === 'SINGOLO' ? (
+                                          <select
+                                            className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                            value={calibroSingolo}
+                                            onChange={(event) => updateSessionCalibro('SINGOLO', { single: event.target.value })}
+                                            disabled={calibroOptions.length === 0}
+                                          >
+                                            <option value="">Seleziona calibro</option>
+                                            {calibroOptions.map((calibro) => (
+                                              <option key={calibro} value={calibro}>{calibro}</option>
+                                            ))}
+                                          </select>
+                                        ) : (
+                                          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                                            <select
+                                              className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                              value={calibroRangeStart}
+                                              onChange={(event) => updateSessionCalibro('RANGE', { start: event.target.value })}
+                                              disabled={calibroOptions.length === 0}
+                                            >
+                                              <option value="">Da</option>
+                                              {calibroOptions.map((calibro) => (
+                                                <option key={`from-${calibro}`} value={calibro}>{calibro}</option>
+                                              ))}
+                                            </select>
+                                            <span className="text-gray-500 text-sm font-medium">→</span>
+                                            <select
+                                              className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                              value={calibroRangeEnd}
+                                              onChange={(event) => updateSessionCalibro('RANGE', { end: event.target.value })}
+                                              disabled={calibroOptions.length === 0}
+                                            >
+                                              <option value="">A</option>
+                                              {calibroOptions.map((calibro) => (
+                                                <option key={`to-${calibro}`} value={calibro}>{calibro}</option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                     <div className="md:col-span-2">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>

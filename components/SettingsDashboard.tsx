@@ -41,7 +41,7 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setEditingId(null);
     setNewProdotto({ nome: '', codice: '', attivo: true });
     setNewVarieta({ nome: '', codice: '', prodottoId: '', tipologiaId: '' });
-    setNewTipologia({ nome: '', prodottoId: '', ordinamento: 1, attivo: true });
+    setNewTipologia({ nome: '', prodottoId: '', attivo: true });
     setNewCalibro({ nome: '', prodottoId: '', ordinamento: 1, descrizione: '', attivo: true });
     setDraftTipologie([]);
     setDraftCalibri([]);
@@ -115,17 +115,6 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
     setNuovaTipologiaNome('');
   };
 
-  const moveTipologiaDraft = (index: number, direction: -1 | 1) => {
-    setDraftTipologie((prev) => {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= prev.length) return prev;
-      const updated = [...prev];
-      [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-      return updated;
-    });
-  };
-
-
   const removeTipologiaDraft = (nome: string) => {
     setDraftTipologie((prev) => prev.filter((tipologia) => tipologia.nome !== nome));
   };
@@ -180,13 +169,12 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
 
     const existingTipologie = data.tipologie.filter((tipologia) => tipologia.prodottoId === prodottoId);
     const preservedTipologie = data.tipologie.filter((tipologia) => tipologia.prodottoId !== prodottoId);
-    const nextTipologie = draftTipologie.map((tipologiaDraft, index) => {
+    const nextTipologie = draftTipologie.map((tipologiaDraft) => {
       const existing = existingTipologie.find((tipologia) => tipologia.id === tipologiaDraft.id || tipologia.nome === tipologiaDraft.nome);
       return {
         id: existing?.id || crypto.randomUUID(),
         nome: tipologiaDraft.nome,
         prodottoId,
-        ordinamento: index + 1,
         attivo: true,
         createdAt: existing?.createdAt || now,
         updatedAt: now,
@@ -663,12 +651,10 @@ const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateDat
                     <button onClick={addTipologiaDraft} className="bg-gray-200 px-3 rounded hover:bg-gray-300"><Plus size={16} /></button>
                   </div>
                   <div className="space-y-1">
-                    {draftTipologie.map((tipologia, index) => (
+                    {draftTipologie.map((tipologia) => (
                       <div key={tipologia.nome} className="flex items-center justify-between bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
                         <span>{tipologia.nome}</span>
                         <div className="flex items-center gap-1">
-                          <button disabled={index === 0} onClick={() => moveTipologiaDraft(index, -1)} className="disabled:opacity-40"><ChevronUp size={12} /></button>
-                          <button disabled={index === draftTipologie.length - 1} onClick={() => moveTipologiaDraft(index, 1)} className="disabled:opacity-40"><ChevronDown size={12} /></button>
                           <button onClick={() => removeTipologiaDraft(tipologia.nome)}><Trash2 size={12} /></button>
                         </div>
                       </div>
