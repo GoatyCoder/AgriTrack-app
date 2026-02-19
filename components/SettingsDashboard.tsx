@@ -11,7 +11,7 @@ interface SettingsDashboardProps {
 
 const SettingsDashboard: React.FC<SettingsDashboardProps> = ({ data, onUpdateData }) => {
   const { showConfirm, showAlert } = useDialog();
-  const codeUniquenessService = new CodeUniquenessService();
+  const codeUniquenessService = React.useMemo(() => new CodeUniquenessService(), []);
   const [activeTab, setActiveTab] = useState<'AREE_LINEE' | 'PRODOTTI' | 'TIPOLOGIE' | 'CALIBRI' | 'VARIETA' | 'ARTICOLI' | 'LOTTI' | 'IMBALLI'>('AREE_LINEE');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [mostraDisattivati, setMostraDisattivati] = useState(false);
