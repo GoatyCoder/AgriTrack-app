@@ -117,7 +117,11 @@ export const useSessionForm = (
   );
 
   const calibroOptions = useMemo(
-    () => state.calibri.filter((calibro) => calibro.attivo && calibro.prodottoId === newSessionData.prodottoId).map((calibro) => calibro.nome),
+    () =>
+      state.calibri
+        .filter((calibro) => calibro.attivo && calibro.prodottoId === newSessionData.prodottoId)
+        .sort((a, b) => a.ordinamento - b.ordinamento)
+        .map((calibro) => calibro.nome),
     [state.calibri, newSessionData.prodottoId]
   );
 

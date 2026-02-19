@@ -117,7 +117,6 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - **Campi**:
   - `nome`: descrizione (es: "Bianca Con Semi", "Rossa Senza Semi")
   - `prodottoId`: FK a Prodotto Grezzo (OBBLIGATORIO)
-  - `ordinamento`: per sorting
 - **Esempio**: "Bianca Con Semi" è tipologia di "Uva da Tavola"
 - **Distinguere da**: Categoria Commerciale (Extra/Prima - futura)
 
@@ -348,7 +347,6 @@ interface Tipologia {
   id: string;
   nome: string;              // "Bianca Con Semi", "Rossa Senza Semi"
   prodottoId: string;        // FK a ProdottoGrezzo (OBBLIGATORIO)
-  ordinamento: number;       // per sorting
   attivo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -1540,7 +1538,7 @@ await updateLavorazione({ ...lavorazione, ...updates });
 - **Decisione**: SÌ, rinominare "Categoria" → "Tipologia" e creare entità separata
 - **Relazione**: N Tipologie → 1 Prodotto Grezzo (OBBLIGATORIO)
 - **Distinguere da**: Futura "Categoria Commerciale" (Extra/Prima/Seconda)
-- **Campi**: id, nome, prodottoId, ordinamento, attivo, audit fields
+- **Campi**: id, nome, prodottoId, attivo, audit fields
 - **Status**: Da implementare in FASE 1
 
 **D5: Normalizzare prodottoId in Articolo** → **RISOLTO**
@@ -1667,6 +1665,23 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.18 (Current - Q2 2026)
+- Compattata la selezione calibro in Nuova Lavorazione: input unico con coppia `Da → A` senza toggle modalità
+- Normalizzazione automatica del range calibro in salvataggio (es. selezione `2` → `1X` salvata come `1X-2`)
+
+### Version 0.2.17 (Current - Q2 2026)
+- Ripristinato deploy GitHub Pages automatico solo su branch `main` per rispettare le environment protection rules
+- Mantenuto trigger manuale `workflow_dispatch` per avvio on-demand del workflow
+
+### Version 0.2.16 (Current - Q2 2026)
+- Rimosso il concetto di ordinamento dalle Tipologie prodotto (gestione come elenco non ordinato)
+- Migliorata la UI di creazione Nuova Lavorazione con selezione calibro singolo o range (Da → A) in modalità guidata
+
+### Version 0.2.15 (Current - Q2 2026)
+- Workflow GitHub Pages aggiornato: deploy automatico su push da qualsiasi branch (inclusi feature branch)
+- Mantenuto trigger manuale `workflow_dispatch` per pubblicazione on-demand
+- Documentato che un deploy da branch non-main sostituisce temporaneamente la versione online corrente
+
 ### Version 0.2.13 (Current - Q2 2026)
 - Ulteriore semplificazione dialog "Nuova Lavorazione" per ridurre confusione operativa
 - Rimossa integrazione scanner EAN dal dialog (temporaneamente) per evitare duplicazione/ambiguità
@@ -1789,7 +1804,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.2.14
+**Version**: 0.2.18
 **Maintained by**: Development Team
 
 ---

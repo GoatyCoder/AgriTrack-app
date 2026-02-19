@@ -160,6 +160,69 @@ const App: React.FC = () => {
     [varietaOptions]
   );
 
+  const [calibroDa, setCalibroDa] = useState('');
+  const [calibroA, setCalibroA] = useState('');
+
+  useEffect(() => {
+    if (!isNewSessionMode) return;
+    if (!newSessionData.calibro) {
+      setCalibroDa('');
+      setCalibroA('');
+      return;
+    }
+
+    if (newSessionData.calibro.includes('-')) {
+      const [from, to] = newSessionData.calibro.split('-');
+      setCalibroDa(from || '');
+      setCalibroA(to || '');
+      return;
+    }
+
+    setCalibroDa(newSessionData.calibro);
+    setCalibroA(newSessionData.calibro);
+  }, [isNewSessionMode, newSessionData.calibro]);
+
+  useEffect(() => {
+    const hasInvalidValue =
+      (calibroDa && !calibroOptions.includes(calibroDa)) ||
+      (calibroA && !calibroOptions.includes(calibroA));
+
+    if (hasInvalidValue) {
+      setCalibroDa('');
+      setCalibroA('');
+      if (newSessionData.calibro !== '') setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+    }
+  }, [calibroA, calibroDa, calibroOptions, newSessionData.calibro, setNewSessionData]);
+
+  const updateSessionCalibro = (nextDa: string, nextA: string) => {
+    setCalibroDa(nextDa);
+    setCalibroA(nextA);
+
+    if (!nextDa && !nextA) {
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      return;
+    }
+
+    const effectiveDa = nextDa || nextA;
+    const effectiveA = nextA || nextDa;
+
+    if (!effectiveDa || !effectiveA) {
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      return;
+    }
+
+    const daIndex = calibroOptions.indexOf(effectiveDa);
+    const aIndex = calibroOptions.indexOf(effectiveA);
+    if (daIndex === -1 || aIndex === -1) {
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+      return;
+    }
+
+    const from = daIndex <= aIndex ? effectiveDa : effectiveA;
+    const to = daIndex <= aIndex ? effectiveA : effectiveDa;
+    setNewSessionData((prev) => ({ ...prev, calibro: from === to ? from : `${from}-${to}` }));
+  };
+
   // --- Handlers ---
 
   // --- Inline Edit Handlers ---
@@ -452,10 +515,32 @@ const App: React.FC = () => {
                                     </div>
                                     <div>
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Calibro</label>
-                                      <input list="calibri-lavorazione" type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.calibro} onChange={e => setNewSessionData({...newSessionData, calibro: e.target.value})} />
-                                      <datalist id="calibri-lavorazione">
-                                        {calibroOptions.map((calibro) => <option key={calibro} value={calibro} />)}
-                                      </datalist>
+                                      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                                        <select
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                          value={calibroDa}
+                                          onChange={(event) => updateSessionCalibro(event.target.value, calibroA)}
+                                          disabled={calibroOptions.length === 0}
+                                        >
+                                          <option value="">Da</option>
+                                          {calibroOptions.map((calibro) => (
+                                            <option key={`from-${calibro}`} value={calibro}>{calibro}</option>
+                                          ))}
+                                        </select>
+                                        <span className="text-gray-500 text-sm font-medium">→</span>
+                                        <select
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                          value={calibroA}
+                                          onChange={(event) => updateSessionCalibro(calibroDa, event.target.value)}
+                                          disabled={calibroOptions.length === 0}
+                                        >
+                                          <option value="">A</option>
+                                          {calibroOptions.map((calibro) => (
+                                            <option key={`to-${calibro}`} value={calibro}>{calibro}</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <p className="text-xs text-gray-500 mt-1">Seleziona un solo valore o un range: il formato viene normalizzato automaticamente.</p>
                                     </div>
                                     <div className="md:col-span-2">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>

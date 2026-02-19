@@ -59,6 +59,7 @@ Passi consigliati:
 2. Imposta **Source: GitHub Actions**
 3. Esegui push su `main` oppure avvia manualmente il workflow da tab **Actions**
 
+
 Workflow previsto:
 - `npm ci`
 - `npm run typecheck`
