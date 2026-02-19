@@ -57,7 +57,9 @@ Il progetto è configurato per deploy automatico con GitHub Actions.
 Passi consigliati:
 1. In GitHub: **Settings → Pages**
 2. Imposta **Source: GitHub Actions**
-3. Esegui push su `main` oppure avvia manualmente il workflow da tab **Actions**
+3. Esegui push sul branch che vuoi pubblicare (feature inclusa) oppure avvia manualmente il workflow da tab **Actions**
+
+> Nota: GitHub Pages pubblica una sola versione alla volta. Un deploy da branch feature sostituisce temporaneamente la versione online corrente.
 
 Workflow previsto:
 - `npm ci`
