@@ -160,19 +160,28 @@ const App: React.FC = () => {
     [varietaOptions]
   );
 
-  const [calibroDa, setCalibroDa] = useState('');
-  const [calibroA, setCalibroA] = useState('');
+  const [calibroBase, setCalibroBase] = useState('');
+  const [calibroFinoA, setCalibroFinoA] = useState('');
 
   useEffect(() => {
     if (!isNewSessionMode) return;
     if (!newSessionData.calibro) {
-      setCalibroDa('');
-      setCalibroA('');
+      setCalibroBase('');
+      setCalibroFinoA('');
       return;
     }
 
     if (newSessionData.calibro.includes('-')) {
       const [from, to] = newSessionData.calibro.split('-');
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+      setCalibroBase(from || '');
+      setCalibroFinoA(to || '');
+      return;
+    }
+
+    setCalibroBase(newSessionData.calibro);
+    setCalibroFinoA('');
+=======
       setCalibroDa(from || '');
       setCalibroA(to || '');
       return;
@@ -180,10 +189,28 @@ const App: React.FC = () => {
 
     setCalibroDa(newSessionData.calibro);
     setCalibroA(newSessionData.calibro);
+>>>>>>> main
   }, [isNewSessionMode, newSessionData.calibro]);
 
   useEffect(() => {
     const hasInvalidValue =
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+      (calibroBase && !calibroOptions.includes(calibroBase)) ||
+      (calibroFinoA && !calibroOptions.includes(calibroFinoA));
+
+    if (hasInvalidValue) {
+      setCalibroBase('');
+      setCalibroFinoA('');
+      setNewSessionData((prev) => ({ ...prev, calibro: '' }));
+    }
+  }, [calibroBase, calibroFinoA, calibroOptions, setNewSessionData]);
+
+  const updateSessionCalibro = (nextBase: string, nextFinoA: string) => {
+    setCalibroBase(nextBase);
+    setCalibroFinoA(nextFinoA);
+
+    if (!nextBase && !nextFinoA) {
+=======
       (calibroDa && !calibroOptions.includes(calibroDa)) ||
       (calibroA && !calibroOptions.includes(calibroA));
 
@@ -199,10 +226,20 @@ const App: React.FC = () => {
     setCalibroA(nextA);
 
     if (!nextDa && !nextA) {
+>>>>>>> main
       setNewSessionData((prev) => ({ ...prev, calibro: '' }));
       return;
     }
 
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+    const effectiveBase = nextBase || nextFinoA;
+    const effectiveFinoA = nextFinoA || nextBase;
+
+
+    const baseIndex = calibroOptions.indexOf(effectiveBase);
+    const finoAIndex = calibroOptions.indexOf(effectiveFinoA);
+    if (baseIndex === -1 || finoAIndex === -1) {
+=======
     const effectiveDa = nextDa || nextA;
     const effectiveA = nextA || nextDa;
 
@@ -214,12 +251,18 @@ const App: React.FC = () => {
     const daIndex = calibroOptions.indexOf(effectiveDa);
     const aIndex = calibroOptions.indexOf(effectiveA);
     if (daIndex === -1 || aIndex === -1) {
+>>>>>>> main
       setNewSessionData((prev) => ({ ...prev, calibro: '' }));
       return;
     }
 
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+    const from = baseIndex <= finoAIndex ? effectiveBase : effectiveFinoA;
+    const to = baseIndex <= finoAIndex ? effectiveFinoA : effectiveBase;
+=======
     const from = daIndex <= aIndex ? effectiveDa : effectiveA;
     const to = daIndex <= aIndex ? effectiveA : effectiveDa;
+>>>>>>> main
     setNewSessionData((prev) => ({ ...prev, calibro: from === to ? from : `${from}-${to}` }));
   };
 
@@ -514,6 +557,22 @@ const App: React.FC = () => {
                                       <input type="text" className="w-full p-2 border border-gray-300 rounded-lg font-medium" value={newSessionData.categoria} onChange={e => setNewSessionData({...newSessionData, categoria: e.target.value})} />
                                     </div>
                                     <div>
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+                                      <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-sm font-medium text-gray-500">Calibro</label>
+                                        {(calibroBase || calibroFinoA) && (
+                                          <button type="button" className="text-xs text-gray-500 hover:text-gray-700" onClick={() => updateSessionCalibro('', '')}>Reset</button>
+                                        )}
+                                      </div>
+                                      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                                        <select
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                          value={calibroBase}
+                                          onChange={(event) => updateSessionCalibro(event.target.value, calibroFinoA)}
+                                          disabled={calibroOptions.length === 0}
+                                        >
+                                          <option value="">Calibro</option>
+=======
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Calibro</label>
                                       <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
                                         <select
@@ -523,10 +582,21 @@ const App: React.FC = () => {
                                           disabled={calibroOptions.length === 0}
                                         >
                                           <option value="">Da</option>
+>>>>>>> main
                                           {calibroOptions.map((calibro) => (
                                             <option key={`from-${calibro}`} value={calibro}>{calibro}</option>
                                           ))}
                                         </select>
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+                                        <span className="text-gray-300 text-sm font-medium">→</span>
+                                        <select
+                                          className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
+                                          value={calibroFinoA}
+                                          onChange={(event) => updateSessionCalibro(calibroBase, event.target.value)}
+                                          disabled={calibroOptions.length === 0}
+                                        >
+                                          <option value="">Fino a (opzionale)</option>
+=======
                                         <span className="text-gray-500 text-sm font-medium">→</span>
                                         <select
                                           className="w-full p-2 border border-gray-300 rounded-lg font-medium disabled:bg-gray-100"
@@ -535,12 +605,17 @@ const App: React.FC = () => {
                                           disabled={calibroOptions.length === 0}
                                         >
                                           <option value="">A</option>
+>>>>>>> main
                                           {calibroOptions.map((calibro) => (
                                             <option key={`to-${calibro}`} value={calibro}>{calibro}</option>
                                           ))}
                                         </select>
                                       </div>
+<<<<<<< codex/deploy-to-github-pages-from-last-branch-uo1vax
+                                      <p className="text-xs text-gray-500 mt-1">Se imposti anche "Fino a", viene salvato un range ordinato automaticamente (es. 1X-2).</p>
+=======
                                       <p className="text-xs text-gray-500 mt-1">Seleziona un solo valore o un range: il formato viene normalizzato automaticamente.</p>
+>>>>>>> main
                                     </div>
                                     <div className="md:col-span-2">
                                       <label className="block text-sm font-medium text-gray-500 mb-1">Note lavorazione</label>

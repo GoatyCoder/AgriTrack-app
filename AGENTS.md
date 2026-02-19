@@ -1665,6 +1665,10 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 
 ## 🔄 CHANGELOG
 
+### Version 0.2.19 (Current - Q2 2026)
+- Rivista UX selezione calibro in Nuova Lavorazione: primo selettore `Calibro` + secondo selettore opzionale `Fino a` (range senza toggle modalità)
+- Aggiunto reset rapido del campo calibro e microcopy esplicativo su normalizzazione automatica del range
+
 ### Version 0.2.18 (Current - Q2 2026)
 - Compattata la selezione calibro in Nuova Lavorazione: input unico con coppia `Da → A` senza toggle modalità
 - Normalizzazione automatica del range calibro in salvataggio (es. selezione `2` → `1X` salvata come `1X-2`)
@@ -1804,7 +1808,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.2.18
+**Version**: 0.2.19
 **Maintained by**: Development Team
 
 ---
