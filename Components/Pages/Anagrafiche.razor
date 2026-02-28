@@ -1,0 +1,41 @@
+@page "/anagrafiche"
+@inject AppStateService StateService
+
+<PageTitle>Anagrafiche</PageTitle>
+
+<h1>Anagrafiche</h1>
+
+<section class="panel">
+    <h2>Nuovo Prodotto Grezzo</h2>
+    <EditForm Model="nuovoProdotto" OnValidSubmit="CreateProdotto">
+        <InputText @bind-Value="nuovoProdotto.Codice" placeholder="Codice" />
+        <InputText @bind-Value="nuovoProdotto.Nome" placeholder="Nome" />
+        <button type="submit">Salva</button>
+    </EditForm>
+</section>
+
+<section class="panel">
+    <h2>Prodotti</h2>
+    <ul>
+        @foreach (var prodotto in StateService.State.ProdottiGrezzi.OrderBy(p => p.Codice))
+        {
+            <li><strong>@prodotto.Codice</strong> - @prodotto.Nome</li>
+        }
+    </ul>
+</section>
+
+@code {
+    private ProdottoGrezzo nuovoProdotto = new();
+
+    private void CreateProdotto()
+    {
+        if (string.IsNullOrWhiteSpace(nuovoProdotto.Codice) || string.IsNullOrWhiteSpace(nuovoProdotto.Nome))
+        {
+            return;
+        }
+
+        nuovoProdotto.Id = Guid.NewGuid().ToString("N");
+        StateService.AddProdotto(nuovoProdotto);
+        nuovoProdotto = new ProdottoGrezzo();
+    }
+}

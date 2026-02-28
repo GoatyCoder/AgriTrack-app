@@ -1,0 +1,42 @@
+{
+  "aree": [
+    {
+      "id": "area-confezionamento",
+      "nome": "Confezionamento",
+      "attiva": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z",
+      "createdBy": "seed",
+      "updatedBy": "seed"
+    }
+  ],
+  "linee": [
+    {
+      "id": "linea-1",
+      "areaId": "area-confezionamento",
+      "nome": "Linea 1",
+      "attiva": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z",
+      "createdBy": "seed",
+      "updatedBy": "seed"
+    }
+  ],
+  "prodottiGrezzi": [
+    {
+      "id": "prodotto-uva",
+      "codice": "UVA",
+      "nome": "Uva da Tavola",
+      "attivo": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z",
+      "createdBy": "seed",
+      "updatedBy": "seed"
+    }
+  ],
+  "varieta": [],
+  "articoli": [],
+  "sessioniProduzione": [],
+  "lavorazioni": [],
+  "pedane": []
+}

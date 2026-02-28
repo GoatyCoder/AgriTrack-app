@@ -39,9 +39,9 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - **Quality assurance**: Tracciabilità lotti e scarti
 - **Management**: Report e analytics (futuro)
 
-### Current Status (v0.2-alpha)
-- ✅ Frontend React + TypeScript completo
-- ✅ Persistenza su localStorage
+### Current Status (v0.3-alpha)
+- ✅ Frontend riscritto in Blazor Server (.NET 10)
+- ✅ Persistenza server-side su file JSON
 - ✅ Anagrafiche base (Prodotti, Varietà, Articoli, Lotti)
 - ✅ Gestione sessioni produzione e lavorazioni
 - ✅ Tracciabilità pedane con codici univoci
@@ -52,11 +52,12 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 - 🚧 Multi-user auth (pianificato)
 
 ### Tech Stack
-**Frontend**: React 19, TypeScript, Vite, TailwindCSS (via CDN), Recharts
-**State**: Custom hooks + localStorage (preparazione per Redux Toolkit)
-**Validation**: Zod (runtime) + TypeScript (compile-time)
-**Architecture**: Clean Architecture (Domain, Application, Infrastructure layers)
-**Deployment**: GitHub Pages (test), Docker-ready (production)
+**Frontend/UI**: Blazor Server (Razor Components)
+**Backend runtime**: ASP.NET Core .NET 10
+**State**: `AppStateService` singleton + JSON persistence
+**Validation**: C# typed models + form validation Blazor
+**Architecture**: Clean Architecture adattata a stack .NET (Domain, Application, Infrastructure)
+**Deployment**: Kestrel/IIS/Container (Docker-ready)
 
 ---
 
@@ -716,85 +717,44 @@ pedana.calibro (stringa singola o range)
 
 ```
 ┌─────────────────────────────────────────┐
-│          PRESENTATION (UI)              │  ← React Components, Pages
-│  - Components (Smart/Dumb)              │
-│  - Custom Hooks (useXXX)                │
-│  - Pages                                │
+│          PRESENTATION (UI)              │  ← Razor Components, Pages
+│  - Components/Pages                     │
+│  - Components/Layout                    │
 └────────────────┬────────────────────────┘
                  │
 ┌────────────────▼────────────────────────┐
 │      APPLICATION SERVICES               │  ← Orchestration, Use Cases
-│  - SessioneApplicationService           │
-│  - TurnoApplicationService              │
+│  - Services/AppStateService             │
 └────────────────┬────────────────────────┘
                  │
 ┌────────────────▼────────────────────────┐
-│         DOMAIN SERVICES                 │  ← Business Logic
-│  - ArticoloLottoCompatibilityService    │
-│  - SessioneConflictService              │
-│  - StickerGenerationService             │
-│  - ProductionValidationService          │
+│         DOMAIN MODEL                    │  ← Business entities and rules
+│  - Models/*.cs                          │
 └────────────────┬────────────────────────┘
                  │
 ┌────────────────▼────────────────────────┐
-│      REPOSITORY INTERFACES              │  ← Contracts
-│  - ISessioneRepository                  │
-│  - ITurnoRepository                     │
-│  - IPedanaRepository, etc.              │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│   INFRASTRUCTURE (Persistence)          │  ← Concrete Implementations
-│  - LocalStorageSessioneRepository       │
-│  - LocalStorageTurnoRepository          │
-│  - (Future: PostgresSessioneRepository) │
+│   INFRASTRUCTURE (Persistence)          │  ← JSON file storage
+│  - Data/appstate.json                   │
 └─────────────────────────────────────────┘
 ```
 
 ### Directory Structure
 
 ```
-src/
-├── app/                    # Application setup
-│   ├── providers/          # Context providers
-│   └── routes/             # Routing logic
-│
-├── pages/                  # Page components
-│   ├── HomePage/
-│   ├── ReportPage/
-│   └── SettingsPage/
-│
-├── features/               # Feature modules
-│   ├── turno/
-│   ├── sessione/
-│   ├── pedana/
-│   └── anagrafica/
-│
-├── components/             # Shared UI components
-│   ├── SessionCard.tsx
-│   ├── SmartSelect.tsx
-│   ├── DialogContext.tsx
-│   └── ...
-│
-├── hooks/                  # Custom hooks
-│   ├── useAppStateStore.ts
-│   ├── useTurnoActions.ts
-│   ├── useSessioneActions.ts
-│   └── ...
-│
-├── core/                   # Clean Architecture core
-│   ├── services/
-│   │   ├── application/    # Use cases
-│   │   └── domain/         # Domain services
-│   ├── repositories/
-│   │   ├── interfaces/
-│   │   └── localStorage/
-│   ├── validators/
-│   └── errors/
-│
-├── types.ts                # Domain types
-├── constants.ts            # Initial data, configs
-└── utils.ts                # Utilities
+/
+├── AgriTrack.App.csproj
+├── Program.cs
+├── Components/
+│   ├── App.razor
+│   ├── Routes.razor
+│   ├── Layout/
+│   └── Pages/
+├── Models/
+├── Services/
+├── Data/
+├── wwwroot/
+├── README.md
+└── AGENTS.md
 ```
 
 ### Key Architectural Decisions
@@ -1733,7 +1693,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Product form now edits both lists inline; `Calibri` keeps explicit `ordinamento`, `Tipologie` are managed without dedicated ordering controls
 - Removed dedicated sidebar tabs for Tipologie/Calibri to simplify operator UX
 
-### Version 0.2.2 (Current - Q2 2026)
+### Version 0.3.0 (Current - Q2 2026)
+- Full rewrite to Blazor Server on .NET 10
+- Removed React/Vite runtime and Node toolchain
+- Introduced server-side JSON persistence through AppStateService
+
+### Version 0.2.2 (Q2 2026)
 - Added Settings CRUD tabs for `Tipologie` and `Calibri` with full create/update/deactivate flows
 - Removed legacy inline product arrays management (`categorie`, `calibri`) from product form UI
 - Standardized soft-delete UX with referential integrity checks and "Mostra disattivati" filter
@@ -1807,8 +1772,8 @@ refactor: Extract validation logic to service
 
 ---
 
-**Last Updated**: 2026-02-19
-**Version**: 0.2.19
+**Last Updated**: 2026-02-28
+**Version**: 0.3.0
 **Maintained by**: Development Team
 
 ---

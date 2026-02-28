@@ -1,0 +1,71 @@
+@page "/produzione"
+@inject AppStateService StateService
+
+<PageTitle>Produzione</PageTitle>
+
+<h1>Gestione Produzione</h1>
+
+<section class="panel">
+    <h2>Nuova sessione produzione</h2>
+    <EditForm Model="nuovaSessione" OnValidSubmit="CreateSessione">
+        <InputText @bind-Value="nuovaSessione.Operatore" placeholder="Operatore" />
+        <InputSelect @bind-Value="nuovaSessione.AreaId">
+            @foreach (var area in StateService.State.Aree)
+            {
+                <option value="@area.Id">@area.Nome</option>
+            }
+        </InputSelect>
+        <button type="submit">Avvia sessione</button>
+    </EditForm>
+</section>
+
+<section class="panel">
+    <h2>Sessioni</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Operatore</th>
+                <th>Area</th>
+                <th>Inizio</th>
+                <th>Stato</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sessione in StateService.State.SessioniProduzione.OrderByDescending(s => s.Inizio))
+            {
+                <tr>
+                    <td>@sessione.Operatore</td>
+                    <td>@ResolveAreaName(sessione.AreaId)</td>
+                    <td>@sessione.Inizio.ToLocalTime().ToString("g")</td>
+                    <td>@sessione.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+
+@code {
+    private SessioneProduzione nuovaSessione = new();
+
+    protected override void OnInitialized()
+    {
+        nuovaSessione.AreaId = StateService.State.Aree.FirstOrDefault()?.Id ?? string.Empty;
+    }
+
+    private void CreateSessione()
+    {
+        nuovaSessione.Id = Guid.NewGuid().ToString("N");
+        nuovaSessione.Inizio = DateTime.UtcNow;
+        nuovaSessione.Status = "APERTO";
+
+        StateService.AddSessione(nuovaSessione);
+
+        nuovaSessione = new SessioneProduzione
+        {
+            AreaId = StateService.State.Aree.FirstOrDefault()?.Id ?? string.Empty
+        };
+    }
+
+    private string ResolveAreaName(string areaId)
+        => StateService.State.Aree.FirstOrDefault(a => a.Id == areaId)?.Nome ?? "-";
+}

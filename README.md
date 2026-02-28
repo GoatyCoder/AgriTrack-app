@@ -1,81 +1,46 @@
-# AgriTrack
+# AgriTrack (Blazor Server)
 
-Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di confezionamento agricolo.
+Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di confezionamento agricolo, riscritto in **Blazor Server** su **.NET 10**.
 
 ## Stato del progetto
 
-Versione attuale: **v0.2-alpha**.
+Versione attuale: **v0.3.0-alpha**.
 
-Funzionalità già disponibili:
-- Gestione sessioni di produzione e lavorazioni
-- Tracciabilità pedane con codici univoci
-- Anagrafiche base (prodotti, varietà, articoli, lotti)
-- Reportistica base
-- Persistenza locale tramite `localStorage`
-
-Per glossario di dominio, business rules e roadmap, consulta `AGENTS.md`.
-
-Per il log delle migrazioni schema, consulta `MIGRATIONS.md`.
+Questa release introduce la migrazione strutturale da React/Vite a Blazor Server con:
+- shell applicativa server-rendered (layout, routing, pagine principali);
+- gestione stato centralizzata in `AppStateService`;
+- persistenza JSON lato server (`Data/appstate.json`);
+- dashboard operativa, produzione, anagrafiche e report di base.
 
 ## Stack tecnico
 
-- React 19 + TypeScript
-- Vite
-- Recharts
-- Zod
+- .NET 10 (target framework `net10.0`)
+- ASP.NET Core Blazor Server (Interactive Server Components)
+- JSON persistence locale (seed in `Data/appstate.json`)
 
 ## Requisiti
 
-- Node.js 20+
-- npm 10+
+- .NET SDK 10 (preview o stable compatibile con `net10.0`)
 
 ## Avvio locale
 
-1. Installa le dipendenze:
-   ```bash
-   npm install
-   ```
-2. Avvia il progetto in sviluppo:
-   ```bash
-   npm run dev
-   ```
-3. Apri l'app su `http://localhost:5173`.
-
-## Script disponibili
-
 ```bash
-npm run dev        # avvio in sviluppo
-npm run typecheck  # controllo TypeScript
-npm run build      # build di produzione
-npm run preview    # anteprima build
+dotnet restore
+dotnet run
 ```
 
-## Deploy su GitHub Pages
+Applicazione disponibile (default):
+- `https://localhost:7184`
+- `http://localhost:5184`
 
-Il progetto è configurato per deploy automatico con GitHub Actions.
+## Struttura principale
 
-Passi consigliati:
-1. In GitHub: **Settings → Pages**
-2. Imposta **Source: GitHub Actions**
-3. Esegui push su `main` oppure avvia manualmente il workflow da tab **Actions**
+- `Program.cs`: bootstrap applicazione
+- `Components/`: routing, layout e pagine Razor
+- `Models/`: modelli dominio
+- `Services/AppStateService.cs`: stato applicativo + persistenza
+- `Data/appstate.json`: dataset iniziale
 
+## Note
 
-Workflow previsto:
-- `npm ci`
-- `npm run typecheck`
-- `npm run build`
-- publish della cartella `dist/`
-
-## Note architetturali
-
-Il codice segue una struttura orientata alla Clean Architecture (domain/application/infrastructure) con logica applicativa centralizzata in custom hooks e servizi.
-
-## Roadmap sintetica
-
-- Refactoring terminologia (`Turno` → `SessioneProduzione`, `SessioneLinea` → `Lavorazione`)
-- Introduzione entità separate per `Tipologia` e `Calibro`
-- Versionamento schema e migrazioni dati
-- Testing suite
-- Backend con database PostgreSQL
-
-Per il dettaglio completo: `AGENTS.md`.
+Per glossario di dominio, business rules e roadmap consulta `AGENTS.md`.

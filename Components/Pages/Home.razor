@@ -1,0 +1,21 @@
+@page "/"
+@inject AppStateService StateService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1>Dashboard Produzione</h1>
+
+<div class="cards">
+    <article class="card">
+        <h3>Sessioni aperte</h3>
+        <p>@StateService.State.SessioniProduzione.Count(s => s.Status != "CHIUSO")</p>
+    </article>
+    <article class="card">
+        <h3>Lavorazioni attive</h3>
+        <p>@StateService.State.Lavorazioni.Count(s => s.Status == "ATTIVA")</p>
+    </article>
+    <article class="card">
+        <h3>Pedane totali</h3>
+        <p>@StateService.State.Pedane.Count</p>
+    </article>
+</div>

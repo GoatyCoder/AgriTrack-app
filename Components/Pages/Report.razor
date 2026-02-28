@@ -1,0 +1,16 @@
+@page "/report"
+@inject AppStateService StateService
+
+<PageTitle>Report</PageTitle>
+
+<h1>Report Operativi</h1>
+
+<section class="panel">
+    <h2>KPI principali</h2>
+    <ul>
+        <li>Sessioni Totali: @StateService.State.SessioniProduzione.Count</li>
+        <li>Lavorazioni Totali: @StateService.State.Lavorazioni.Count</li>
+        <li>Pedane Totali: @StateService.State.Pedane.Count</li>
+        <li>Prodotti Attivi: @StateService.State.ProdottiGrezzi.Count(p => p.Attivo)</li>
+    </ul>
+</section>
