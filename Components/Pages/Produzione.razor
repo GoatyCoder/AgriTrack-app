@@ -1,0 +1,77 @@
+@page "/produzione"
+@inject AppStateService StateService
+
+<PageTitle>Produzione</PageTitle>
+
+<h1>Gestione Produzione</h1>
+
+<section class="panel">
+    <h2>Nuova sessione produzione</h2>
+    <EditForm Model="nuovaSessione" OnValidSubmit="CreateSessioneAsync">
+        <InputText @bind-Value="nuovaSessione.Operatore" placeholder="Operatore" />
+        <InputSelect @bind-Value="nuovaSessione.AreaId">
+            @foreach (var area in aree)
+            {
+                <option value="@area.Id">@area.Nome</option>
+            }
+        </InputSelect>
+        <button type="submit">Avvia sessione</button>
+    </EditForm>
+</section>
+
+<section class="panel">
+    <h2>Sessioni</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Operatore</th>
+                <th>Area</th>
+                <th>Inizio</th>
+                <th>Stato</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sessione in sessioni)
+            {
+                <tr>
+                    <td>@sessione.Operatore</td>
+                    <td>@ResolveAreaName(sessione.AreaId)</td>
+                    <td>@sessione.Inizio.ToLocalTime().ToString("g")</td>
+                    <td>@sessione.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+
+@code {
+    private SessioneProduzione nuovaSessione = new();
+    private IReadOnlyList<Area> aree = [];
+    private IReadOnlyList<SessioneProduzione> sessioni = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        aree = await StateService.GetAreeAsync();
+        sessioni = await StateService.GetSessioniAsync();
+        nuovaSessione.AreaId = aree.FirstOrDefault()?.Id ?? string.Empty;
+    }
+
+    private async Task CreateSessioneAsync()
+    {
+        nuovaSessione.Id = Guid.NewGuid().ToString("N");
+        nuovaSessione.Inizio = DateTime.UtcNow;
+        nuovaSessione.Status = "APERTO";
+
+        await StateService.AddSessioneAsync(nuovaSessione);
+
+        nuovaSessione = new SessioneProduzione
+        {
+            AreaId = aree.FirstOrDefault()?.Id ?? string.Empty
+        };
+
+        sessioni = await StateService.GetSessioniAsync();
+    }
+
+    private string ResolveAreaName(string areaId)
+        => aree.FirstOrDefault(a => a.Id == areaId)?.Nome ?? "-";
+}

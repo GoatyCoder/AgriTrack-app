@@ -1,0 +1,35 @@
+@page "/"
+@inject AppStateService StateService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1>Dashboard Produzione</h1>
+
+<div class="cards">
+    <article class="card">
+        <h3>Sessioni aperte</h3>
+        <p>@sessioniAperte</p>
+    </article>
+    <article class="card">
+        <h3>Lavorazioni attive</h3>
+        <p>@lavorazioniAttive</p>
+    </article>
+    <article class="card">
+        <h3>Pedane totali</h3>
+        <p>@pedaneTotali</p>
+    </article>
+</div>
+
+@code {
+    private int sessioniAperte;
+    private int lavorazioniAttive;
+    private int pedaneTotali;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var stats = await StateService.GetDashboardStatsAsync();
+        sessioniAperte = stats.SessioniAperte;
+        lavorazioniAttive = stats.LavorazioniAttive;
+        pedaneTotali = stats.PedaneTotali;
+    }
+}

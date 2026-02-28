@@ -1,0 +1,34 @@
+@page "/report"
+@inject AppStateService StateService
+
+<PageTitle>Report</PageTitle>
+
+<h1>Report Operativi</h1>
+
+<section class="panel">
+    <h2>KPI principali</h2>
+    <ul>
+        <li>Sessioni Totali: @sessioniTotali</li>
+        <li>Lavorazioni Totali: @lavorazioniTotali</li>
+        <li>Pedane Totali: @pedaneTotali</li>
+        <li>Prodotti Attivi: @prodottiAttivi</li>
+    </ul>
+</section>
+
+@code {
+    private int sessioniTotali;
+    private int lavorazioniTotali;
+    private int pedaneTotali;
+    private int prodottiAttivi;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var stats = await StateService.GetDashboardStatsAsync();
+        sessioniTotali = stats.SessioniTotali;
+        lavorazioniTotali = stats.LavorazioniTotali;
+        pedaneTotali = stats.PedaneTotali;
+
+        var prodotti = await StateService.GetProdottiAsync();
+        prodottiAttivi = prodotti.Count(p => p.Attivo);
+    }
+}

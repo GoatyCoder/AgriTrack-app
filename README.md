@@ -1,81 +1,62 @@
-# AgriTrack
+# AgriTrack (Blazor Server)
 
-Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di confezionamento agricolo.
+Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di confezionamento agricolo, riscritto in **Blazor Server** su **.NET 10**.
 
 ## Stato del progetto
 
-Versione attuale: **v0.2-alpha**.
+Versione attuale: **v0.4.0-alpha**.
 
-Funzionalità già disponibili:
-- Gestione sessioni di produzione e lavorazioni
-- Tracciabilità pedane con codici univoci
-- Anagrafiche base (prodotti, varietà, articoli, lotti)
-- Reportistica base
-- Persistenza locale tramite `localStorage`
-
-Per glossario di dominio, business rules e roadmap, consulta `AGENTS.md`.
-
-Per il log delle migrazioni schema, consulta `MIGRATIONS.md`.
+Questa release introduce un backend più solido con:
+- persistenza su PostgreSQL tramite EF Core;
+- `DbContext` dedicato e inizializzazione database;
+- service layer asincrono per use-case applicativi;
+- CRUD anagrafiche con filtri/ordinamenti collegato a DB.
 
 ## Stack tecnico
 
-- React 19 + TypeScript
-- Vite
-- Recharts
-- Zod
+- .NET 10 (target framework `net10.0`)
+- ASP.NET Core Blazor Server (Interactive Server Components)
+- EF Core + Npgsql (PostgreSQL)
 
-## Requisiti
+## Neon vs Supabase
 
-- Node.js 20+
-- npm 10+
+Entrambi vanno bene perché espongono PostgreSQL standard.
+
+- **Neon**: migliore se vuoi solo database PostgreSQL serverless, branch DB e costi più semplici.
+- **Supabase**: migliore se vuoi anche auth, storage, realtime e API pronte oltre al DB.
+
+Per AgriTrack (scenario attuale) la scelta consigliata è **Neon + EF Core**: architettura più pulita lato backend .NET e pieno controllo su dominio e migrazioni.
+
+## Configurazione database
+
+Imposta `ConnectionStrings:Postgres` in `appsettings.json` o variabile ambiente:
+
+```bash
+ConnectionStrings__Postgres="Host=...;Port=5432;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true"
+```
 
 ## Avvio locale
 
-1. Installa le dipendenze:
-   ```bash
-   npm install
-   ```
-2. Avvia il progetto in sviluppo:
-   ```bash
-   npm run dev
-   ```
-3. Apri l'app su `http://localhost:5173`.
-
-## Script disponibili
-
 ```bash
-npm run dev        # avvio in sviluppo
-npm run typecheck  # controllo TypeScript
-npm run build      # build di produzione
-npm run preview    # anteprima build
+dotnet restore
+dotnet run
 ```
 
-## Deploy su GitHub Pages
+Applicazione disponibile (default):
+- `https://localhost:7184`
+- `http://localhost:5184`
 
-Il progetto è configurato per deploy automatico con GitHub Actions.
+## Deploy su Render.com
 
-Passi consigliati:
-1. In GitHub: **Settings → Pages**
-2. Imposta **Source: GitHub Actions**
-3. Esegui push su `main` oppure avvia manualmente il workflow da tab **Actions**
+Il repository include un `Dockerfile` multi-stage compatibile con Render.
 
+1. Crea un nuovo **Web Service** da repository GitHub.
+2. Seleziona **Environment: Docker**.
+3. Imposta `ConnectionStrings__Postgres` nelle environment variables.
+4. Lascia vuoti Build/Start command (Render userà il `Dockerfile`).
 
-Workflow previsto:
-- `npm ci`
-- `npm run typecheck`
-- `npm run build`
-- publish della cartella `dist/`
+Il container usa automaticamente `PORT` fornita da Render con fallback a `10000`.
 
-## Note architetturali
+## Note
 
-Il codice segue una struttura orientata alla Clean Architecture (domain/application/infrastructure) con logica applicativa centralizzata in custom hooks e servizi.
-
-## Roadmap sintetica
-
-- Refactoring terminologia (`Turno` → `SessioneProduzione`, `SessioneLinea` → `Lavorazione`)
-- Introduzione entità separate per `Tipologia` e `Calibro`
-- Versionamento schema e migrazioni dati
-- Testing suite
-- Backend con database PostgreSQL
-
-Per il dettaglio completo: `AGENTS.md`.
+Per glossario di dominio, business rules e roadmap consulta `AGENTS.md`.
