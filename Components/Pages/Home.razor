@@ -8,14 +8,28 @@
 <div class="cards">
     <article class="card">
         <h3>Sessioni aperte</h3>
-        <p>@StateService.State.SessioniProduzione.Count(s => s.Status != "CHIUSO")</p>
+        <p>@sessioniAperte</p>
     </article>
     <article class="card">
         <h3>Lavorazioni attive</h3>
-        <p>@StateService.State.Lavorazioni.Count(s => s.Status == "ATTIVA")</p>
+        <p>@lavorazioniAttive</p>
     </article>
     <article class="card">
         <h3>Pedane totali</h3>
-        <p>@StateService.State.Pedane.Count</p>
+        <p>@pedaneTotali</p>
     </article>
 </div>
+
+@code {
+    private int sessioniAperte;
+    private int lavorazioniAttive;
+    private int pedaneTotali;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var stats = await StateService.GetDashboardStatsAsync();
+        sessioniAperte = stats.SessioniAperte;
+        lavorazioniAttive = stats.LavorazioniAttive;
+        pedaneTotali = stats.PedaneTotali;
+    }
+}

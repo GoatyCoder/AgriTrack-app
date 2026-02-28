@@ -12,7 +12,7 @@
 
 <section class="panel">
     <h2>Prodotti Grezzi</h2>
-    <EditForm Model="prodottoForm" OnValidSubmit="SaveProdotto">
+    <EditForm Model="prodottoForm" OnValidSubmit="SaveProdottoAsync">
         <InputText @bind-Value="prodottoForm.Codice" placeholder="Codice prodotto" />
         <InputText @bind-Value="prodottoForm.Nome" placeholder="Nome prodotto" />
         <button type="submit">@(prodottoEditId is null ? "Aggiungi" : "Salva")</button>
@@ -42,7 +42,7 @@
                     <td>@prodotto.Nome</td>
                     <td class="actions-cell">
                         <button @onclick="() => EditProdotto(prodotto)">Modifica</button>
-                        <button @onclick="() => DeleteProdotto(prodotto.Id)">Elimina</button>
+                        <button @onclick="() => DeleteProdottoAsync(prodotto.Id)">Elimina</button>
                     </td>
                 </tr>
             }
@@ -52,10 +52,10 @@
 
 <section class="panel">
     <h2>Varietà</h2>
-    <EditForm Model="varietaForm" OnValidSubmit="SaveVarieta">
+    <EditForm Model="varietaForm" OnValidSubmit="SaveVarietaAsync">
         <InputSelect @bind-Value="varietaForm.ProdottoId">
             <option value="">Seleziona prodotto</option>
-            @foreach (var p in StateService.State.ProdottiGrezzi.OrderBy(x => x.Codice))
+            @foreach (var p in prodotti.OrderBy(x => x.Codice))
             {
                 <option value="@p.Id">@p.Codice - @p.Nome</option>
             }
@@ -82,15 +82,15 @@
     <table>
         <thead><tr><th>Prodotto</th><th>Codice</th><th>Nome</th><th>Azioni</th></tr></thead>
         <tbody>
-            @foreach (var varieta in FilteredVarieta)
+            @foreach (var varietaItem in FilteredVarieta)
             {
                 <tr>
-                    <td>@GetProdottoLabel(varieta.ProdottoId)</td>
-                    <td>@varieta.Codice</td>
-                    <td>@varieta.Nome</td>
+                    <td>@GetProdottoLabel(varietaItem.ProdottoId)</td>
+                    <td>@varietaItem.Codice</td>
+                    <td>@varietaItem.Nome</td>
                     <td class="actions-cell">
-                        <button @onclick="() => EditVarieta(varieta)">Modifica</button>
-                        <button @onclick="() => DeleteVarieta(varieta.Id)">Elimina</button>
+                        <button @onclick="() => EditVarieta(varietaItem)">Modifica</button>
+                        <button @onclick="() => DeleteVarietaAsync(varietaItem.Id)">Elimina</button>
                     </td>
                 </tr>
             }
@@ -100,7 +100,7 @@
 
 <section class="panel">
     <h2>Imballaggi</h2>
-    <EditForm Model="imballoForm" OnValidSubmit="SaveImballo">
+    <EditForm Model="imballoForm" OnValidSubmit="SaveImballoAsync">
         <InputText @bind-Value="imballoForm.Codice" placeholder="Codice imballo" />
         <InputText @bind-Value="imballoForm.Nome" placeholder="Nome imballo" />
         <InputNumber @bind-Value="imballoForm.TaraKg" placeholder="Tara kg (opzionale)" />
@@ -132,7 +132,7 @@
                     <td>@(imballo.TaraKg?.ToString("0.###") ?? "-")</td>
                     <td class="actions-cell">
                         <button @onclick="() => EditImballo(imballo)">Modifica</button>
-                        <button @onclick="() => DeleteImballo(imballo.Id)">Elimina</button>
+                        <button @onclick="() => DeleteImballoAsync(imballo.Id)">Elimina</button>
                     </td>
                 </tr>
             }
@@ -142,12 +142,12 @@
 
 <section class="panel">
     <h2>Articoli</h2>
-    <EditForm Model="articoloForm" OnValidSubmit="SaveArticolo">
+    <EditForm Model="articoloForm" OnValidSubmit="SaveArticoloAsync">
         <InputText @bind-Value="articoloForm.Codice" placeholder="Codice articolo" />
         <InputText @bind-Value="articoloForm.Nome" placeholder="Nome articolo" />
         <InputSelect @bind-Value="articoloForm.ProdottoId">
             <option value="">Nessun vincolo prodotto</option>
-            @foreach (var p in StateService.State.ProdottiGrezzi.OrderBy(x => x.Codice))
+            @foreach (var p in prodotti.OrderBy(x => x.Codice))
             {
                 <option value="@p.Id">@p.Codice - @p.Nome</option>
             }
@@ -197,7 +197,7 @@
                     <td>@articolo.PesoColloTeorico.ToString("0.###")</td>
                     <td class="actions-cell">
                         <button @onclick="() => EditArticolo(articolo)">Modifica</button>
-                        <button @onclick="() => DeleteArticolo(articolo.Id)">Elimina</button>
+                        <button @onclick="() => DeleteArticoloAsync(articolo.Id)">Elimina</button>
                     </td>
                 </tr>
             }
@@ -207,6 +207,11 @@
 
 @code {
     private string? feedbackMessage;
+
+    private List<ProdottoGrezzo> prodotti = [];
+    private List<Varieta> varieta = [];
+    private List<Imballo> imballi = [];
+    private List<Articolo> articoli = [];
 
     private ProdottoForm prodottoForm = new();
     private string? prodottoEditId;
@@ -228,452 +233,218 @@
     private string articoloFiltro = string.Empty;
     private string articoloOrdinamento = "codice-asc";
 
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        prodotti = (await StateService.GetProdottiAsync()).ToList();
+        varieta = (await StateService.GetVarietaAsync()).ToList();
+        imballi = (await StateService.GetImballiAsync()).ToList();
+        articoli = (await StateService.GetArticoliAsync()).ToList();
+    }
+
     private IEnumerable<ProdottoGrezzo> FilteredProdotti =>
-        ApplyOrdering(
-            StateService.State.ProdottiGrezzi.Where(p => ContainsText($"{p.Codice} {p.Nome}", prodottoFiltro)),
-            prodottoOrdinamento,
-            x => x.Codice,
-            x => x.Nome);
+        ApplyOrdering(prodotti.Where(p => ContainsText($"{p.Codice} {p.Nome}", prodottoFiltro)), prodottoOrdinamento, x => x.Codice, x => x.Nome);
 
     private IEnumerable<Varieta> FilteredVarieta =>
-        ApplyOrdering(
-            StateService.State.Varieta.Where(v => ContainsText($"{GetProdottoLabel(v.ProdottoId)} {v.Codice} {v.Nome}", varietaFiltro)),
-            varietaOrdinamento,
-            x => x.Codice,
-            x => x.Nome);
+        ApplyOrdering(varieta.Where(v => ContainsText($"{GetProdottoLabel(v.ProdottoId)} {v.Codice} {v.Nome}", varietaFiltro)), varietaOrdinamento, x => x.Codice, x => x.Nome);
 
     private IEnumerable<Imballo> FilteredImballi =>
-        ApplyOrdering(
-            StateService.State.Imballi.Where(i => ContainsText($"{i.Codice} {i.Nome}", imballoFiltro)),
-            imballoOrdinamento,
-            x => x.Codice,
-            x => x.Nome);
+        ApplyOrdering(imballi.Where(i => ContainsText($"{i.Codice} {i.Nome}", imballoFiltro)), imballoOrdinamento, x => x.Codice, x => x.Nome);
 
     private IEnumerable<Articolo> FilteredArticoli =>
-        ApplyOrderingWithPeso(
-            StateService.State.Articoli.Where(a => ContainsText($"{a.Codice} {a.Nome} {GetProdottoLabel(a.ProdottoId)} {GetVarietaLabel(a.VarietaId)}", articoloFiltro)),
-            articoloOrdinamento);
+        ApplyOrderingWithPeso(articoli.Where(a => ContainsText($"{a.Codice} {a.Nome} {GetProdottoLabel(a.ProdottoId)} {GetVarietaLabel(a.VarietaId)}", articoloFiltro)), articoloOrdinamento);
 
-    private void SaveProdotto()
+    private async Task SaveProdottoAsync()
     {
         var codice = prodottoForm.Codice.Trim().ToUpperInvariant();
         var nome = prodottoForm.Nome.Trim();
+        if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome)) { feedbackMessage = "Prodotto non valido."; return; }
 
-        if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome))
+        var ok = await StateService.SaveProdottoAsync(new ProdottoGrezzo
         {
-            feedbackMessage = "Prodotto non valido: codice e nome sono obbligatori.";
-            return;
-        }
+            Id = Guid.NewGuid().ToString("N"),
+            Codice = codice,
+            Nome = nome,
+            Attivo = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        }, prodottoEditId);
 
-        var duplicate = StateService.State.ProdottiGrezzi.Any(p =>
-            p.Codice.Equals(codice, StringComparison.OrdinalIgnoreCase)
-            && p.Id != prodottoEditId);
-
-        if (duplicate)
+        feedbackMessage = ok ? "Prodotto salvato." : "Salvataggio prodotto fallito (codice duplicato o errore).";
+        if (ok)
         {
-            feedbackMessage = $"Codice prodotto '{codice}' già in uso.";
-            return;
+            CancelProdottoEdit();
+            await ReloadAsync();
         }
-
-        if (prodottoEditId is null)
-        {
-            StateService.State.ProdottiGrezzi.Add(new ProdottoGrezzo
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Codice = codice,
-                Nome = nome,
-                Attivo = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-            feedbackMessage = "Prodotto aggiunto.";
-        }
-        else
-        {
-            var prodotto = StateService.State.ProdottiGrezzi.FirstOrDefault(p => p.Id == prodottoEditId);
-            if (prodotto is null)
-            {
-                feedbackMessage = "Prodotto non trovato.";
-                return;
-            }
-
-            prodotto.Codice = codice;
-            prodotto.Nome = nome;
-            prodotto.UpdatedAt = DateTime.UtcNow;
-            feedbackMessage = "Prodotto aggiornato.";
-        }
-
-        StateService.Save();
-        CancelProdottoEdit();
     }
 
     private void EditProdotto(ProdottoGrezzo prodotto)
     {
         prodottoEditId = prodotto.Id;
         prodottoForm = new ProdottoForm { Codice = prodotto.Codice, Nome = prodotto.Nome };
-        feedbackMessage = null;
     }
 
-    private void DeleteProdotto(string id)
+    private async Task DeleteProdottoAsync(string id)
     {
-        if (StateService.State.Varieta.Any(v => v.ProdottoId == id) || StateService.State.Articoli.Any(a => a.ProdottoId == id))
-        {
-            feedbackMessage = "Impossibile eliminare: prodotto referenziato da varietà o articoli.";
-            return;
-        }
-
-        var removed = StateService.State.ProdottiGrezzi.Remove(StateService.State.ProdottiGrezzi.First(p => p.Id == id));
-        if (removed)
-        {
-            StateService.Save();
-            feedbackMessage = "Prodotto eliminato.";
-        }
+        var ok = await StateService.DeleteProdottoAsync(id);
+        feedbackMessage = ok ? "Prodotto eliminato." : "Eliminazione bloccata: prodotto in uso.";
+        if (ok) await ReloadAsync();
     }
 
-    private void CancelProdottoEdit()
-    {
-        prodottoEditId = null;
-        prodottoForm = new ProdottoForm();
-    }
+    private void CancelProdottoEdit() { prodottoEditId = null; prodottoForm = new(); }
 
-    private void SaveVarieta()
+    private async Task SaveVarietaAsync()
     {
-        if (string.IsNullOrWhiteSpace(varietaForm.ProdottoId))
-        {
-            feedbackMessage = "Varietà non valida: selezionare un prodotto.";
-            return;
-        }
-
+        if (string.IsNullOrWhiteSpace(varietaForm.ProdottoId)) { feedbackMessage = "Seleziona un prodotto."; return; }
         var codice = varietaForm.Codice.Trim().ToUpperInvariant();
         var nome = varietaForm.Nome.Trim();
-        if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome))
+        if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome)) { feedbackMessage = "Varietà non valida."; return; }
+
+        var ok = await StateService.SaveVarietaAsync(new Varieta
         {
-            feedbackMessage = "Varietà non valida: codice e nome sono obbligatori.";
-            return;
-        }
+            Id = Guid.NewGuid().ToString("N"),
+            ProdottoId = varietaForm.ProdottoId,
+            Codice = codice,
+            Nome = nome,
+            Attiva = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        }, varietaEditId);
 
-        var duplicate = StateService.State.Varieta.Any(v =>
-            v.ProdottoId == varietaForm.ProdottoId
-            && v.Codice.Equals(codice, StringComparison.OrdinalIgnoreCase)
-            && v.Id != varietaEditId);
-
-        if (duplicate)
-        {
-            feedbackMessage = $"Codice varietà '{codice}' già in uso per il prodotto selezionato.";
-            return;
-        }
-
-        if (varietaEditId is null)
-        {
-            StateService.State.Varieta.Add(new Varieta
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                ProdottoId = varietaForm.ProdottoId,
-                Codice = codice,
-                Nome = nome,
-                Attiva = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-            feedbackMessage = "Varietà aggiunta.";
-        }
-        else
-        {
-            var varieta = StateService.State.Varieta.FirstOrDefault(v => v.Id == varietaEditId);
-            if (varieta is null)
-            {
-                feedbackMessage = "Varietà non trovata.";
-                return;
-            }
-
-            varieta.ProdottoId = varietaForm.ProdottoId;
-            varieta.Codice = codice;
-            varieta.Nome = nome;
-            varieta.UpdatedAt = DateTime.UtcNow;
-            feedbackMessage = "Varietà aggiornata.";
-        }
-
-        StateService.Save();
-        CancelVarietaEdit();
+        feedbackMessage = ok ? "Varietà salvata." : "Salvataggio varietà fallito.";
+        if (ok) { CancelVarietaEdit(); await ReloadAsync(); }
     }
 
-    private void EditVarieta(Varieta varieta)
+    private void EditVarieta(Varieta model)
     {
-        varietaEditId = varieta.Id;
-        varietaForm = new VarietaForm
-        {
-            ProdottoId = varieta.ProdottoId,
-            Codice = varieta.Codice,
-            Nome = varieta.Nome
-        };
-        feedbackMessage = null;
+        varietaEditId = model.Id;
+        varietaForm = new VarietaForm { ProdottoId = model.ProdottoId, Codice = model.Codice, Nome = model.Nome };
     }
 
-    private void DeleteVarieta(string id)
+    private async Task DeleteVarietaAsync(string id)
     {
-        if (StateService.State.Articoli.Any(a => a.VarietaId == id))
-        {
-            feedbackMessage = "Impossibile eliminare: varietà referenziata da articoli.";
-            return;
-        }
-
-        var item = StateService.State.Varieta.FirstOrDefault(v => v.Id == id);
-        if (item is null)
-        {
-            return;
-        }
-
-        StateService.State.Varieta.Remove(item);
-        StateService.Save();
-        feedbackMessage = "Varietà eliminata.";
+        var ok = await StateService.DeleteVarietaAsync(id);
+        feedbackMessage = ok ? "Varietà eliminata." : "Eliminazione bloccata: varietà in uso.";
+        if (ok) await ReloadAsync();
     }
 
-    private void CancelVarietaEdit()
-    {
-        varietaEditId = null;
-        varietaForm = new VarietaForm();
-    }
+    private void CancelVarietaEdit() { varietaEditId = null; varietaForm = new(); }
 
-    private void SaveImballo()
+    private async Task SaveImballoAsync()
     {
         var codice = imballoForm.Codice.Trim().ToUpperInvariant();
         var nome = imballoForm.Nome.Trim();
+        if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome)) { feedbackMessage = "Imballaggio non valido."; return; }
 
-        if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome))
+        var ok = await StateService.SaveImballoAsync(new Imballo
         {
-            feedbackMessage = "Imballaggio non valido: codice e nome sono obbligatori.";
-            return;
-        }
+            Id = Guid.NewGuid().ToString("N"),
+            Codice = codice,
+            Nome = nome,
+            TaraKg = imballoForm.TaraKg,
+            Attivo = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        }, imballoEditId);
 
-        var duplicate = StateService.State.Imballi.Any(i =>
-            i.Codice.Equals(codice, StringComparison.OrdinalIgnoreCase)
-            && i.Id != imballoEditId);
-
-        if (duplicate)
-        {
-            feedbackMessage = $"Codice imballaggio '{codice}' già in uso.";
-            return;
-        }
-
-        if (imballoEditId is null)
-        {
-            StateService.State.Imballi.Add(new Imballo
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Codice = codice,
-                Nome = nome,
-                TaraKg = imballoForm.TaraKg,
-                Attivo = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-            feedbackMessage = "Imballaggio aggiunto.";
-        }
-        else
-        {
-            var imballo = StateService.State.Imballi.FirstOrDefault(i => i.Id == imballoEditId);
-            if (imballo is null)
-            {
-                feedbackMessage = "Imballaggio non trovato.";
-                return;
-            }
-
-            imballo.Codice = codice;
-            imballo.Nome = nome;
-            imballo.TaraKg = imballoForm.TaraKg;
-            imballo.UpdatedAt = DateTime.UtcNow;
-            feedbackMessage = "Imballaggio aggiornato.";
-        }
-
-        StateService.Save();
-        CancelImballoEdit();
+        feedbackMessage = ok ? "Imballaggio salvato." : "Salvataggio imballaggio fallito.";
+        if (ok) { CancelImballoEdit(); await ReloadAsync(); }
     }
 
-    private void EditImballo(Imballo imballo)
+    private void EditImballo(Imballo model)
     {
-        imballoEditId = imballo.Id;
-        imballoForm = new ImballoForm { Codice = imballo.Codice, Nome = imballo.Nome, TaraKg = imballo.TaraKg };
-        feedbackMessage = null;
+        imballoEditId = model.Id;
+        imballoForm = new ImballoForm { Codice = model.Codice, Nome = model.Nome, TaraKg = model.TaraKg };
     }
 
-    private void DeleteImballo(string id)
+    private async Task DeleteImballoAsync(string id)
     {
-        if (StateService.State.Lavorazioni.Any(l => l.ImballoId == id))
-        {
-            feedbackMessage = "Impossibile eliminare: imballaggio usato in lavorazioni.";
-            return;
-        }
-
-        var item = StateService.State.Imballi.FirstOrDefault(i => i.Id == id);
-        if (item is null)
-        {
-            return;
-        }
-
-        StateService.State.Imballi.Remove(item);
-        StateService.Save();
-        feedbackMessage = "Imballaggio eliminato.";
+        var ok = await StateService.DeleteImballoAsync(id);
+        feedbackMessage = ok ? "Imballaggio eliminato." : "Eliminazione bloccata: imballaggio in uso.";
+        if (ok) await ReloadAsync();
     }
 
-    private void CancelImballoEdit()
-    {
-        imballoEditId = null;
-        imballoForm = new ImballoForm();
-    }
+    private void CancelImballoEdit() { imballoEditId = null; imballoForm = new(); }
 
-    private void SaveArticolo()
+    private async Task SaveArticoloAsync()
     {
         var codice = articoloForm.Codice.Trim().ToUpperInvariant();
         var nome = articoloForm.Nome.Trim();
-
         if (string.IsNullOrWhiteSpace(codice) || string.IsNullOrWhiteSpace(nome) || articoloForm.PesoColloTeorico <= 0)
         {
-            feedbackMessage = "Articolo non valido: codice, nome e peso > 0 sono obbligatori.";
+            feedbackMessage = "Articolo non valido.";
             return;
         }
 
-        var duplicate = StateService.State.Articoli.Any(a =>
-            a.Codice.Equals(codice, StringComparison.OrdinalIgnoreCase)
-            && a.Id != articoloEditId);
-
-        if (duplicate)
+        var ok = await StateService.SaveArticoloAsync(new Articolo
         {
-            feedbackMessage = $"Codice articolo '{codice}' già in uso.";
-            return;
-        }
+            Id = Guid.NewGuid().ToString("N"),
+            Codice = codice,
+            Nome = nome,
+            ProdottoId = NullIfEmpty(articoloForm.ProdottoId),
+            VarietaId = NullIfEmpty(articoloForm.VarietaId),
+            TipoPeso = articoloForm.TipoPeso,
+            PesoColloTeorico = articoloForm.PesoColloTeorico,
+            Attivo = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        }, articoloEditId);
 
-        if (!string.IsNullOrWhiteSpace(articoloForm.VarietaId) && string.IsNullOrWhiteSpace(articoloForm.ProdottoId))
-        {
-            feedbackMessage = "Se selezioni una varietà devi selezionare anche il prodotto.";
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(articoloForm.VarietaId))
-        {
-            var varieta = StateService.State.Varieta.FirstOrDefault(v => v.Id == articoloForm.VarietaId);
-            if (varieta is null || varieta.ProdottoId != articoloForm.ProdottoId)
-            {
-                feedbackMessage = "Varietà non coerente con prodotto selezionato.";
-                return;
-            }
-        }
-
-        if (articoloEditId is null)
-        {
-            StateService.State.Articoli.Add(new Articolo
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Codice = codice,
-                Nome = nome,
-                ProdottoId = NullIfEmpty(articoloForm.ProdottoId),
-                VarietaId = NullIfEmpty(articoloForm.VarietaId),
-                TipoPeso = articoloForm.TipoPeso,
-                PesoColloTeorico = articoloForm.PesoColloTeorico,
-                Attivo = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-            feedbackMessage = "Articolo aggiunto.";
-        }
-        else
-        {
-            var articolo = StateService.State.Articoli.FirstOrDefault(a => a.Id == articoloEditId);
-            if (articolo is null)
-            {
-                feedbackMessage = "Articolo non trovato.";
-                return;
-            }
-
-            articolo.Codice = codice;
-            articolo.Nome = nome;
-            articolo.ProdottoId = NullIfEmpty(articoloForm.ProdottoId);
-            articolo.VarietaId = NullIfEmpty(articoloForm.VarietaId);
-            articolo.TipoPeso = articoloForm.TipoPeso;
-            articolo.PesoColloTeorico = articoloForm.PesoColloTeorico;
-            articolo.UpdatedAt = DateTime.UtcNow;
-            feedbackMessage = "Articolo aggiornato.";
-        }
-
-        StateService.Save();
-        CancelArticoloEdit();
+        feedbackMessage = ok ? "Articolo salvato." : "Salvataggio articolo fallito.";
+        if (ok) { CancelArticoloEdit(); await ReloadAsync(); }
     }
 
-    private void EditArticolo(Articolo articolo)
+    private void EditArticolo(Articolo model)
     {
-        articoloEditId = articolo.Id;
+        articoloEditId = model.Id;
         articoloForm = new ArticoloForm
         {
-            Codice = articolo.Codice,
-            Nome = articolo.Nome,
-            ProdottoId = articolo.ProdottoId ?? string.Empty,
-            VarietaId = articolo.VarietaId ?? string.Empty,
-            TipoPeso = articolo.TipoPeso,
-            PesoColloTeorico = articolo.PesoColloTeorico
+            Codice = model.Codice,
+            Nome = model.Nome,
+            ProdottoId = model.ProdottoId ?? string.Empty,
+            VarietaId = model.VarietaId ?? string.Empty,
+            TipoPeso = model.TipoPeso,
+            PesoColloTeorico = model.PesoColloTeorico
         };
-        feedbackMessage = null;
     }
 
-    private void DeleteArticolo(string id)
+    private async Task DeleteArticoloAsync(string id)
     {
-        if (StateService.State.Lavorazioni.Any(l => l.ArticoloId == id))
-        {
-            feedbackMessage = "Impossibile eliminare: articolo usato in lavorazioni.";
-            return;
-        }
-
-        var item = StateService.State.Articoli.FirstOrDefault(a => a.Id == id);
-        if (item is null)
-        {
-            return;
-        }
-
-        StateService.State.Articoli.Remove(item);
-        StateService.Save();
-        feedbackMessage = "Articolo eliminato.";
+        var ok = await StateService.DeleteArticoloAsync(id);
+        feedbackMessage = ok ? "Articolo eliminato." : "Eliminazione bloccata: articolo in uso.";
+        if (ok) await ReloadAsync();
     }
 
-    private void CancelArticoloEdit()
-    {
-        articoloEditId = null;
-        articoloForm = new ArticoloForm { TipoPeso = "EGALIZZATO" };
-    }
+    private void CancelArticoloEdit() { articoloEditId = null; articoloForm = new() { TipoPeso = "EGALIZZATO" }; }
 
     private IEnumerable<Varieta> VarietaDisponibiliPerArticolo()
     {
-        var query = StateService.State.Varieta.AsEnumerable();
+        var query = varieta.AsEnumerable();
         if (!string.IsNullOrWhiteSpace(articoloForm.ProdottoId))
-        {
             query = query.Where(v => v.ProdottoId == articoloForm.ProdottoId);
-        }
-
         return query.OrderBy(v => v.Codice).ThenBy(v => v.Nome);
     }
 
     private string GetProdottoLabel(string? prodottoId)
     {
-        if (string.IsNullOrWhiteSpace(prodottoId))
-        {
-            return "-";
-        }
-
-        var prodotto = StateService.State.ProdottiGrezzi.FirstOrDefault(p => p.Id == prodottoId);
-        return prodotto is null ? "-" : $"{prodotto.Codice} - {prodotto.Nome}";
+        if (string.IsNullOrWhiteSpace(prodottoId)) return "-";
+        var p = prodotti.FirstOrDefault(x => x.Id == prodottoId);
+        return p is null ? "-" : $"{p.Codice} - {p.Nome}";
     }
 
     private string GetVarietaLabel(string? varietaId)
     {
-        if (string.IsNullOrWhiteSpace(varietaId))
-        {
-            return "-";
-        }
-
-        var varieta = StateService.State.Varieta.FirstOrDefault(v => v.Id == varietaId);
-        return varieta is null ? "-" : $"{varieta.Codice} - {varieta.Nome}";
+        if (string.IsNullOrWhiteSpace(varietaId)) return "-";
+        var v = varieta.FirstOrDefault(x => x.Id == varietaId);
+        return v is null ? "-" : $"{v.Codice} - {v.Nome}";
     }
 
     private static bool ContainsText(string value, string filter)
-        => string.IsNullOrWhiteSpace(filter)
-           || value.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase);
+        => string.IsNullOrWhiteSpace(filter) || value.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<T> ApplyOrdering<T>(IEnumerable<T> source, string order, Func<T, string> byCode, Func<T, string> byName)
         => order switch
@@ -698,26 +469,9 @@
     private static string? NullIfEmpty(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value;
 
-    private sealed class ProdottoForm
-    {
-        public string Codice { get; set; } = string.Empty;
-        public string Nome { get; set; } = string.Empty;
-    }
-
-    private sealed class VarietaForm
-    {
-        public string ProdottoId { get; set; } = string.Empty;
-        public string Codice { get; set; } = string.Empty;
-        public string Nome { get; set; } = string.Empty;
-    }
-
-    private sealed class ImballoForm
-    {
-        public string Codice { get; set; } = string.Empty;
-        public string Nome { get; set; } = string.Empty;
-        public decimal? TaraKg { get; set; }
-    }
-
+    private sealed class ProdottoForm { public string Codice { get; set; } = string.Empty; public string Nome { get; set; } = string.Empty; }
+    private sealed class VarietaForm { public string ProdottoId { get; set; } = string.Empty; public string Codice { get; set; } = string.Empty; public string Nome { get; set; } = string.Empty; }
+    private sealed class ImballoForm { public string Codice { get; set; } = string.Empty; public string Nome { get; set; } = string.Empty; public decimal? TaraKg { get; set; } }
     private sealed class ArticoloForm
     {
         public string Codice { get; set; } = string.Empty;

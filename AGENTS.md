@@ -41,7 +41,7 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 
 ### Current Status (v0.3-alpha)
 - ✅ Frontend riscritto in Blazor Server (.NET 10)
-- ✅ Persistenza server-side su file JSON
+- ✅ Persistenza server-side su PostgreSQL (EF Core)
 - ✅ Anagrafiche base (Prodotti, Varietà, Articoli, Lotti)
 - ✅ Gestione sessioni produzione e lavorazioni
 - ✅ Tracciabilità pedane con codici univoci
@@ -54,10 +54,10 @@ AgriTrack è un sistema di **gestione produzione e tracciabilità** per stabilim
 ### Tech Stack
 **Frontend/UI**: Blazor Server (Razor Components)
 **Backend runtime**: ASP.NET Core .NET 10
-**State**: `AppStateService` singleton + JSON persistence
+**State**: Application services + EF Core DbContext
 **Validation**: C# typed models + form validation Blazor
-**Architecture**: Clean Architecture adattata a stack .NET (Domain, Application, Infrastructure)
-**Deployment**: Kestrel/IIS/Container (Docker-ready)
+**Architecture**: Clean Architecture .NET con Application/Infrastructure separati
+**Deployment**: Kestrel/IIS/Container (Docker-ready) + PostgreSQL managed (Neon/Supabase)
 
 ---
 
@@ -1693,7 +1693,12 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Product form now edits both lists inline; `Calibri` keeps explicit `ordinamento`, `Tipologie` are managed without dedicated ordering controls
 - Removed dedicated sidebar tabs for Tipologie/Calibri to simplify operator UX
 
-### Version 0.3.2 (Current - Q2 2026)
+### Version 0.4.0 (Current - Q2 2026)
+- Refactored backend to EF Core with PostgreSQL provider (Npgsql)
+- Introduced AppDbContext and database initializer with relational constraints
+- Migrated app services from JSON file persistence to database-backed operations
+
+### Version 0.3.2 (Q2 2026)
 - Completed master-data management for Prodotti, Varietà, Imballaggi e Articoli with create/update/delete
 - Added list filters and sorting options in Anagrafiche page
 
@@ -1781,7 +1786,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-28
-**Version**: 0.3.2
+**Version**: 0.4.0
 **Maintained by**: Development Team
 
 ---

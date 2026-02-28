@@ -7,10 +7,10 @@
 
 <section class="panel">
     <h2>Nuova sessione produzione</h2>
-    <EditForm Model="nuovaSessione" OnValidSubmit="CreateSessione">
+    <EditForm Model="nuovaSessione" OnValidSubmit="CreateSessioneAsync">
         <InputText @bind-Value="nuovaSessione.Operatore" placeholder="Operatore" />
         <InputSelect @bind-Value="nuovaSessione.AreaId">
-            @foreach (var area in StateService.State.Aree)
+            @foreach (var area in aree)
             {
                 <option value="@area.Id">@area.Nome</option>
             }
@@ -31,7 +31,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var sessione in StateService.State.SessioniProduzione.OrderByDescending(s => s.Inizio))
+            @foreach (var sessione in sessioni)
             {
                 <tr>
                     <td>@sessione.Operatore</td>
@@ -46,26 +46,32 @@
 
 @code {
     private SessioneProduzione nuovaSessione = new();
+    private IReadOnlyList<Area> aree = [];
+    private IReadOnlyList<SessioneProduzione> sessioni = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        nuovaSessione.AreaId = StateService.State.Aree.FirstOrDefault()?.Id ?? string.Empty;
+        aree = await StateService.GetAreeAsync();
+        sessioni = await StateService.GetSessioniAsync();
+        nuovaSessione.AreaId = aree.FirstOrDefault()?.Id ?? string.Empty;
     }
 
-    private void CreateSessione()
+    private async Task CreateSessioneAsync()
     {
         nuovaSessione.Id = Guid.NewGuid().ToString("N");
         nuovaSessione.Inizio = DateTime.UtcNow;
         nuovaSessione.Status = "APERTO";
 
-        StateService.AddSessione(nuovaSessione);
+        await StateService.AddSessioneAsync(nuovaSessione);
 
         nuovaSessione = new SessioneProduzione
         {
-            AreaId = StateService.State.Aree.FirstOrDefault()?.Id ?? string.Empty
+            AreaId = aree.FirstOrDefault()?.Id ?? string.Empty
         };
+
+        sessioni = await StateService.GetSessioniAsync();
     }
 
     private string ResolveAreaName(string areaId)
-        => StateService.State.Aree.FirstOrDefault(a => a.Id == areaId)?.Nome ?? "-";
+        => aree.FirstOrDefault(a => a.Id == areaId)?.Nome ?? "-";
 }

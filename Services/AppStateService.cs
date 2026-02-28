@@ -1,82 +1,221 @@
-using System.Text.Json;
+using AgriTrack.App.Infrastructure.Persistence;
 using AgriTrack.App.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgriTrack.App.Services;
 
-public class AppStateService
+public class AppStateService(IDbContextFactory<AppDbContext> dbContextFactory)
 {
-    private readonly string _storagePath;
-    private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
+    public async Task<IReadOnlyList<Area>> GetAreeAsync(CancellationToken cancellationToken = default)
     {
-        WriteIndented = true
-    };
-
-    public AppState State { get; private set; } = new();
-
-    public AppStateService(IWebHostEnvironment env)
-    {
-        _storagePath = Path.Combine(env.ContentRootPath, "Data", "appstate.json");
-        Directory.CreateDirectory(Path.GetDirectoryName(_storagePath)!);
-        State = Load();
-        EnsureDefaults();
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.Aree.AsNoTracking().OrderBy(x => x.Nome).ToListAsync(cancellationToken);
     }
 
-    public void Save() => Persist(State);
-
-    public void AddSessione(SessioneProduzione sessione)
+    public async Task<IReadOnlyList<ProdottoGrezzo>> GetProdottiAsync(CancellationToken cancellationToken = default)
     {
-        State.SessioniProduzione.Add(sessione);
-        Save();
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.ProdottiGrezzi.AsNoTracking().ToListAsync(cancellationToken);
     }
 
-    public void AddLavorazione(Lavorazione lavorazione)
+    public async Task<IReadOnlyList<Varieta>> GetVarietaAsync(CancellationToken cancellationToken = default)
     {
-        State.Lavorazioni.Add(lavorazione);
-        Save();
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.Varieta.AsNoTracking().ToListAsync(cancellationToken);
     }
 
-    public void AddPedana(Pedana pedana)
+    public async Task<IReadOnlyList<Imballo>> GetImballiAsync(CancellationToken cancellationToken = default)
     {
-        State.Pedane.Add(pedana);
-        Save();
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.Imballi.AsNoTracking().ToListAsync(cancellationToken);
     }
 
-    private AppState Load()
+    public async Task<IReadOnlyList<Articolo>> GetArticoliAsync(CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(_storagePath))
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.Articoli.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    public async Task<(int SessioniAperte, int SessioniTotali, int LavorazioniAttive, int LavorazioniTotali, int PedaneTotali)> GetDashboardStatsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var sessioniAperte = await db.SessioniProduzione.CountAsync(x => x.Status != "CHIUSO", cancellationToken);
+        var sessioniTotali = await db.SessioniProduzione.CountAsync(cancellationToken);
+        var lavorazioniAttive = await db.Lavorazioni.CountAsync(x => x.Status == "ATTIVA", cancellationToken);
+        var lavorazioniTotali = await db.Lavorazioni.CountAsync(cancellationToken);
+        var pedaneTotali = await db.Pedane.CountAsync(cancellationToken);
+        return (sessioniAperte, sessioniTotali, lavorazioniAttive, lavorazioniTotali, pedaneTotali);
+    }
+
+    public async Task AddSessioneAsync(SessioneProduzione sessione, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        db.SessioniProduzione.Add(sessione);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SessioneProduzione>> GetSessioniAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.SessioniProduzione.AsNoTracking().OrderByDescending(x => x.Inizio).ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> SaveProdottoAsync(ProdottoGrezzo model, string? editId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var duplicate = await db.ProdottiGrezzi.AnyAsync(p => p.Codice == model.Codice && p.Id != editId, cancellationToken);
+        if (duplicate) return false;
+
+        if (string.IsNullOrWhiteSpace(editId))
         {
-            var seeded = Seed();
-            Persist(seeded);
-            return seeded;
+            db.ProdottiGrezzi.Add(model);
+        }
+        else
+        {
+            var entity = await db.ProdottiGrezzi.FirstOrDefaultAsync(x => x.Id == editId, cancellationToken);
+            if (entity is null) return false;
+            entity.Codice = model.Codice;
+            entity.Nome = model.Nome;
+            entity.UpdatedAt = DateTime.UtcNow;
         }
 
-        var json = File.ReadAllText(_storagePath);
-        return JsonSerializer.Deserialize<AppState>(json, _jsonOptions) ?? Seed();
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
-    private void Persist(AppState state)
+    public async Task<bool> DeleteProdottoAsync(string id, CancellationToken cancellationToken = default)
     {
-        File.WriteAllText(_storagePath, JsonSerializer.Serialize(state, _jsonOptions));
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var referenced = await db.Varieta.AnyAsync(v => v.ProdottoId == id, cancellationToken)
+                         || await db.Articoli.AnyAsync(a => a.ProdottoId == id, cancellationToken);
+        if (referenced) return false;
+
+        var entity = await db.ProdottiGrezzi.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return false;
+        db.ProdottiGrezzi.Remove(entity);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
-    private void EnsureDefaults()
+    public async Task<bool> SaveVarietaAsync(Varieta model, string? editId, CancellationToken cancellationToken = default)
     {
-        State.Imballi ??= new List<Imballo>();
-        Save();
-    }
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var duplicate = await db.Varieta.AnyAsync(v => v.ProdottoId == model.ProdottoId && v.Codice == model.Codice && v.Id != editId, cancellationToken);
+        if (duplicate) return false;
 
-    private static AppState Seed()
-    {
-        var area = new Area { Nome = "Confezionamento" };
-        var linea = new Linea { Nome = "Linea 1", AreaId = area.Id };
-        var prodotto = new ProdottoGrezzo { Codice = "UVA", Nome = "Uva da Tavola" };
-
-        return new AppState
+        if (string.IsNullOrWhiteSpace(editId))
         {
-            Aree = new List<Area> { area },
-            Linee = new List<Linea> { linea },
-            ProdottiGrezzi = new List<ProdottoGrezzo> { prodotto },
-            Imballi = new List<Imballo>()
-        };
+            db.Varieta.Add(model);
+        }
+        else
+        {
+            var entity = await db.Varieta.FirstOrDefaultAsync(x => x.Id == editId, cancellationToken);
+            if (entity is null) return false;
+            entity.ProdottoId = model.ProdottoId;
+            entity.Codice = model.Codice;
+            entity.Nome = model.Nome;
+            entity.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteVarietaAsync(string id, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var referenced = await db.Articoli.AnyAsync(a => a.VarietaId == id, cancellationToken);
+        if (referenced) return false;
+
+        var entity = await db.Varieta.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return false;
+        db.Varieta.Remove(entity);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> SaveImballoAsync(Imballo model, string? editId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var duplicate = await db.Imballi.AnyAsync(v => v.Codice == model.Codice && v.Id != editId, cancellationToken);
+        if (duplicate) return false;
+
+        if (string.IsNullOrWhiteSpace(editId))
+        {
+            db.Imballi.Add(model);
+        }
+        else
+        {
+            var entity = await db.Imballi.FirstOrDefaultAsync(x => x.Id == editId, cancellationToken);
+            if (entity is null) return false;
+            entity.Codice = model.Codice;
+            entity.Nome = model.Nome;
+            entity.TaraKg = model.TaraKg;
+            entity.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteImballoAsync(string id, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var referenced = await db.Lavorazioni.AnyAsync(a => a.ImballoId == id, cancellationToken);
+        if (referenced) return false;
+
+        var entity = await db.Imballi.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return false;
+        db.Imballi.Remove(entity);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> SaveArticoloAsync(Articolo model, string? editId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var duplicate = await db.Articoli.AnyAsync(v => v.Codice == model.Codice && v.Id != editId, cancellationToken);
+        if (duplicate) return false;
+
+        if (!string.IsNullOrWhiteSpace(model.VarietaId) && string.IsNullOrWhiteSpace(model.ProdottoId)) return false;
+
+        if (!string.IsNullOrWhiteSpace(model.VarietaId))
+        {
+            var varieta = await db.Varieta.FirstOrDefaultAsync(v => v.Id == model.VarietaId, cancellationToken);
+            if (varieta is null || varieta.ProdottoId != model.ProdottoId) return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(editId))
+        {
+            db.Articoli.Add(model);
+        }
+        else
+        {
+            var entity = await db.Articoli.FirstOrDefaultAsync(x => x.Id == editId, cancellationToken);
+            if (entity is null) return false;
+            entity.Codice = model.Codice;
+            entity.Nome = model.Nome;
+            entity.ProdottoId = model.ProdottoId;
+            entity.VarietaId = model.VarietaId;
+            entity.PesoColloTeorico = model.PesoColloTeorico;
+            entity.TipoPeso = model.TipoPeso;
+            entity.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteArticoloAsync(string id, CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var referenced = await db.Lavorazioni.AnyAsync(a => a.ArticoloId == id, cancellationToken);
+        if (referenced) return false;
+
+        var entity = await db.Articoli.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return false;
+        db.Articoli.Remove(entity);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
