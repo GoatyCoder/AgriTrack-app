@@ -18,17 +18,14 @@ public class AppStateService
         _storagePath = Path.Combine(env.ContentRootPath, "Data", "appstate.json");
         Directory.CreateDirectory(Path.GetDirectoryName(_storagePath)!);
         State = Load();
+        EnsureDefaults();
     }
+
+    public void Save() => Persist(State);
 
     public void AddSessione(SessioneProduzione sessione)
     {
         State.SessioniProduzione.Add(sessione);
-        Save();
-    }
-
-    public void AddProdotto(ProdottoGrezzo prodotto)
-    {
-        State.ProdottiGrezzi.Add(prodotto);
         Save();
     }
 
@@ -57,11 +54,15 @@ public class AppStateService
         return JsonSerializer.Deserialize<AppState>(json, _jsonOptions) ?? Seed();
     }
 
-    private void Save() => Persist(State);
-
     private void Persist(AppState state)
     {
         File.WriteAllText(_storagePath, JsonSerializer.Serialize(state, _jsonOptions));
+    }
+
+    private void EnsureDefaults()
+    {
+        State.Imballi ??= new List<Imballo>();
+        Save();
     }
 
     private static AppState Seed()
@@ -74,7 +75,8 @@ public class AppStateService
         {
             Aree = new List<Area> { area },
             Linee = new List<Linea> { linea },
-            ProdottiGrezzi = new List<ProdottoGrezzo> { prodotto }
+            ProdottiGrezzi = new List<ProdottoGrezzo> { prodotto },
+            Imballi = new List<Imballo>()
         };
     }
 }

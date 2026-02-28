@@ -29,6 +29,16 @@ public class Varieta : AuditFields
     public string ProdottoId { get; set; } = string.Empty;
     public string Codice { get; set; } = string.Empty;
     public string Nome { get; set; } = string.Empty;
+    public bool Attiva { get; set; } = true;
+}
+
+public class Imballo : AuditFields
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Codice { get; set; } = string.Empty;
+    public string Nome { get; set; } = string.Empty;
+    public decimal? TaraKg { get; set; }
+    public bool Attivo { get; set; } = true;
 }
 
 public class Articolo : AuditFields
@@ -36,7 +46,11 @@ public class Articolo : AuditFields
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Codice { get; set; } = string.Empty;
     public string Nome { get; set; } = string.Empty;
+    public string? ProdottoId { get; set; }
+    public string? VarietaId { get; set; }
     public decimal PesoColloTeorico { get; set; }
+    public string TipoPeso { get; set; } = "EGALIZZATO";
+    public bool Attivo { get; set; } = true;
 }
 
 public class SessioneProduzione
@@ -55,6 +69,7 @@ public class Lavorazione
     public string SessioneProduzioneId { get; set; } = string.Empty;
     public string LineaId { get; set; } = string.Empty;
     public string ArticoloId { get; set; } = string.Empty;
+    public string? ImballoId { get; set; }
     public string SiglaLottoCode { get; set; } = string.Empty;
     public DateOnly DataIngresso { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public string Status { get; set; } = "ATTIVA";
@@ -76,6 +91,7 @@ public class AppState
     public IList<Linea> Linee { get; set; } = new List<Linea>();
     public IList<ProdottoGrezzo> ProdottiGrezzi { get; set; } = new List<ProdottoGrezzo>();
     public IList<Varieta> Varieta { get; set; } = new List<Varieta>();
+    public IList<Imballo> Imballi { get; set; } = new List<Imballo>();
     public IList<Articolo> Articoli { get; set; } = new List<Articolo>();
     public IList<SessioneProduzione> SessioniProduzione { get; set; } = new List<SessioneProduzione>();
     public IList<Lavorazione> Lavorazioni { get; set; } = new List<Lavorazione>();

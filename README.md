@@ -4,13 +4,14 @@ Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di c
 
 ## Stato del progetto
 
-Versione attuale: **v0.3.1-alpha**.
+Versione attuale: **v0.3.2-alpha**.
 
 Questa release introduce la migrazione strutturale da React/Vite a Blazor Server con:
 - shell applicativa server-rendered (layout, routing, pagine principali);
 - gestione stato centralizzata in `AppStateService`;
 - persistenza JSON lato server (`Data/appstate.json`);
-- dashboard operativa, produzione, anagrafiche e report di base.
+- dashboard operativa, produzione, anagrafiche e report di base;
+- anagrafiche complete con CRUD + filtri/ordinamenti per prodotti, varietà, imballaggi, articoli.
 
 ## Stack tecnico
 

@@ -1693,7 +1693,11 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Product form now edits both lists inline; `Calibri` keeps explicit `ordinamento`, `Tipologie` are managed without dedicated ordering controls
 - Removed dedicated sidebar tabs for Tipologie/Calibri to simplify operator UX
 
-### Version 0.3.1 (Current - Q2 2026)
+### Version 0.3.2 (Current - Q2 2026)
+- Completed master-data management for Prodotti, Varietà, Imballaggi e Articoli with create/update/delete
+- Added list filters and sorting options in Anagrafiche page
+
+### Version 0.3.1 (Q2 2026)
 - Added Dockerfile multi-stage for containerized deploy on Render.com
 - Added Docker deployment notes in README for Render Web Service setup
 
@@ -1777,7 +1781,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-28
-**Version**: 0.3.1
+**Version**: 0.3.2
 **Maintained by**: Development Team
 
 ---

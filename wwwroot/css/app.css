@@ -37,20 +37,44 @@ main {
   gap: 1rem;
 }
 
-.card, .panel {
+.card,
+.panel {
   background: white;
   border-radius: 8px;
   padding: 1rem;
 }
 
 form {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0.5rem;
-  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
 }
 
-input, select, button {
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+input,
+select,
+button {
   padding: 0.5rem;
+}
+
+.feedback {
+  background: #e0f2fe;
+  color: #0c4a6e;
+  border: 1px solid #7dd3fc;
+  border-radius: 8px;
+  padding: 0.7rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
 }
 
 table {
@@ -58,7 +82,8 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
   padding: 0.5rem;
