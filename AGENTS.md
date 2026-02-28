@@ -1693,7 +1693,11 @@ Per ridurre rischio regressioni, il refactoring di FASE 1 va eseguito in micro-s
 - Product form now edits both lists inline; `Calibri` keeps explicit `ordinamento`, `Tipologie` are managed without dedicated ordering controls
 - Removed dedicated sidebar tabs for Tipologie/Calibri to simplify operator UX
 
-### Version 0.3.0 (Current - Q2 2026)
+### Version 0.3.1 (Current - Q2 2026)
+- Added Dockerfile multi-stage for containerized deploy on Render.com
+- Added Docker deployment notes in README for Render Web Service setup
+
+### Version 0.3.0 (Q2 2026)
 - Full rewrite to Blazor Server on .NET 10
 - Removed React/Vite runtime and Node toolchain
 - Introduced server-side JSON persistence through AppStateService
@@ -1773,7 +1777,7 @@ refactor: Extract validation logic to service
 ---
 
 **Last Updated**: 2026-02-28
-**Version**: 0.3.0
+**Version**: 0.3.1
 **Maintained by**: Development Team
 
 ---

@@ -4,7 +4,7 @@ Sistema web per la **gestione produzione e tracciabilità** in stabilimenti di c
 
 ## Stato del progetto
 
-Versione attuale: **v0.3.0-alpha**.
+Versione attuale: **v0.3.1-alpha**.
 
 Questa release introduce la migrazione strutturale da React/Vite a Blazor Server con:
 - shell applicativa server-rendered (layout, routing, pagine principali);
@@ -44,3 +44,16 @@ Applicazione disponibile (default):
 ## Note
 
 Per glossario di dominio, business rules e roadmap consulta `AGENTS.md`.
+
+## Deploy su Render.com
+
+Il repository include un `Dockerfile` multi-stage compatibile con Render.
+
+### Configurazione servizio su Render
+
+1. Crea un nuovo **Web Service** da repository GitHub.
+2. Seleziona **Environment: Docker**.
+3. Lascia vuoti Build/Start command (Render userà il `Dockerfile`).
+4. Imposta eventuali variabili ambiente applicative aggiuntive.
+
+Il container usa automaticamente `PORT` fornita da Render con fallback a `10000`.
